@@ -178,10 +178,16 @@ const main = async () => {
 
         // 4. Discipline Messages
         console.log("\nPopulating discipline messages...");
-        for (const msg of disciplineMessages) {
-            await addDoc(collection(db, 'discipline'), { text: msg.text });
+        const disciplineCollectionRef = collection(db, 'discipline');
+        const existingDisciplineDocs = await getDocs(disciplineCollectionRef);
+        if (existingDisciplineDocs.empty) {
+            for (const msg of disciplineMessages) {
+                await addDoc(disciplineCollectionRef, { text: msg.text });
+            }
+            console.log("✅ Successfully populated 'discipline' collection!");
+        } else {
+            console.log("Skipping 'discipline' collection population as it already contains data.");
         }
-        console.log("✅ Successfully populated 'discipline' collection!");
 
 
         console.log("\nAll data populated successfully. You can now close this script (Ctrl+C).");
@@ -193,3 +199,5 @@ const main = async () => {
 }
 
 main();
+
+    

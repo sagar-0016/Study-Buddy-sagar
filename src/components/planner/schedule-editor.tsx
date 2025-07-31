@@ -116,7 +116,7 @@ const ScheduleList = ({
           const emojiPart = informalTaskParts.length > 1 ? ` (${informalTaskParts.pop()}` : '';
           updatedTasks[taskIndexToUpdate] = {
               time: editedTime,
-              task: `${editedTask} ${emojiPart}`.trim()
+              task: `${editedTask}${emojiPart}`.trim()
           };
       }
       updatedTasks.sort((a, b) => a.time.localeCompare(b.time));
@@ -372,3 +372,5 @@ export default function ScheduleEditor() {
     </Card>
   );
 }
+
+    
