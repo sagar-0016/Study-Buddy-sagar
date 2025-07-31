@@ -10,26 +10,33 @@ import {
 } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, ResponsiveContainer, RadialBarChart, RadialBar } from "recharts";
 import { progressChartData, quizScoresData, completionData } from "@/lib/data";
+import type { ChartConfig } from "@/components/ui/chart"
 
 const lineChartConfig = {
   completed: {
     label: "Topics Completed",
     color: "hsl(var(--chart-1))",
   },
-};
+} satisfies ChartConfig;
 
 const barChartConfig = {
     score: {
         label: "Score",
         color: "hsl(var(--chart-2))",
     }
-}
+} satisfies ChartConfig;
 
 const radialChartConfig = {
-    value: {
-        label: "Completion"
+    physics: {
+        label: "Physics",
+    },
+    chemistry: {
+        label: "Chemistry",
+    },
+    maths: {
+        label: "Maths",
     }
-}
+} satisfies ChartConfig;
 
 export default function ProgressCharts() {
   return (
@@ -87,22 +94,24 @@ export default function ProgressCharts() {
           <CardDescription>Breakdown of your progress in each subject.</CardDescription>
         </CardHeader>
         <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-            <RadialBarChart 
-                innerRadius="20%" 
-                outerRadius="100%" 
-                data={completionData} 
-                startAngle={-270}
-                endAngle={90}
-            >
-                <RadialBar minAngle={15} label={{ position: 'insideStart', fill: '#fff' }} background clockWise dataKey='value' />
-                <ChartLegend
-                    content={<ChartLegendContent nameKey="subject" />}
-                    className="-mt-4"
-                />
-                 <Tooltip content={<ChartTooltipContent nameKey="subject" />} />
-            </RadialBarChart>
-            </ResponsiveContainer>
+            <ChartContainer config={radialChartConfig} className="w-full h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                <RadialBarChart 
+                    innerRadius="20%" 
+                    outerRadius="100%" 
+                    data={completionData} 
+                    startAngle={-270}
+                    endAngle={90}
+                >
+                    <RadialBar minAngle={15} label={{ position: 'insideStart', fill: '#fff' }} background clockWise dataKey='value' />
+                    <ChartLegend
+                        content={<ChartLegendContent nameKey="subject" />}
+                        className="-mt-4"
+                    />
+                    <Tooltip content={<ChartTooltipContent nameKey="subject" />} />
+                </RadialBarChart>
+                </ResponsiveContainer>
+            </ChartContainer>
         </CardContent>
       </Card>
     </div>
