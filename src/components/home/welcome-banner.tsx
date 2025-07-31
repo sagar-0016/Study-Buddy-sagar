@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function WelcomeBanner() {
   return (
-    <div className="relative rounded-lg bg-card text-card-foreground shadow-sm transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+    <div className="relative transition-transform duration-300 ease-in-out">
       <div className="grid md:grid-cols-2 items-center">
         <div className="p-8 md:p-12 z-10">
           <h2 className="text-3xl lg:text-4xl font-bold text-primary">Conquer JEE, Pranjal!</h2>
@@ -10,13 +10,13 @@ export default function WelcomeBanner() {
             Your journey to IIT Delhi starts now. Seize the day!
           </p>
         </div>
-        <div className="relative h-60 md:h-full">
+        <div className="relative h-60 md:h-full group">
            <Image
               src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
               alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
               fill
-              className="object-cover rounded-r-lg md:rounded-l-lg"
+              className="object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105 group-hover:-translate-y-1"
             />
         </div>
       </div>
