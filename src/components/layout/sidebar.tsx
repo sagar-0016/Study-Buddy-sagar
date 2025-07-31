@@ -11,7 +11,7 @@ import {
   CalendarClock,
   ClipboardList,
   Flame,
-  MessageSquareQuestion,
+  MessageSquareQuote,
   LifeBuoy,
 } from "lucide-react";
 
@@ -35,7 +35,7 @@ export const navLinks: NavLink[] = [
 
 const secondaryNavLinks: NavLink[] = [
     { href: "/tricky-topics", label: "Tricky Topics", icon: Flame },
-    { href: "/doubts", label: "Doubt Centre", icon: MessageSquareQuestion },
+    { href: "/doubts", label: "Doubt Centre", icon: MessageSquareQuote },
     { href: "/help", label: "Help", icon: LifeBuoy },
 ]
 
