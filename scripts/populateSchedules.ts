@@ -118,7 +118,15 @@ const lateNightMessages = {
     '12amto2am': "The world is quiet, but your ambition is loud. A little more effort now will make tomorrow's success even sweeter. You've got this!",
     '2amto5am': "The quietest hours are for the most dedicated minds. While others sleep, you're building your dream. Rest soon, champion.",
     '5amto6am': "The sun is almost up, and so are you. This dedication is what separates the good from the great. Finish strong and then greet the day!"
-}
+};
+
+const disciplineMessages = [
+    { text: "Before you change your path, ask yourself: Is this change a step forward or a step back from my ultimate goal?" },
+    { text: "Discipline is choosing between what you want now and what you want most. Are your edits aligned with what you want most?" },
+    { text: "A schedule is a map. Are you redrawing it to find a better route, or to avoid a difficult climb?" },
+    { text: "Reflect on why the original plan isn't working. Is the plan flawed, or is the execution faltering?" },
+    { text: "Consistency is the key that unlocks potential. How will this new schedule enhance your consistency?" },
+];
 
 
 // --- SCRIPT LOGIC ---
@@ -167,6 +175,13 @@ const main = async () => {
         await addDoc(collection(db, '2amto5am'), { message: lateNightMessages['2amto5am'] });
         await addDoc(collection(db, '5amto6am'), { message: lateNightMessages['5amto6am'] });
         console.log("✅ Successfully populated late night message collections!");
+
+        // 4. Discipline Messages
+        console.log("\nPopulating discipline messages...");
+        for (const msg of disciplineMessages) {
+            await addDoc(collection(db, 'discipline'), { text: msg.text });
+        }
+        console.log("✅ Successfully populated 'discipline' collection!");
 
 
         console.log("\nAll data populated successfully. You can now close this script (Ctrl+C).");

@@ -103,3 +103,24 @@ export const getLateNightMessage = async (collectionName: '12amto2am' | '2amto5a
         return "A quiet moment to reflect on your day's hard work. Rest is part of the process.";
     }
 }
+
+
+/**
+ * Fetches all messages from the 'discipline' collection.
+ * @returns {Promise<string[]>} An array of discipline messages.
+ */
+export const getDisciplineMessages = async (): Promise<string[]> => {
+    try {
+        const messagesRef = collection(db, 'discipline');
+        const querySnapshot = await getDocs(messagesRef);
+
+        if (querySnapshot.empty) {
+            return ["Before you change your path, reflect on your goal. Is this change necessary?"];
+        }
+
+        return querySnapshot.docs.map(doc => doc.data().text as string);
+    } catch (error) {
+        console.error("Error fetching discipline messages:", error);
+        return ["There was an error fetching reflection questions. Please proceed with intention."];
+    }
+};
