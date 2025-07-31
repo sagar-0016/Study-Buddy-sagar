@@ -41,7 +41,7 @@ export default function MotivationCorner() {
   };
 
   return (
-    <Card className="flex flex-col transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+    <Card className="flex flex-col transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg border-0">
       <CardHeader>
         <CardTitle>Motivation Corner</CardTitle>
         <CardDescription>A little boost from your study buddy.</CardDescription>
@@ -53,7 +53,7 @@ export default function MotivationCorner() {
             <Button
               key={mood.label}
               variant={selectedMood === mood.label ? "default" : "outline"}
-              className="flex flex-col h-16"
+              className={cn("flex flex-col h-16", selectedMood !== mood.label && "border-0")}
               onClick={() => setSelectedMood(mood.label)}
             >
               <span className="text-2xl">{mood.emoji}</span>

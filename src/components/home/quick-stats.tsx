@@ -32,7 +32,7 @@ export default function QuickStats() {
     }, []);
 
     return (
-        <Card className="transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+        <Card className="transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg border-0">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Quick Stats</CardTitle>
             </CardHeader>

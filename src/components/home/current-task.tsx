@@ -4,7 +4,7 @@ import { Bell, Clock } from "lucide-react";
 
 export default function CurrentTask() {
   return (
-    <Card className="transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+    <Card className="transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg border-0">
       <CardHeader>
         <CardTitle>Current Task</CardTitle>
         <CardDescription>What's next on your study plan.</CardDescription>
