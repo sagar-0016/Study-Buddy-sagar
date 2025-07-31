@@ -4,12 +4,12 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Clock, HelpCircle, Moon } from "lucide-react";
+import { Clock, HelpCircle, Moon, Sparkles } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
 import { getDayType, setDayType, getSchedule, getLateNightMessage } from '@/lib/schedule';
 import type { Schedule, ScheduleTask, DayType } from '@/lib/types';
 
-const TaskItem = ({ task, isActive, isUpcoming = false, isLaterUpcoming = false }: { task: ScheduleTask, isActive: boolean, isUpcoming?: boolean, isLaterUpcoming?: boolean }) => {
+const TaskItem = ({ task, isActive, isUpcoming = false }: { task: ScheduleTask, isActive: boolean, isUpcoming?: boolean }) => {
     const getVariantClasses = () => {
         if (isActive) return 'bg-primary/10 ring-2 ring-primary';
         if (isUpcoming) return 'bg-accent/10 ring-2 ring-accent';
@@ -18,7 +18,6 @@ const TaskItem = ({ task, isActive, isUpcoming = false, isLaterUpcoming = false 
     const getTextClasses = () => {
         if (isActive) return 'text-primary';
         if (isUpcoming) return 'text-accent';
-        if (isLaterUpcoming) return 'text-foreground/80';
         return 'text-muted-foreground';
     }
     return (
@@ -31,28 +30,6 @@ const TaskItem = ({ task, isActive, isUpcoming = false, isLaterUpcoming = false 
         </div>
     )
 }
-
-const LateNightMessage = ({ message, firstTask }: { message: string, firstTask: ScheduleTask | null }) => (
-    <div className="space-y-6">
-        <div>
-            <h4 className="text-sm font-semibold text-accent mb-2 flex items-center">
-                <Moon className="h-4 w-4 mr-2" />
-                Upcoming Task
-            </h4>
-            <div className="p-4 rounded-lg bg-accent/10 ring-2 ring-accent">
-                 <h3 className="text-lg font-bold mt-2 text-accent-foreground">{message}</h3>
-                 <p className="text-sm text-muted-foreground mt-1">It's late, time for some rest soon.</p>
-            </div>
-        </div>
-
-        {firstTask && (
-             <div>
-                <h4 className="text-sm font-semibold text-muted-foreground mb-2">Later Upcoming...</h4>
-                <TaskItem task={firstTask} isActive={false} isLaterUpcoming={true} />
-            </div>
-        )}
-    </div>
-)
 
 const DayTypeSelector = ({ onSelect }: { onSelect: (type: DayType) => void }) => (
     <div className="flex flex-col items-center justify-center p-6 bg-muted/30 rounded-lg text-center">
@@ -174,7 +151,23 @@ export default function CurrentTask() {
     
     if (lateNightMessage) {
         const firstTask = schedule.tasks.length > 0 ? schedule.tasks[0] : null;
-        return <LateNightMessage message={lateNightMessage} firstTask={firstTask} />
+        return (
+            <div className="space-y-6">
+                <div className="p-4 bg-accent/10 rounded-lg text-accent-foreground border-l-4 border-accent">
+                    <div className="flex items-start">
+                        <Moon className="h-5 w-5 mr-3 mt-1 text-accent flex-shrink-0" />
+                        <p className="italic">"{lateNightMessage}"</p>
+                    </div>
+                </div>
+
+                {firstTask && (
+                     <div>
+                        <h4 className="text-sm font-semibold text-accent mb-2">Upcoming...</h4>
+                        <TaskItem task={firstTask} isActive={false} isUpcoming={true} />
+                    </div>
+                )}
+            </div>
+        )
     }
     
     const activeTaskIndex = getActiveTaskIndex();
