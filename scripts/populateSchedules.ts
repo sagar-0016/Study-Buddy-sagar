@@ -4,7 +4,7 @@
 // 2. Run from the root of your project: ts-node ./scripts/populateSchedules.ts
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, writeBatch } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, writeBatch, addDoc, collection } from 'firebase/firestore';
 
 // IMPORTANT: Paste your Firebase config here
 const firebaseConfig = {
@@ -114,6 +114,12 @@ const coaching_schedule_formal = [
     "23:30: End of day – Good night!",
 ];
 
+const lateNightMessages = {
+    '12amto2am': "The world is quiet, but your ambition is loud. A little more effort now will make tomorrow's success even sweeter. You've got this!",
+    '2amto5am': "The quietest hours are for the most dedicated minds. While others sleep, you're building your dream. Rest soon, champion.",
+    '5amto6am': "The sun is almost up, and so are you. This dedication is what separates the good from the great. Finish strong and then greet the day!"
+}
+
 
 // --- SCRIPT LOGIC ---
 
@@ -154,7 +160,16 @@ const main = async () => {
         await batch.commit();
         
         console.log("\n✅ Successfully populated 'schedules' collection in Firestore!");
-        console.log("You can now close this script (Ctrl+C).");
+
+        // 3. Late Night Messages
+        console.log("\nPopulating late night messages...");
+        await addDoc(collection(db, '12amto2am'), { message: lateNightMessages['12amto2am'] });
+        await addDoc(collection(db, '2amto5am'), { message: lateNightMessages['2amto5am'] });
+        await addDoc(collection(db, '5amto6am'), { message: lateNightMessages['5amto6am'] });
+        console.log("✅ Successfully populated late night message collections!");
+
+
+        console.log("\nAll data populated successfully. You can now close this script (Ctrl+C).");
 
     } catch (error) {
         console.error("\n❌ Error populating Firestore:", error);
