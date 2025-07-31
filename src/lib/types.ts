@@ -1,3 +1,4 @@
+
 export type NavLink = {
   href: string;
   label: string;
@@ -28,3 +29,15 @@ export type BarChartData = {
   subject: string;
   score: number;
 }[];
+
+export type ScheduleTask = {
+  time: string;
+  task: string;
+};
+
+export type Schedule = {
+  type: 'holiday' | 'coaching';
+  tasks: ScheduleTask[];
+};
+
+export type DayType = 'holiday' | 'coaching';

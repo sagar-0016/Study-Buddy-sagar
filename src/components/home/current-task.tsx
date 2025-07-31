@@ -3,102 +3,142 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Clock } from "lucide-react";
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy, Timestamp } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
+import { Clock, Loader2, HelpCircle } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
+import { getDayType, setDayType, getSchedule } from '@/lib/schedule';
+import type { Schedule, ScheduleTask } from '@/lib/types';
 
-type Task = {
-  id: string;
-  taskName: string;
-  subject: string;
-  startTime: Timestamp;
-  endTime: Timestamp;
-};
-
-const TaskItem = ({ task }: { task: Task }) => {
-    const formatTime = (date: Date) => {
-        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    }
-
+const TaskItem = ({ task, isActive }: { task: ScheduleTask, isActive: boolean }) => {
     return (
-        <div className="p-4 bg-primary/5 rounded-lg">
-            <div className="flex items-center text-primary font-semibold">
+        <div className={`p-4 rounded-lg transition-all duration-300 ${isActive ? 'bg-primary/10 ring-2 ring-primary' : 'bg-muted/50'}`}>
+            <div className={`flex items-center font-semibold ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
                 <Clock className="h-5 w-5 mr-2" />
-                <p>{formatTime(task.startTime.toDate())} - {formatTime(task.endTime.toDate())}</p>
+                <p>{task.time}</p>
             </div>
-            <h3 className="text-xl font-bold mt-2">{task.taskName}</h3>
-            <p className="text-sm text-muted-foreground">{task.subject}</p>
+            <h3 className="text-lg font-bold mt-2">{task.task}</h3>
         </div>
     )
 }
 
+const DayTypeSelector = ({ onSelect }: { onSelect: (type: 'coaching' | 'holiday') => void }) => (
+    <div className="flex flex-col items-center justify-center p-6 bg-muted/30 rounded-lg text-center">
+        <HelpCircle className="h-10 w-10 text-primary mb-4" />
+        <h3 className="text-lg font-semibold mb-2">What's the plan for today?</h3>
+        <p className="text-muted-foreground mb-4">Let me know if it's a coaching day or a holiday to pull up the right schedule.</p>
+        <div className="flex gap-4">
+            <Button onClick={() => onSelect('coaching')} size="lg">Coaching Day</Button>
+            <Button onClick={() => onSelect('holiday')} variant="outline" size="lg">Holiday</Button>
+        </div>
+    </div>
+)
+
 export default function CurrentTask() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [dayType, setDayTypeState] = useState<'coaching' | 'holiday' | null>(null);
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const fetchDayTypeAndSchedule = async () => {
       try {
+        setIsLoading(true);
         setError(null);
-        const today = new Date();
-        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(today.setHours(23, 59, 59, 999));
-
-        const q = query(
-          collection(db, "schedule"),
-          where("startTime", ">=", startOfDay),
-          where("startTime", "<=", endOfDay),
-          orderBy("startTime")
-        );
-
-        const querySnapshot = await getDocs(q);
-        const tasksData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Task));
-        setTasks(tasksData);
+        const type = await getDayType();
+        setDayTypeState(type);
+        if (type) {
+          const scheduleData = await getSchedule(type);
+          setSchedule(scheduleData);
+        }
       } catch (err) {
-        console.error("Error fetching schedule:", err);
-        setError("Could not load schedule. Make sure you've added tasks for today in the 'schedule' collection in Firestore.");
+        console.error("Error fetching schedule info:", err);
+        setError("Could not load schedule information.");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTasks();
+    fetchDayTypeAndSchedule();
   }, []);
 
-  const now = new Date();
-  const upcomingTasks = tasks.filter(task => task.startTime.toDate() > now);
-  const currentOrPastTasks = tasks.filter(task => task.startTime.toDate() <= now);
+  const handleDayTypeSelect = async (type: 'coaching' | 'holiday') => {
+    setIsLoading(true);
+    try {
+        await setDayType(type);
+        setDayTypeState(type);
+        const scheduleData = await getSchedule(type);
+        setSchedule(scheduleData);
+    } catch(err) {
+        console.error("Error setting day type:", err);
+        setError("Could not save your choice. Please try again.");
+    } finally {
+        setIsLoading(false);
+    }
+  }
+
+  const getActiveTaskIndex = () => {
+    if (!schedule) return -1;
+    const now = currentTime;
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    let activeIndex = -1;
+    for (let i = schedule.tasks.length - 1; i >= 0; i--) {
+      const taskTime = schedule.tasks[i].time.split(':');
+      const taskMinutes = parseInt(taskTime[0]) * 60 + parseInt(taskTime[1]);
+      if (currentMinutes >= taskMinutes) {
+        activeIndex = i;
+        break;
+      }
+    }
+    return activeIndex;
+  }
+
+  const activeTaskIndex = getActiveTaskIndex();
+
+  const renderContent = () => {
+    if (isLoading) {
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+            </div>
+        )
+    }
+    if (error) {
+        return <p className="text-destructive text-center">{error}</p>;
+    }
+    if (!dayType) {
+        return <DayTypeSelector onSelect={handleDayTypeSelect} />;
+    }
+    if (!schedule || schedule.tasks.length === 0) {
+        return <p className="text-muted-foreground text-center">No tasks found for a {dayType} schedule.</p>;
+    }
+
+    return (
+        <div className="space-y-4">
+            {schedule.tasks.map((task, index) => (
+                <TaskItem key={index} task={task} isActive={index === activeTaskIndex} />
+            ))}
+        </div>
+    )
+  }
 
   return (
     <Card className="transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg border-0">
       <CardHeader>
-        <CardTitle>Today's Schedule</CardTitle>
+        <CardTitle>
+            {dayType ? `Today's Schedule (${dayType.charAt(0).toUpperCase() + dayType.slice(1)})` : "Today's Schedule"}
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {isLoading && (
-            <>
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
-            </>
-        )}
-        {error && <p className="text-destructive">{error}</p>}
-        {!isLoading && !error && tasks.length === 0 && (
-            <p className="text-muted-foreground">No tasks scheduled for today. Add some in the planner!</p>
-        )}
-        
-        {currentOrPastTasks.map(task => <TaskItem key={task.id} task={task} />)}
-
-        {currentOrPastTasks.length > 0 && upcomingTasks.length > 0 && (
-           <p className="text-muted-foreground font-semibold px-1 pt-2">Upcoming...</p>
-        )}
-        
-        {upcomingTasks.map(task => <TaskItem key={task.id} task={task} />)}
-        
+      <CardContent>
+        {renderContent()}
       </CardContent>
     </Card>
   );
