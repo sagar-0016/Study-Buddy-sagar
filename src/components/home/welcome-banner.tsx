@@ -1,8 +1,9 @@
+import { Radius } from "lucide-react";
 import Image from "next/image";
 
 export default function WelcomeBanner() {
   return (
-    <div className="relative overflow-hidden rounded-lg bg-card text-card-foreground shadow-sm transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+    <div className="relative rounded-lg bg-card text-card-foreground shadow-sm transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
       <div className="grid md:grid-cols-2 items-center">
         <div className="p-8 md:p-12 z-10">
           <h2 className="text-3xl lg:text-4xl font-bold text-primary">Conquer JEE, Pranjal!</h2>
@@ -16,7 +17,7 @@ export default function WelcomeBanner() {
               alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
               fill
-              className="object-cover rounded-r-lg"
+              className="object-cover rounded-r-lg md:rounded-l-none rounded-l-lg"
             />
         </div>
       </div>
