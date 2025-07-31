@@ -1,26 +1,42 @@
-import type { Metadata } from "next";
+
+"use client";
+
+import { useEffect } from 'react';
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
-
-export const metadata: Metadata = {
-  title: {
-    template: "%s | JEE PrepTrack",
-    default: "JEE PrepTrack",
-  },
-  description: "Your personalized companion for JEE preparation.",
-  icons: [{ rel: "icon", url: "/icon.svg" }],
-};
+import { db } from '@/lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  useEffect(() => {
+    const logAppOpen = async () => {
+      try {
+        await addDoc(collection(db, "opened"), {
+          time: new Date(),
+        });
+        console.log("App open event logged to Firestore.");
+      } catch (error) {
+        console.error("Error logging app open event: ", error);
+      }
+    };
+
+    logAppOpen();
+  }, []);
+
+
   return (
     <html lang="en">
       <head>
+        <title>JEE PrepTrack</title>
+        <meta name="description" content="Your personalized companion for JEE preparation." />
+        <link rel="icon" href="/icon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
