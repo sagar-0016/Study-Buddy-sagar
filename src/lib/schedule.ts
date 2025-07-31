@@ -124,3 +124,36 @@ export const getDisciplineMessages = async (): Promise<string[]> => {
         return ["There was an error fetching reflection questions. Please proceed with intention."];
     }
 };
+
+
+/**
+ * Gets the current state of the discipline check toggle.
+ * @returns {Promise<boolean>} True if the check is enabled, false otherwise.
+ */
+export const getDisciplineCheck = async (): Promise<boolean> => {
+    try {
+        const settingDocRef = doc(db, 'app_settings', 'discipline_check');
+        const docSnap = await getDoc(settingDocRef);
+        if (docSnap.exists()) {
+            return docSnap.data().enabled;
+        }
+        // Default to true if the setting doesn't exist yet
+        return true; 
+    } catch (error) {
+        console.error("Error fetching discipline check setting:", error);
+        return true;
+    }
+};
+
+/**
+ * Sets the state of the discipline check toggle.
+ * @param {boolean} enabled - The new state for the toggle.
+ */
+export const setDisciplineCheck = async (enabled: boolean): Promise<void> => {
+    try {
+        const settingDocRef = doc(db, 'app_settings', 'discipline_check');
+        await setDoc(settingDocRef, { enabled });
+    } catch (error) {
+        console.error("Error setting discipline check:", error);
+    }
+};

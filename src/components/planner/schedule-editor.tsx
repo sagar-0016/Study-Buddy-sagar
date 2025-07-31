@@ -22,8 +22,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { ScheduleTask, DayType } from "@/lib/types";
 import { Pencil, Loader2, PlusCircle, Lock, Unlock, MessageSquareHeart } from "lucide-react";
-import { getDisciplineMessages } from "@/lib/schedule";
+import { getDisciplineMessages, getDisciplineCheck, setDisciplineCheck } from "@/lib/schedule";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 
 type ScheduleDocument = {
   type: DayType;
@@ -46,6 +47,7 @@ const ScheduleList = ({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDisciplineDialogOpen, setIsDisciplineDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showDisciplineCheck, setShowDisciplineCheck] = useState(true);
   
   // Data State
   const [selectedTask, setSelectedTask] = useState<{ index: number; value: string; originalTime: string } | null>(null);
@@ -55,6 +57,14 @@ const ScheduleList = ({
   const [newTask, setNewTask] = useState("");
   const [disciplineMessages, setDisciplineMessages] = useState<string[]>([]);
   const { toast } = useToast();
+  
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const check = await getDisciplineCheck();
+      setShowDisciplineCheck(check);
+    };
+    fetchSettings();
+  }, []);
 
   if (!schedule) {
     return (
@@ -67,9 +77,13 @@ const ScheduleList = ({
   }
 
   const handleEnableEditing = async () => {
-    const messages = await getDisciplineMessages();
-    setDisciplineMessages(messages);
-    setIsDisciplineDialogOpen(true);
+    if (showDisciplineCheck) {
+      const messages = await getDisciplineMessages();
+      setDisciplineMessages(messages);
+      setIsDisciplineDialogOpen(true);
+    } else {
+      setIsEditMode(true);
+    }
   };
 
   const handleEnterEditMode = () => {
@@ -170,6 +184,15 @@ const ScheduleList = ({
         setIsSaving(false);
     }
   }
+  
+  const handleToggleDisciplineCheck = async (checked: boolean) => {
+    setShowDisciplineCheck(checked);
+    await setDisciplineCheck(checked);
+    toast({
+      title: "Settings updated",
+      description: `Discipline check is now ${checked ? 'ON' : 'OFF'}.`,
+    });
+  }
 
   return (
     <div>
@@ -186,22 +209,35 @@ const ScheduleList = ({
         ))}
       </ul>
       
-      <div className="flex justify-end gap-2 mt-6">
-        {isEditMode ? (
-            <>
-                <Button onClick={handleAddClick} variant="outline">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add New Task
+      <Separator className="my-6" />
+
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="flex items-center space-x-2">
+          <Switch 
+            id="discipline-check" 
+            checked={showDisciplineCheck}
+            onCheckedChange={handleToggleDisciplineCheck}
+          />
+          <Label htmlFor="discipline-check">Enable Discipline Check</Label>
+        </div>
+        <div className="flex justify-end gap-2">
+            {isEditMode ? (
+                <>
+                    <Button onClick={handleAddClick} variant="outline">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add New Task
+                    </Button>
+                    <Button onClick={handleDisableEditing}>
+                        <Lock className="mr-2 h-4 w-4" /> Finish Editing
+                    </Button>
+                </>
+            ) : (
+                <Button onClick={handleEnableEditing}>
+                    <Unlock className="mr-2 h-4 w-4" /> Enable Editing
                 </Button>
-                <Button onClick={handleDisableEditing}>
-                    <Lock className="mr-2 h-4 w-4" /> Finish Editing
-                </Button>
-            </>
-        ) : (
-            <Button onClick={handleEnableEditing}>
-                <Unlock className="mr-2 h-4 w-4" /> Enable Editing
-            </Button>
-        )}
+            )}
+        </div>
       </div>
+
 
       {/* Discipline Dialog */}
        <Dialog open={isDisciplineDialogOpen} onOpenChange={setIsDisciplineDialogOpen}>
@@ -372,5 +408,3 @@ export default function ScheduleEditor() {
     </Card>
   );
 }
-
-    
