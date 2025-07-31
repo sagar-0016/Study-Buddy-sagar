@@ -125,35 +125,21 @@ export const getDisciplineMessages = async (): Promise<string[]> => {
     }
 };
 
-
 /**
- * Gets the current state of the discipline check toggle.
- * @returns {Promise<boolean>} True if the check is enabled, false otherwise.
+ * Checks if the developer has enabled direct edit mode.
+ * @returns {Promise<boolean>} True if direct editing is enabled, false otherwise.
  */
-export const getDisciplineCheck = async (): Promise<boolean> => {
+export const isDirectEditModeEnabled = async (): Promise<boolean> => {
     try {
-        const settingDocRef = doc(db, 'app_settings', 'discipline_check');
+        const settingDocRef = doc(db, 'settings', 'edit_mode');
         const docSnap = await getDoc(settingDocRef);
-        if (docSnap.exists()) {
-            return docSnap.data().enabled;
+        if (docSnap.exists() && docSnap.data().directEditEnabled === true) {
+            return true;
         }
-        // Default to true if the setting doesn't exist yet
-        return true; 
+        return false; 
     } catch (error) {
-        console.error("Error fetching discipline check setting:", error);
-        return true;
-    }
-};
-
-/**
- * Sets the state of the discipline check toggle.
- * @param {boolean} enabled - The new state for the toggle.
- */
-export const setDisciplineCheck = async (enabled: boolean): Promise<void> => {
-    try {
-        const settingDocRef = doc(db, 'app_settings', 'discipline_check');
-        await setDoc(settingDocRef, { enabled });
-    } catch (error) {
-        console.error("Error setting discipline check:", error);
+        console.error("Error fetching direct edit mode setting:", error);
+        // Default to safer option (showing dialog) if there's an error.
+        return false;
     }
 };
