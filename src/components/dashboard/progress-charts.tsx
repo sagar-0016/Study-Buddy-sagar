@@ -8,8 +8,8 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, ResponsiveContainer, RadialBarChart, RadialBar } from "recharts";
-import { progressChartData, quizScoresData, completionData } from "@/lib/data";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadialBarChart, RadialBar } from "recharts";
+import { progressChartData, completionData } from "@/lib/data";
 import type { ChartConfig } from "@/components/ui/chart"
 
 const lineChartConfig = {
@@ -17,13 +17,6 @@ const lineChartConfig = {
     label: "Topics Completed",
     color: "hsl(var(--chart-1))",
   },
-} satisfies ChartConfig;
-
-const barChartConfig = {
-    score: {
-        label: "Score",
-        color: "hsl(var(--chart-2))",
-    }
 } satisfies ChartConfig;
 
 const radialChartConfig = {
@@ -41,7 +34,7 @@ const radialChartConfig = {
 export default function ProgressCharts() {
   return (
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-      <Card>
+      <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Progress Over Time</CardTitle>
           <CardDescription>Number of syllabus topics completed each month.</CardDescription>
@@ -69,31 +62,13 @@ export default function ProgressCharts() {
           </ChartContainer>
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Quiz Scores</CardTitle>
-          <CardDescription>Average scores by subject.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={barChartConfig} className="h-[250px] w-full">
-            <BarChart data={quizScoresData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="subject" />
-              <YAxis domain={[0, 100]} />
-              <Tooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="score" fill="var(--color-score)" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
       
-      <Card className="lg:col-span-2">
+      <Card className="lg:col-span-1">
         <CardHeader>
           <CardTitle>Syllabus Completion</CardTitle>
           <CardDescription>Breakdown of your progress in each subject.</CardDescription>
         </CardHeader>
-        <CardContent className="h-[300px]">
+        <CardContent className="h-[250px]">
             <ChartContainer config={radialChartConfig} className="w-full h-full">
                 <ResponsiveContainer width="100%" height="100%">
                 <RadialBarChart 
@@ -106,7 +81,7 @@ export default function ProgressCharts() {
                     <RadialBar minAngle={15} label={{ position: 'insideStart', fill: '#fff' }} background clockWise dataKey='value' />
                     <ChartLegend
                         content={<ChartLegendContent nameKey="subject" />}
-                        className="-mt-4"
+                        className="!mt-2"
                     />
                     <Tooltip content={<ChartTooltipContent nameKey="subject" />} />
                 </RadialBarChart>

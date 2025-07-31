@@ -1,4 +1,6 @@
 
+import { DocumentData, Timestamp } from 'firebase/firestore';
+
 export type NavLink = {
   href: string;
   label: string;
@@ -43,3 +45,16 @@ export type Schedule = {
 export type DayType = 'holiday' | 'coaching';
 
 export type LateNightMessageCollection = '12amto2am' | '2amto5am' | '5amto6am';
+
+export interface Question extends DocumentData {
+  id: string;
+  questionText: string;
+  questionImageURL?: string;
+  answerType: 'options' | 'text';
+  options?: string[];
+  correctAnswer: string;
+  isAttempted: boolean;
+  subject: string;
+  userAnswer?: string;
+  isCorrect?: boolean;
+}
