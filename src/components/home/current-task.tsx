@@ -15,6 +15,9 @@ export default function CurrentTask() {
           </div>
           <h3 className="text-xl font-bold mt-2">Physics: Rotational Motion</h3>
         </div>
+        
+        <p className="text-muted-foreground font-semibold px-1 pt-2">Upcoming...</p>
+
         <div className="p-4 bg-primary/5 rounded-lg">
           <div className="flex items-center text-primary font-semibold">
             <Clock className="h-5 w-5 mr-2" />
