@@ -11,7 +11,7 @@ export default function WelcomeBanner() {
             Your journey to IIT Delhi starts now. Seize the day!
           </p>
         </div>
-        <div className="relative aspect-video group">
+        <div className="relative h-60 md:h-full group">
            <Image
               src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
               alt="IIT Delhi Emblem in a serene landscape"
