@@ -17,7 +17,7 @@ export default function WelcomeBanner() {
               alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
               fill
-              className="object-contain rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105 group-hover:-translate-y-1"
+              className="object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105 group-hover:-translate-y-1"
             />
         </div>
       </div>
