@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { ScheduleTask, DayType } from "@/lib/types";
-import { Pencil, Loader2 } from "lucide-react";
+import { Pencil, Loader2, PlusCircle } from "lucide-react";
 
 type ScheduleDocument = {
   type: DayType;
@@ -39,10 +39,16 @@ const ScheduleList = ({
   onUpdate: (updatedSchedule: ScheduleDocument) => void;
 }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<{ index: number; value: string } | null>(null);
+  const [selectedTask, setSelectedTask] = useState<{ index: number; value: string; originalTime: string } | null>(null);
+
   const [editedTime, setEditedTime] = useState("");
   const [editedTask, setEditedTask] = useState("");
+
+  const [newTime, setNewTime] = useState("");
+  const [newTask, setNewTask] = useState("");
+
   const { toast } = useToast();
 
   if (!schedule) {
@@ -61,10 +67,16 @@ const ScheduleList = ({
     const time = timeMatch ? timeMatch[1] : "";
     const task = timeMatch ? taskString.replace(timeMatch[0], "") : taskString;
 
-    setSelectedTask({ index, value: taskString });
+    setSelectedTask({ index, value: taskString, originalTime: time });
     setEditedTime(time);
     setEditedTask(task);
     setIsEditDialogOpen(true);
+  };
+
+  const handleAddClick = () => {
+    setNewTime("");
+    setNewTask("");
+    setIsAddDialogOpen(true);
   };
 
   const handleSaveChanges = async () => {
@@ -74,16 +86,18 @@ const ScheduleList = ({
     try {
       const updatedFormalTasks = [...schedule.formalTasks];
       updatedFormalTasks[selectedTask.index] = `${editedTime}: ${editedTask}`;
-      
+      updatedFormalTasks.sort();
+
       const updatedTasks = [...schedule.tasks];
-      const informalTaskToUpdate = updatedTasks.find(t => t.time === selectedTask.value.split(':')[0]);
+      const informalTaskToUpdate = updatedTasks.find(t => t.time === selectedTask.originalTime);
 
       if (informalTaskToUpdate) {
         informalTaskToUpdate.time = editedTime;
+        informalTaskToUpdate.task = `${editedTask} (Edited)`; // A simple way to sync, could be improved.
       }
       updatedTasks.sort((a, b) => a.time.localeCompare(b.time));
 
-      const updatedSchedule = {
+      const updatedScheduleData = {
         ...schedule,
         formalTasks: updatedFormalTasks,
         tasks: updatedTasks,
@@ -91,11 +105,11 @@ const ScheduleList = ({
 
       const scheduleDocRef = doc(db, "schedules", type);
       await updateDoc(scheduleDocRef, {
-        formalTasks: updatedSchedule.formalTasks,
-        tasks: updatedSchedule.tasks,
+        formalTasks: updatedScheduleData.formalTasks,
+        tasks: updatedScheduleData.tasks,
       });
 
-      onUpdate(updatedSchedule);
+      onUpdate(updatedScheduleData);
       toast({
         title: "Success!",
         description: "Your schedule has been updated.",
@@ -113,8 +127,58 @@ const ScheduleList = ({
     }
   };
 
+  const handleAddNewTask = async () => {
+    if (!newTime || !newTask || !schedule) return;
+
+    setIsSaving(true);
+    try {
+        const newFormalTask = `${newTime}: ${newTask}`;
+        const updatedFormalTasks = [...schedule.formalTasks, newFormalTask];
+        updatedFormalTasks.sort();
+
+        const newInformalTask: ScheduleTask = { time: newTime, task: newTask };
+        const updatedTasks = [...schedule.tasks, newInformalTask];
+        updatedTasks.sort((a, b) => a.time.localeCompare(b.time));
+        
+        const updatedScheduleData = {
+            ...schedule,
+            formalTasks: updatedFormalTasks,
+            tasks: updatedTasks,
+        };
+
+        const scheduleDocRef = doc(db, "schedules", type);
+        await updateDoc(scheduleDocRef, {
+            formalTasks: updatedScheduleData.formalTasks,
+            tasks: updatedScheduleData.tasks,
+        });
+
+        onUpdate(updatedScheduleData);
+        toast({
+            title: "Task Added!",
+            description: "The new task has been added to your schedule.",
+        });
+        setIsAddDialogOpen(false);
+
+    } catch(error) {
+        console.error("Error adding task:", error);
+        toast({
+            title: "Error",
+            description: "Could not add the task. Please try again.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsSaving(false);
+    }
+  }
+
   return (
     <div>
+        <div className="flex justify-end mb-4">
+            <Button onClick={handleAddClick}>
+                <PlusCircle className="mr-2" />
+                Add New Task
+            </Button>
+        </div>
       <ul className="space-y-2">
         {schedule.formalTasks.map((task, index) => (
           <li
@@ -129,6 +193,7 @@ const ScheduleList = ({
         ))}
       </ul>
 
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -169,6 +234,49 @@ const ScheduleList = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Add Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Task</DialogTitle>
+            <DialogDescription>
+              Enter the details for the new task. It will be automatically sorted by time.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-time" className="text-right">Time</Label>
+              <Input
+                id="new-time"
+                value={newTime}
+                onChange={(e) => setNewTime(e.target.value)}
+                className="col-span-3"
+                type="time"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="new-task" className="text-right">Task</Label>
+              <Input
+                id="new-task"
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                className="col-span-3"
+                placeholder="E.g., Review Physics Notes"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleAddNewTask} disabled={isSaving}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Add Task
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -193,10 +301,14 @@ export default function ScheduleEditor() {
         ]);
 
         if (holidaySnap.exists()) {
-          setHolidaySchedule(holidaySnap.data() as ScheduleDocument);
+          const data = holidaySnap.data() as ScheduleDocument;
+          data.formalTasks.sort();
+          setHolidaySchedule(data);
         }
         if (coachingSnap.exists()) {
-          setCoachingSchedule(coachingSnap.data() as ScheduleDocument);
+          const data = coachingSnap.data() as ScheduleDocument;
+          data.formalTasks.sort();
+          setCoachingSchedule(data);
         }
       } catch (error) {
         console.error("Failed to fetch schedules:", error);
