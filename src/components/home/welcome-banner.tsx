@@ -11,13 +11,13 @@ export default function WelcomeBanner() {
             Your journey to IIT Delhi starts now. Seize the day!
           </p>
         </div>
-                <div className="relative min-h-[15rem] h-60 md:h-full group">
+        <div className="relative aspect-video group">
            <Image
               src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
               alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
               fill
-              className="object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105 group-hover:-translate-y-1"
+              className="object-contain rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105 group-hover:-translate-y-1"
             />
         </div>
       </div>
