@@ -41,7 +41,7 @@ export default function MotivationCorner() {
   };
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
       <CardHeader>
         <CardTitle>Motivation Corner</CardTitle>
         <CardDescription>A little boost from your study buddy.</CardDescription>
