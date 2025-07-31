@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Clock, HelpCircle, Moon, Sparkles } from "lucide-react";
+import { Clock, HelpCircle, Moon } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
 import { getDayType, setDayType, getSchedule, getLateNightMessage } from '@/lib/schedule';
 import type { Schedule, ScheduleTask, DayType } from '@/lib/types';
@@ -151,9 +151,10 @@ export default function CurrentTask() {
     
     if (lateNightMessage) {
         const firstTask = schedule.tasks.length > 0 ? schedule.tasks[0] : null;
+        const secondTask = schedule.tasks.length > 1 ? schedule.tasks[1] : null;
         return (
             <div className="space-y-6">
-                <div className="p-4 bg-accent/10 rounded-lg text-accent-foreground border-l-4 border-accent">
+                <div className="p-4 bg-accent/10 rounded-lg text-foreground border-l-4 border-accent">
                     <div className="flex items-start">
                         <Moon className="h-5 w-5 mr-3 mt-1 text-accent flex-shrink-0" />
                         <p className="italic">"{lateNightMessage}"</p>
@@ -164,6 +165,12 @@ export default function CurrentTask() {
                      <div>
                         <h4 className="text-sm font-semibold text-accent mb-2">Upcoming...</h4>
                         <TaskItem task={firstTask} isActive={false} isUpcoming={true} />
+                    </div>
+                )}
+                {secondTask && (
+                     <div>
+                        <h4 className="text-sm font-semibold text-muted-foreground mb-2">Later upcoming...</h4>
+                        <TaskItem task={secondTask} isActive={false} isUpcoming={false} />
                     </div>
                 )}
             </div>
