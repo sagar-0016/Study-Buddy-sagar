@@ -9,14 +9,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getDayType, setDayType, getSchedule } from '@/lib/schedule';
 import type { Schedule, ScheduleTask } from '@/lib/types';
 
-const TaskItem = ({ task, isActive }: { task: ScheduleTask, isActive: boolean }) => {
+const TaskItem = ({ task, isActive, isUpcoming = false }: { task: ScheduleTask, isActive: boolean, isUpcoming?: boolean }) => {
     return (
         <div className={`p-4 rounded-lg transition-all duration-300 ${isActive ? 'bg-primary/10 ring-2 ring-primary' : 'bg-muted/50'}`}>
-            <div className={`flex items-center font-semibold ${isActive ? 'text-primary' : 'text-muted-foreground'}`}>
+            <div className={`flex items-center font-semibold ${isActive ? 'text-primary' : isUpcoming ? 'text-accent' : 'text-muted-foreground'}`}>
                 <Clock className="h-5 w-5 mr-2" />
                 <p>{task.time}</p>
             </div>
-            <h3 className="text-lg font-bold mt-2">{task.task}</h3>
+            <h3 className={`text-lg font-bold mt-2 ${!isActive && 'text-foreground/80'}`}>{task.task}</h3>
         </div>
     )
 }
@@ -88,6 +88,7 @@ export default function CurrentTask() {
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     
     let activeIndex = -1;
+    // Find the last task that has started
     for (let i = schedule.tasks.length - 1; i >= 0; i--) {
       const taskTime = schedule.tasks[i].time.split(':');
       const taskMinutes = parseInt(taskTime[0]) * 60 + parseInt(taskTime[1]);
@@ -96,6 +97,11 @@ export default function CurrentTask() {
         break;
       }
     }
+     // If no task has started yet, default to the first task.
+    if (activeIndex === -1 && schedule.tasks.length > 0) {
+        return 0;
+    }
+
     return activeIndex;
   }
 
@@ -105,7 +111,6 @@ export default function CurrentTask() {
     if (isLoading) {
         return (
             <div className="space-y-4">
-                <Skeleton className="h-24 w-full" />
                 <Skeleton className="h-24 w-full" />
                 <Skeleton className="h-24 w-full" />
             </div>
@@ -120,12 +125,30 @@ export default function CurrentTask() {
     if (!schedule || schedule.tasks.length === 0) {
         return <p className="text-muted-foreground text-center">No tasks found for a {dayType} schedule.</p>;
     }
+    if(activeTaskIndex === -1){
+        return <p className="text-muted-foreground text-center">No tasks scheduled for today.</p>;
+    }
+
+    const currentTask = schedule.tasks[activeTaskIndex];
+    const nextTask = activeTaskIndex + 1 < schedule.tasks.length ? schedule.tasks[activeTaskIndex + 1] : null;
 
     return (
-        <div className="space-y-4">
-            {schedule.tasks.map((task, index) => (
-                <TaskItem key={index} task={task} isActive={index === activeTaskIndex} />
-            ))}
+        <div className="space-y-6">
+            <div>
+                <h4 className="text-sm font-semibold text-primary mb-2">Current Task</h4>
+                <TaskItem task={currentTask} isActive={true} />
+            </div>
+
+            {nextTask && (
+                 <div>
+                    <h4 className="text-sm font-semibold text-accent mb-2">Upcoming...</h4>
+                    <TaskItem task={nextTask} isActive={false} isUpcoming={true} />
+                </div>
+            )}
+            
+            {!nextTask && (
+                <p className="text-center text-muted-foreground pt-4">This is the last task for today. Well done!</p>
+            )}
         </div>
     )
   }
@@ -134,7 +157,7 @@ export default function CurrentTask() {
     <Card className="transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg border-0">
       <CardHeader>
         <CardTitle>
-            {dayType ? `Today's Schedule (${dayType.charAt(0).toUpperCase() + dayType.slice(1)})` : "Today's Schedule"}
+            {dayType ? `Today's Focus (${dayType.charAt(0).toUpperCase() + dayType.slice(1)})` : "Today's Focus"}
         </CardTitle>
       </CardHeader>
       <CardContent>
