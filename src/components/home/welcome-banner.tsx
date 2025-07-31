@@ -12,11 +12,11 @@ export default function WelcomeBanner() {
         </div>
         <div className="relative h-48 md:h-full">
            <Image
-              src="https://placehold.co/600x400.png"
-              alt="Person studying"
-              data-ai-hint="person studying"
+              src="https://storage.googleapis.com/aifirebase-765ca.appspot.com/users%2F1jHlQh3nLIW7q4wE42Y4Fz24pTj1%2Fprojects%2Fc0689b70-76af-42e5-a63c-383796d11f97%2Fiit-delhi-logo.png"
+              alt="IIT Delhi logo"
+              data-ai-hint="logo university"
               fill
-              className="object-cover"
+              className="object-cover rounded-r-lg"
             />
         </div>
       </div>
