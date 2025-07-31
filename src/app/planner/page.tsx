@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarClock } from 'lucide-react';
+import ScheduleEditor from '@/components/planner/schedule-editor';
 
 export const metadata: Metadata = {
   title: 'Study Planner',
@@ -8,20 +7,14 @@ export const metadata: Metadata = {
 
 export default function PlannerPage() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="mx-auto bg-primary/10 p-4 rounded-full">
-            <CalendarClock className="h-12 w-12 text-primary" />
-          </div>
-          <CardTitle className="mt-4">Study Planner Coming Soon!</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            We're working hard to bring you a powerful tool to schedule your study and revision sessions. Stay tuned!
-          </p>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+       <div>
+        <h1 className="text-2xl font-bold tracking-tight">Study Planner</h1>
+        <p className="text-muted-foreground">
+          View and edit your schedules for holiday and coaching days.
+        </p>
+      </div>
+      <ScheduleEditor />
     </div>
   );
 }
