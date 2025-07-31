@@ -1,4 +1,3 @@
-import { Radius } from "lucide-react";
 import Image from "next/image";
 
 export default function WelcomeBanner() {
@@ -17,7 +16,7 @@ export default function WelcomeBanner() {
               alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
               fill
-              className="object-cover rounded-r-lg md:rounded-l-none rounded-l-lg"
+              className="object-cover rounded-r-lg md:rounded-l-lg"
             />
         </div>
       </div>
