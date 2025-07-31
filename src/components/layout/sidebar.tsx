@@ -9,7 +9,7 @@ import {
   BarChart3,
   BotMessageSquare,
   CalendarClock,
-  ClipboardQuestion,
+  ClipboardList,
   Flame,
   MessageSquareQuote,
   LifeBuoy,
@@ -28,7 +28,7 @@ export const navLinks: NavLink[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/syllabus", label: "Syllabus", icon: BookCheck },
   { href: "/planner", label: "Planner", icon: CalendarClock },
-  { href: "/questions", label: "Questions", icon: ClipboardQuestion },
+  { href: "/questions", label: "Questions", icon: ClipboardList },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/feedback", label: "AI Feedback", icon: BotMessageSquare },
 ];
