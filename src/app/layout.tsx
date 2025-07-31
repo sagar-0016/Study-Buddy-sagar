@@ -34,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>JEE PrepTrack</title>
+        <title>Pranjal's Study Buddy</title>
         <meta name="description" content="Your personalized companion for JEE preparation." />
         <link rel="icon" href="/icon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
