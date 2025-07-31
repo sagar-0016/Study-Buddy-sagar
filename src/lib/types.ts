@@ -41,3 +41,5 @@ export type Schedule = {
 };
 
 export type DayType = 'holiday' | 'coaching';
+
+export type LateNightMessageCollection = '12amto2am' | '2amto5am' | '5amto6am';

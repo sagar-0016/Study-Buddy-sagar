@@ -4,15 +4,26 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { Clock, Loader2, HelpCircle } from "lucide-react";
+import { Clock, HelpCircle, Moon } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
-import { getDayType, setDayType, getSchedule } from '@/lib/schedule';
-import type { Schedule, ScheduleTask } from '@/lib/types';
+import { getDayType, setDayType, getSchedule, getLateNightMessage } from '@/lib/schedule';
+import type { Schedule, ScheduleTask, DayType } from '@/lib/types';
 
-const TaskItem = ({ task, isActive, isUpcoming = false }: { task: ScheduleTask, isActive: boolean, isUpcoming?: boolean }) => {
+const TaskItem = ({ task, isActive, isUpcoming = false, isLaterUpcoming = false }: { task: ScheduleTask, isActive: boolean, isUpcoming?: boolean, isLaterUpcoming?: boolean }) => {
+    const getVariantClasses = () => {
+        if (isActive) return 'bg-primary/10 ring-2 ring-primary';
+        if (isUpcoming) return 'bg-accent/10 ring-2 ring-accent';
+        return 'bg-muted/50';
+    }
+    const getTextClasses = () => {
+        if (isActive) return 'text-primary';
+        if (isUpcoming) return 'text-accent';
+        if (isLaterUpcoming) return 'text-foreground/80';
+        return 'text-muted-foreground';
+    }
     return (
-        <div className={`p-4 rounded-lg transition-all duration-300 ${isActive ? 'bg-primary/10 ring-2 ring-primary' : 'bg-muted/50'}`}>
-            <div className={`flex items-center font-semibold ${isActive ? 'text-primary' : isUpcoming ? 'text-accent' : 'text-muted-foreground'}`}>
+        <div className={`p-4 rounded-lg transition-all duration-300 ${getVariantClasses()}`}>
+            <div className={`flex items-center font-semibold ${getTextClasses()}`}>
                 <Clock className="h-5 w-5 mr-2" />
                 <p>{task.time}</p>
             </div>
@@ -21,7 +32,29 @@ const TaskItem = ({ task, isActive, isUpcoming = false }: { task: ScheduleTask, 
     )
 }
 
-const DayTypeSelector = ({ onSelect }: { onSelect: (type: 'coaching' | 'holiday') => void }) => (
+const LateNightMessage = ({ message, firstTask }: { message: string, firstTask: ScheduleTask | null }) => (
+    <div className="space-y-6">
+        <div>
+            <h4 className="text-sm font-semibold text-accent mb-2 flex items-center">
+                <Moon className="h-4 w-4 mr-2" />
+                Upcoming Task
+            </h4>
+            <div className="p-4 rounded-lg bg-accent/10 ring-2 ring-accent">
+                 <h3 className="text-lg font-bold mt-2 text-accent-foreground">{message}</h3>
+                 <p className="text-sm text-muted-foreground mt-1">It's late, time for some rest soon.</p>
+            </div>
+        </div>
+
+        {firstTask && (
+             <div>
+                <h4 className="text-sm font-semibold text-muted-foreground mb-2">Later Upcoming...</h4>
+                <TaskItem task={firstTask} isActive={false} isLaterUpcoming={true} />
+            </div>
+        )}
+    </div>
+)
+
+const DayTypeSelector = ({ onSelect }: { onSelect: (type: DayType) => void }) => (
     <div className="flex flex-col items-center justify-center p-6 bg-muted/30 rounded-lg text-center">
         <HelpCircle className="h-10 w-10 text-primary mb-4" />
         <h3 className="text-lg font-semibold mb-2">What's the plan for today?</h3>
@@ -34,11 +67,12 @@ const DayTypeSelector = ({ onSelect }: { onSelect: (type: 'coaching' | 'holiday'
 )
 
 export default function CurrentTask() {
-  const [dayType, setDayTypeState] = useState<'coaching' | 'holiday' | null>(null);
+  const [dayType, setDayTypeState] = useState<DayType | null>(null);
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [lateNightMessage, setLateNightMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute
@@ -46,10 +80,24 @@ export default function CurrentTask() {
   }, []);
 
   useEffect(() => {
-    const fetchDayTypeAndSchedule = async () => {
+    const fetchInitialData = async () => {
       try {
         setIsLoading(true);
         setError(null);
+
+        const currentHour = currentTime.getHours();
+        let messageCollection: '12amto2am' | '2amto5am' | '5amto6am' | null = null;
+        if (currentHour >= 0 && currentHour < 2) messageCollection = '12amto2am';
+        else if (currentHour >= 2 && currentHour < 5) messageCollection = '2amto5am';
+        else if (currentHour >= 5 && currentHour < 6) messageCollection = '5amto6am';
+
+        if(messageCollection) {
+            const msg = await getLateNightMessage(messageCollection);
+            setLateNightMessage(msg);
+        } else {
+            setLateNightMessage(null);
+        }
+
         const type = await getDayType();
         setDayTypeState(type);
         if (type) {
@@ -64,10 +112,10 @@ export default function CurrentTask() {
       }
     };
 
-    fetchDayTypeAndSchedule();
-  }, []);
+    fetchInitialData();
+  }, [currentTime]);
 
-  const handleDayTypeSelect = async (type: 'coaching' | 'holiday') => {
+  const handleDayTypeSelect = async (type: DayType) => {
     setIsLoading(true);
     try {
         await setDayType(type);
@@ -105,8 +153,6 @@ export default function CurrentTask() {
     return activeIndex;
   }
 
-  const activeTaskIndex = getActiveTaskIndex();
-
   const renderContent = () => {
     if (isLoading) {
         return (
@@ -125,6 +171,13 @@ export default function CurrentTask() {
     if (!schedule || schedule.tasks.length === 0) {
         return <p className="text-muted-foreground text-center">No tasks found for a {dayType} schedule.</p>;
     }
+    
+    if (lateNightMessage) {
+        const firstTask = schedule.tasks.length > 0 ? schedule.tasks[0] : null;
+        return <LateNightMessage message={lateNightMessage} firstTask={firstTask} />
+    }
+    
+    const activeTaskIndex = getActiveTaskIndex();
     if(activeTaskIndex === -1){
         return <p className="text-muted-foreground text-center">No tasks scheduled for today.</p>;
     }

@@ -1,6 +1,6 @@
 
 import { db } from './firebase';
-import { collection, doc, getDoc, setDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, query, where, getDocs, Timestamp, orderBy, limit } from 'firebase/firestore';
 import type { DayType, Schedule } from './types';
 
 // Helper to get the start of the current day as a string 'YYYY-MM-DD'
@@ -77,5 +77,29 @@ export const getSchedule = async (type: DayType): Promise<Schedule | null> => {
     } else {
         console.warn(`Schedule for type "${type}" not found in Firestore.`);
         return null;
+    }
+}
+
+/**
+ * Fetches a random message from one of the late-night message collections.
+ * @param {'12amto2am' | '2amto5am' | '5amto6am'} collectionName - The name of the collection to fetch from.
+ * @returns {Promise<string>} A message string.
+ */
+export const getLateNightMessage = async (collectionName: '12amto2am' | '2amto5am' | '5amto6am'): Promise<string> => {
+    try {
+        const messagesRef = collection(db, collectionName);
+        const q = query(messagesRef, limit(20)); // Fetch up to 20 messages
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            return "It's getting late. Time to wind down and get some rest for a productive day tomorrow!";
+        }
+
+        const messages = querySnapshot.docs.map(doc => doc.data().message);
+        const randomIndex = Math.floor(Math.random() * messages.length);
+        return messages[randomIndex] || "Time to sleep!";
+    } catch (error) {
+        console.error(`Error fetching from ${collectionName}:`, error);
+        return "A quiet moment to reflect on your day's hard work. Rest is part of the process.";
     }
 }
