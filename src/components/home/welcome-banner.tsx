@@ -12,8 +12,8 @@ export default function WelcomeBanner() {
         </div>
         <div className="relative h-48 md:h-full">
            <Image
-              src="https://storage.googleapis.com/aifirebase-765ca.appspot.com/users%2F1jHlQh3nLIW7q4wE42Y4Fz24pTj1%2Fprojects%2Fc0689b70-76af-42e5-a63c-383796d11f97%2Fiit-delhi-logo.png"
-              alt="IIT Delhi logo"
+              src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
+              alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
               fill
               className="object-cover rounded-r-lg"
