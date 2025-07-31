@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getMotivationAction } from "@/lib/actions";
 import { Loader2, Sparkles, Wand2 } from "lucide-react";
@@ -42,27 +42,23 @@ export default function MotivationCorner() {
 
   return (
     <Card className="flex flex-col transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg border-0">
-      <CardHeader>
-        <CardTitle>Motivation Corner</CardTitle>
-        <CardDescription>A little boost from your study buddy.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-grow space-y-4">
-        <p className="text-sm font-medium">How are you feeling, Pranjal?</p>
-        <div className="grid grid-cols-4 gap-2">
+      <CardContent className="flex-grow space-y-4 pt-6">
+        <p className="text-lg font-medium text-center">How are you feeling, Pranjal?</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-md mx-auto">
           {moods.map((mood) => (
             <Button
               key={mood.label}
               variant={selectedMood === mood.label ? "default" : "outline"}
-              className={cn("flex flex-col h-16", selectedMood !== mood.label && "border-0")}
+              className={cn("flex flex-col h-20 text-base border-0", selectedMood !== mood.label && "bg-muted/50")}
               onClick={() => setSelectedMood(mood.label)}
             >
-              <span className="text-2xl">{mood.emoji}</span>
-              <span className="text-xs">{mood.label}</span>
+              <span className="text-3xl">{mood.emoji}</span>
+              <span className="mt-1">{mood.label}</span>
             </Button>
           ))}
         </div>
         {motivation && (
-          <div className="p-4 bg-accent/10 rounded-lg text-accent-foreground border-l-4 border-accent">
+          <div className="p-4 bg-accent/10 rounded-lg text-accent-foreground border-l-4 border-accent max-w-2xl mx-auto">
             <div className="flex items-start">
               <Sparkles className="h-5 w-5 mr-3 mt-1 text-accent flex-shrink-0" />
               <p className="italic">"{motivation}"</p>
@@ -71,11 +67,12 @@ export default function MotivationCorner() {
           </div>
         )}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="justify-center">
         <Button
           onClick={handleGetMotivation}
           disabled={!selectedMood || isLoading}
-          className="w-full"
+          className="w-full max-w-xs"
+          size="lg"
         >
           {isLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
