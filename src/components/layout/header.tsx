@@ -36,10 +36,11 @@ import {
 } from "@/components/ui/breadcrumb";
 import { usePathname } from 'next/navigation';
 import { navLinks } from './sidebar';
+import { ThemeToggle } from "./theme-toggle";
 
 export default function Header() {
   const pathname = usePathname();
-  const currentPath = pathname.split('/').pop() || 'home';
+  const currentPath = pathname.split('/').filter(p => p).pop() || 'home';
   const pageTitle = currentPath.charAt(0).toUpperCase() + currentPath.slice(1);
 
   return (
@@ -90,28 +91,28 @@ export default function Header() {
           )}
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="relative ml-auto flex-1 md:grow-0">
-        {/* Search can go here in future */}
+      <div className="relative ml-auto flex items-center gap-2 md:grow-0">
+        <ThemeToggle />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="overflow-hidden rounded-full"
+            >
+              <User className="h-5 w-5"/>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem><Settings className="mr-2 h-4 w-4" />Settings</DropdownMenuItem>
+            <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="overflow-hidden rounded-full"
-          >
-            <User className="h-5 w-5"/>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem><Settings className="mr-2 h-4 w-4" />Settings</DropdownMenuItem>
-          <DropdownMenuItem>Support</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </header>
   );
 }
