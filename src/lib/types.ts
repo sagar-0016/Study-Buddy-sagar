@@ -88,3 +88,8 @@ export interface RevisionTopic extends DocumentData {
   recallFails: number;
   lastReviewed: Timestamp;
 }
+
+export type PyqProgress = {
+  id: string;
+  completed: boolean;
+};

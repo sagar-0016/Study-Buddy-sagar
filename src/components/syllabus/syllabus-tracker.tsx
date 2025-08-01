@@ -16,7 +16,9 @@ import { Progress } from '@/components/ui/progress';
 import { syllabusData } from '@/lib/data';
 import type { Subject, Chapter } from '@/lib/types';
 import { getSyllabusProgress, updateSyllabusTopicStatus } from '@/lib/syllabus';
+import { getPyqProgress, updatePyqStatus } from '@/lib/pyq';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ClipboardCheck } from 'lucide-react';
 
 function SubjectSyllabus({ subject }: { subject: Subject }) {
   const [checkedState, setCheckedState] = useState<Record<string, boolean>>({});
@@ -114,16 +116,103 @@ function SubjectSyllabus({ subject }: { subject: Subject }) {
   );
 }
 
+function PyqTracker({ subject }: { subject: Subject }) {
+    const [checkedState, setCheckedState] = useState<Record<string, boolean>>({});
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchProgress = async () => {
+            setIsLoading(true);
+            const progressData = await getPyqProgress();
+            const initialState: Record<string, boolean> = {};
+            progressData.forEach(item => {
+                initialState[item.id] = item.completed;
+            });
+            setCheckedState(initialState);
+            setIsLoading(false);
+        };
+        fetchProgress();
+    }, [subject]);
+    
+    const handleCheckboxChange = async (chapterKey: string, checked: boolean) => {
+        setCheckedState(prevState => ({ ...prevState, [chapterKey]: checked }));
+        await updatePyqStatus(chapterKey, checked);
+    };
+
+     if (isLoading) {
+        return (
+            <div className="space-y-4 p-4">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+            </div>
+        );
+    }
+
+    return (
+         <div className="space-y-4">
+            <Accordion type="multiple" className="w-full">
+                {subject.chapters.map((chapter: Chapter) => {
+                    const chapterKey = `${subject.label}-${chapter.title}`;
+                    return (
+                        <AccordionItem key={chapterKey} value={chapter.title}>
+                            <AccordionTrigger>{chapter.title}</AccordionTrigger>
+                            <AccordionContent>
+                                <div className="flex items-center space-x-3 rounded-md p-2 hover:bg-muted/50 transition-colors">
+                                    <Checkbox
+                                        id={chapterKey}
+                                        checked={checkedState[chapterKey] || false}
+                                        onCheckedChange={(checked) => handleCheckboxChange(chapterKey, !!checked)}
+                                    />
+                                    <Label htmlFor={chapterKey} className="w-full font-normal cursor-pointer">
+                                        Mark all PYQs for this chapter as completed
+                                    </Label>
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
+                    );
+                })}
+            </Accordion>
+            <div className="mt-6 p-4 bg-accent/20 border-l-4 border-accent text-accent-foreground rounded-lg">
+                <p className="font-semibold">Note:</p>
+                <p className="text-sm">For the chapters which you have marked as completed in the syllabus, do move forward with their PYQs.</p>
+            </div>
+        </div>
+    )
+}
+
+function PyqSection() {
+    return (
+        <Tabs defaultValue="physics" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="physics">Physics</TabsTrigger>
+                <TabsTrigger value="chemistry">Chemistry</TabsTrigger>
+                <TabsTrigger value="maths">Maths</TabsTrigger>
+            </TabsList>
+            <TabsContent value="physics" className="p-4">
+                <PyqTracker subject={syllabusData.physics} />
+            </TabsContent>
+            <TabsContent value="chemistry" className="p-4">
+                <PyqTracker subject={syllabusData.chemistry} />
+            </TabsContent>
+            <TabsContent value="maths" className="p-4">
+                <PyqTracker subject={syllabusData.maths} />
+            </TabsContent>
+        </Tabs>
+    )
+}
+
 
 export default function SyllabusTracker() {
   return (
     <Card>
       <CardContent className="p-0 sm:p-4">
         <Tabs defaultValue="physics" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="physics">Physics</TabsTrigger>
             <TabsTrigger value="chemistry">Chemistry</TabsTrigger>
             <TabsTrigger value="maths">Maths</TabsTrigger>
+            <TabsTrigger value="pyq" className="flex items-center gap-2">
+                <ClipboardCheck className="h-4 w-4" /> PYQs
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="physics" className="p-4">
             <SubjectSyllabus subject={syllabusData.physics} />
@@ -133,6 +222,9 @@ export default function SyllabusTracker() {
           </TabsContent>
           <TabsContent value="maths" className="p-4">
             <SubjectSyllabus subject={syllabusData.maths} />
+          </TabsContent>
+          <TabsContent value="pyq" className="p-4">
+            <PyqSection />
           </TabsContent>
         </Tabs>
       </CardContent>
