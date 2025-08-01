@@ -204,42 +204,45 @@ function PyqSection() {
 
 export default function SyllabusTracker() {
   return (
-    <Card>
-      <CardContent className="p-0 sm:p-4">
-        <Tabs defaultValue="physics" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="physics">Physics</TabsTrigger>
-            <TabsTrigger value="chemistry">Chemistry</TabsTrigger>
-            <TabsTrigger value="maths">Maths</TabsTrigger>
-            <TabsTrigger value="pyq" className="flex items-center gap-2">
-                <ClipboardCheck className="h-4 w-4" /> PYQs
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="physics" className="p-4">
-            <SubjectSyllabus subject={syllabusData.physics} />
-          </TabsContent>
-          <TabsContent value="chemistry" className="p-4">
-            <SubjectSyllabus subject={syllabusData.chemistry} />
-          </TabsContent>
-          <TabsContent value="maths" className="p-4">
-            <SubjectSyllabus subject={syllabusData.maths} />
-          </TabsContent>
-          <TabsContent value="pyq" className="p-4">
-            <PyqSection />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-       <CardFooter className="flex-col items-start gap-4 p-4 bg-muted/50 border-t rounded-b-lg">
-          <p className="text-sm text-muted-foreground">
-            <span className="font-semibold">Note:</span> For the chapters which you have marked as completed in the syllabus, do move forward with their PYQs.
-          </p>
-          <Button asChild>
-            <Link href="/syllabus/analysis">
-                <AreaChart className="mr-2 h-4 w-4" />
-                Analyse Syllabus Weightage
-            </Link>
-          </Button>
-      </CardFooter>
-    </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="p-0 sm:p-4">
+          <Tabs defaultValue="physics" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="physics">Physics</TabsTrigger>
+              <TabsTrigger value="chemistry">Chemistry</TabsTrigger>
+              <TabsTrigger value="maths">Maths</TabsTrigger>
+              <TabsTrigger value="pyq" className="flex items-center gap-2">
+                  <ClipboardCheck className="h-4 w-4" /> PYQs
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="physics" className="p-4">
+              <SubjectSyllabus subject={syllabusData.physics} />
+            </TabsContent>
+            <TabsContent value="chemistry" className="p-4">
+              <SubjectSyllabus subject={syllabusData.chemistry} />
+            </TabsContent>
+            <TabsContent value="maths" className="p-4">
+              <SubjectSyllabus subject={syllabusData.maths} />
+            </TabsContent>
+            <TabsContent value="pyq" className="p-4">
+              <PyqSection />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+      
+      <div className="flex flex-col items-start gap-4 p-4 bg-muted/50 border rounded-lg">
+        <p className="text-sm text-muted-foreground">
+          <span className="font-semibold">Note:</span> For the chapters which you have marked as completed in the syllabus, do move forward with their PYQs.
+        </p>
+        <Button asChild>
+          <Link href="/syllabus/analysis">
+              <AreaChart className="mr-2 h-4 w-4" />
+              Analyse Syllabus Weightage
+          </Link>
+        </Button>
+      </div>
+    </div>
   );
 }
