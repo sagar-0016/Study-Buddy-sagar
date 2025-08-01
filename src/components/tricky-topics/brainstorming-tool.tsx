@@ -5,18 +5,72 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { getBrainstormingTopics } from '@/lib/brainstorming';
+import { getBrainstormingTopics, addBrainstormingSubmission } from '@/lib/brainstorming';
 import type { BrainstormingTopic } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, ArrowRight, Lightbulb, Sparkles } from 'lucide-react';
+import { Lightbulb, Send, Loader2, BookCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
+
+const SubmissionDialog = ({ topic, children }: { topic: BrainstormingTopic, children: React.ReactNode }) => {
+    const [userThoughts, setUserThoughts] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubmit = async () => {
+        if (!userThoughts) return;
+        setIsSaving(true);
+        try {
+            await addBrainstormingSubmission({
+                topicId: topic.id,
+                topicQuestion: topic.question,
+                thoughts: userThoughts
+            });
+            toast({ title: "Success!", description: "Your thoughts have been submitted." });
+            setIsOpen(false);
+            setUserThoughts('');
+        } catch (error) {
+            toast({ title: "Error", description: "Could not submit your thoughts.", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>{topic.question}</DialogTitle>
+                    <DialogDescription>
+                        Jot down your initial thoughts, key concepts, formulas, and your approach to solving this problem.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Textarea 
+                        placeholder="Your thoughts here..."
+                        rows={10}
+                        value={userThoughts}
+                        onChange={(e) => setUserThoughts(e.target.value)}
+                    />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                    <Button onClick={handleSubmit} disabled={isSaving || !userThoughts}>
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        Submit for Review
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+};
+
 
 export default function BrainstormingTool() {
     const [topics, setTopics] = useState<BrainstormingTopic[]>([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [userThoughts, setUserThoughts] = useState('');
-    const [showGuideline, setShowGuideline] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -29,34 +83,18 @@ export default function BrainstormingTool() {
         fetchTopics();
     }, []);
 
-    const currentTopic = useMemo(() => topics[currentIndex], [topics, currentIndex]);
-
-    const handleNext = () => {
-        if (currentIndex < topics.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-            setUserThoughts('');
-            setShowGuideline(false);
-        }
-    };
-
-    const handlePrev = () => {
-        if (currentIndex > 0) {
-            setCurrentIndex(prev => prev - 1);
-            setUserThoughts('');
-            setShowGuideline(false);
-        }
-    };
 
     if (isLoading) {
         return (
             <div className="space-y-4">
-                <Skeleton className="h-64 w-full" />
-                <Skeleton className="h-10 w-1/3" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
             </div>
         );
     }
     
-    if (!currentTopic) {
+    if (topics.length === 0) {
         return (
              <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[40vh]">
                 <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
@@ -67,63 +105,25 @@ export default function BrainstormingTool() {
     }
 
     return (
-        <div className="space-y-6">
-            <Card>
-                <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <CardTitle>Brainstorming Session</CardTitle>
-                            <CardDescription>Think through the problem before revealing the guideline.</CardDescription>
-                        </div>
-                        <Badge variant="secondary">{currentTopic.subject}</Badge>
-                    </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <p className="text-base font-semibold leading-relaxed">{currentTopic.question}</p>
-                    <Textarea 
-                        placeholder="Jot down your initial thoughts, key concepts, formulas, and approach here..."
-                        rows={8}
-                        value={userThoughts}
-                        onChange={(e) => setUserThoughts(e.target.value)}
-                    />
-                </CardContent>
-                <CardFooter>
-                    <Button onClick={() => setShowGuideline(true)} disabled={showGuideline}>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Reveal Guideline
-                    </Button>
-                </CardFooter>
-            </Card>
-
-            {showGuideline && (
-                <Card className="bg-muted/30 animate-in fade-in-50">
-                    <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <Lightbulb className="text-accent" />
-                            Suggested Approach
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="whitespace-pre-wrap text-muted-foreground">{currentTopic.guideline}</p>
-                    </CardContent>
-                </Card>
-            )}
-
-            <Separator />
-            
-            <div className="flex justify-between items-center">
-                <Button variant="outline" onClick={handlePrev} disabled={currentIndex === 0}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Previous
-                </Button>
-                 <span className="text-sm font-medium text-muted-foreground">
-                    Question {currentIndex + 1} of {topics.length}
-                </span>
-                <Button variant="outline" onClick={handleNext} disabled={currentIndex === topics.length - 1}>
-                    Next
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-            </div>
+        <div className="space-y-4">
+            {topics.map(topic => (
+                 <SubmissionDialog key={topic.id} topic={topic}>
+                    <Card className="cursor-pointer transition-all hover:border-primary hover:shadow-md">
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <p className="text-base font-semibold leading-relaxed pr-4">{topic.question}</p>
+                                <Badge variant="secondary">{topic.subject}</Badge>
+                            </div>
+                        </CardHeader>
+                         <CardFooter>
+                            <p className="text-sm text-primary font-medium flex items-center gap-2">
+                                <BookCheck className="h-4 w-4" />
+                                Click to start brainstorming and submit your thoughts
+                            </p>
+                        </CardFooter>
+                    </Card>
+                </SubmissionDialog>
+            ))}
         </div>
     );
 }

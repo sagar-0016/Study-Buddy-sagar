@@ -1,7 +1,7 @@
 
 import { db } from './firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import type { BrainstormingTopic } from './types';
+import { collection, getDocs, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import type { BrainstormingTopic, BrainstormingSubmission } from './types';
 
 /**
  * Fetches all brainstorming topics from Firestore, ordered by subject.
@@ -25,3 +25,23 @@ export const getBrainstormingTopics = async (): Promise<BrainstormingTopic[]> =>
     return [];
   }
 };
+
+
+/**
+ * Adds a new brainstorming submission to Firestore.
+ * @param submissionData - The data for the new submission.
+ * @returns The ID of the newly created document.
+ */
+export const addBrainstormingSubmission = async (submissionData: Omit<BrainstormingSubmission, 'id' | 'submittedAt'>): Promise<string> => {
+    try {
+        const submissionsRef = collection(db, 'brainstorming-submissions');
+        const newDocRef = await addDoc(submissionsRef, {
+            ...submissionData,
+            submittedAt: serverTimestamp(),
+        });
+        return newDocRef.id;
+    } catch (error) {
+        console.error('Error adding brainstorming submission:', error);
+        throw error;
+    }
+}
