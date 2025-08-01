@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getSyllabusProgress } from "@/lib/syllabus";
 import { getProgressData } from "@/lib/progress";
+import { getRevisionProgress } from "@/lib/revisions";
 import { syllabusData } from "@/lib/data";
 import { BookCheck, ClipboardList, Notebook, BrainCircuit } from "lucide-react";
 
@@ -43,11 +44,11 @@ export default function DashboardOverview() {
   const [syllabusProgress, setSyllabusProgress] = useState({ completed: 0, total: 0 });
   const [flashcardProgress, setFlashcardProgress] = useState({ completed: 0, total: 0 });
   const [pyqProgress, setPyqProgress] = useState({ completed: 125, total: 500 }); // Placeholder
-  const [revisionProgress, setRevisionProgress] = useState({ completed: 10, total: 50 }); // Placeholder
+  const [revisionProgress, setRevisionProgress] = useState({ completed: 0, total: 0 });
   const [isLoadingSyllabus, setIsLoadingSyllabus] = useState(true);
   const [isLoadingFlashcards, setIsLoadingFlashcards] = useState(true);
   const [isLoadingPyqs, setIsLoadingPyqs] = useState(false); // Placeholder is not loading
-  const [isLoadingRevisions, setIsLoadingRevisions] = useState(false); // Placeholder is not loading
+  const [isLoadingRevisions, setIsLoadingRevisions] = useState(true);
 
   useEffect(() => {
     const fetchSyllabusData = async () => {
@@ -74,8 +75,16 @@ export default function DashboardOverview() {
       setIsLoadingFlashcards(false);
     };
 
+    const fetchRevisionData = async () => {
+        setIsLoadingRevisions(true);
+        const { mastered, total } = await getRevisionProgress();
+        setRevisionProgress({ completed: mastered, total: total });
+        setIsLoadingRevisions(false);
+    }
+
     fetchSyllabusData();
     fetchFlashcardData();
+    fetchRevisionData();
   }, []);
 
   return (
@@ -115,3 +124,5 @@ export default function DashboardOverview() {
     </div>
   );
 }
+
+    

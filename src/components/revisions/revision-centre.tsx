@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Lightbulb, Check, X, Wand } from 'lucide-react';
+import { PlusCircle, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getRevisionTopics, addRevisionTopic } from '@/lib/revisions';
+import { getRevisionTopics, addRevisionTopic, getRecallSessionTopics, updateRecallStats } from '@/lib/revisions';
 import type { RevisionTopic } from '@/lib/types';
 import {
   Select,
@@ -21,53 +21,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import Confetti from 'react-confetti';
 
-const RevisionCard = ({ topic }: { topic: RevisionTopic }) => {
-  const [showHints, setShowHints] = useState(false);
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-            <div>
-                <CardTitle>{topic.topicName}</CardTitle>
-                <CardDescription>{topic.chapterName}</CardDescription>
-            </div>
-            <Badge variant="secondary">{topic.subject}</Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Button variant="outline" onClick={() => setShowHints(!showHints)}>
-            <Wand className="mr-2 h-4 w-4" />
-            {showHints ? 'Hide' : 'Show'} Hints
-        </Button>
-        {showHints && (
-            <div className="p-4 bg-muted/50 rounded-lg border-l-4 border-accent">
-                <p className="text-sm text-muted-foreground italic">
-                    {topic.hints}
-                </p>
-            </div>
-        )}
-      </CardContent>
-      <CardFooter className="flex justify-end gap-2">
-         <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-100 hover:text-red-700">
-            <X className="mr-2 h-4 w-4" /> I Forgot
-         </Button>
-         <Button variant="ghost" size="sm" className="text-green-600 hover:bg-green-100 hover:text-green-700">
-            <Check className="mr-2 h-4 w-4" /> I Recalled It!
-         </Button>
-      </CardFooter>
-    </Card>
-  )
-}
-
-
-const AddRevisionTopicDialog = ({ onTopicAdded }: { onTopicAdded: () => void }) => {
+const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () => void, children: React.ReactNode }) => {
     const [subject, setSubject] = useState('');
     const [chapterName, setChapterName] = useState('');
     const [topicName, setTopicName] = useState('');
     const [hints, setHints] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
 
     const canSubmit = useMemo(() => {
@@ -80,19 +43,15 @@ const AddRevisionTopicDialog = ({ onTopicAdded }: { onTopicAdded: () => void }) 
         setIsSaving(true);
         try {
             const newTopic = { subject, chapterName, topicName, hints };
-            const newId = await addRevisionTopic(newTopic);
-            if(newId) {
-                toast({ title: "Success!", description: "New revision topic has been added." });
-                onTopicAdded();
-                // Reset form
-                setSubject('');
-                setChapterName('');
-                setTopicName('');
-                setHints('');
-                 // Manually close dialog if needed, though DialogClose should handle it.
-            } else {
-                 toast({ title: "Error", description: "Failed to add the topic.", variant: "destructive" });
-            }
+            await addRevisionTopic(newTopic);
+            toast({ title: "Success!", description: "New revision topic has been added." });
+            onTopicAdded();
+            setIsOpen(false);
+            // Reset form
+            setSubject('');
+            setChapterName('');
+            setTopicName('');
+            setHints('');
         } catch (error) {
              toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
         } finally {
@@ -101,12 +60,9 @@ const AddRevisionTopicDialog = ({ onTopicAdded }: { onTopicAdded: () => void }) 
     }
 
     return (
-        <Dialog>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button size="lg">
-                    <PlusCircle className="mr-2 h-5 w-5" />
-                    Add Revision Topic
-                </Button>
+                {children}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[480px]">
                 <DialogHeader>
@@ -116,7 +72,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded }: { onTopicAdded: () => void }) 
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
+                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="subject" className="text-right">Subject</Label>
                         <Select onValueChange={setSubject} value={subject}>
                             <SelectTrigger className="col-span-3">
@@ -143,9 +99,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded }: { onTopicAdded: () => void }) 
                     </div>
                 </div>
                 <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="outline">Cancel</Button>
-                    </DialogClose>
+                    <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
                      <Button onClick={handleSubmit} disabled={isSaving || !canSubmit}>
                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Save Topic
@@ -156,46 +110,178 @@ const AddRevisionTopicDialog = ({ onTopicAdded }: { onTopicAdded: () => void }) 
     )
 }
 
+const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], onEndSession: () => void }) => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [showHints, setShowHints] = useState(false);
+    const [showConfetti, setShowConfetti] = useState(false);
+    const { toast } = useToast();
+
+    const currentTopic = topics[currentIndex];
+
+    const handleNext = async (result: 'success' | 'fail') => {
+        setShowHints(false);
+        try {
+            await updateRecallStats(currentTopic.id, result);
+        } catch (error) {
+            toast({ title: 'Error', description: 'Could not save your progress.', variant: 'destructive'})
+        }
+
+        if (currentIndex < topics.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+        } else {
+            // End of session
+            setShowConfetti(true);
+            setTimeout(() => {
+                onEndSession();
+            }, 5000)
+        }
+    }
+
+    if (!currentTopic) {
+        return (
+             <div className="text-center p-8">
+                {showConfetti && <Confetti recycle={false} numberOfPieces={300} />}
+                <h2 className="text-2xl font-bold mb-2">🎉 Session Complete!</h2>
+                <p className="text-muted-foreground mb-6">Great job on your recall session. Keep up the consistent effort!</p>
+                <Button onClick={onEndSession}>
+                    <RotateCw className="mr-2 h-4 w-4" /> Start Another Session
+                </Button>
+            </div>
+        )
+    }
+
+    return (
+        <div className="w-full max-w-2xl mx-auto">
+             <div className="mb-4 text-center text-sm font-semibold text-muted-foreground">
+                Card {currentIndex + 1} of {topics.length}
+            </div>
+             <Card className="min-h-[350px] flex flex-col">
+                <CardHeader>
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <CardTitle>{currentTopic.topicName}</CardTitle>
+                            <CardDescription>{currentTopic.chapterName}</CardDescription>
+                        </div>
+                        <Badge variant="secondary">{currentTopic.subject}</Badge>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4 flex-grow">
+                    <Button variant="outline" onClick={() => setShowHints(!showHints)}>
+                        <Wand className="mr-2 h-4 w-4" />
+                        {showHints ? 'Hide' : 'Show'} Hints
+                    </Button>
+                    <div className={cn("transition-opacity duration-300", showHints ? 'opacity-100' : 'opacity-0')}>
+                        {showHints && (
+                            <div className="p-4 bg-muted/50 rounded-lg border-l-4 border-accent">
+                                <p className="text-sm text-muted-foreground italic">
+                                    {currentTopic.hints}
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+                <CardFooter className="flex flex-col sm:flex-row justify-center gap-4">
+                    <Button variant="destructive" size="lg" className="w-full sm:w-auto" onClick={() => handleNext('fail')}>
+                        <X className="mr-2 h-5 w-5" /> I Forgot
+                    </Button>
+                    <Button size="lg" className="w-full sm:w-auto bg-green-600 hover:bg-green-700" onClick={() => handleNext('success')}>
+                        <Check className="mr-2 h-5 w-5" /> I Recalled It!
+                    </Button>
+                </CardFooter>
+            </Card>
+        </div>
+    )
+}
+
 
 export default function RevisionCentre() {
-  const [topics, setTopics] = useState<RevisionTopic[]>([]);
+  const [allTopics, setAllTopics] = useState<RevisionTopic[]>([]);
+  const [sessionTopics, setSessionTopics] = useState<RevisionTopic[] | null>(null);
+  const [sessionSize, setSessionSize] = useState("10");
   const [isLoading, setIsLoading] = useState(true);
+  const [isStartingSession, setIsStartingSession] = useState(false);
 
-  const fetchTopics = async () => {
+  const fetchTopics = useCallback(async () => {
     setIsLoading(true);
     const fetchedTopics = await getRevisionTopics();
-    setTopics(fetchedTopics);
+    setAllTopics(fetchedTopics);
     setIsLoading(false);
-  }
+  }, [])
 
   useEffect(() => {
     fetchTopics();
-  }, []);
+  }, [fetchTopics]);
+
+  const handleStartSession = async () => {
+    setIsStartingSession(true);
+    const topicsForSession = await getRecallSessionTopics(parseInt(sessionSize, 10));
+    setSessionTopics(topicsForSession);
+    setIsStartingSession(false);
+  }
+
+  const handleEndSession = () => {
+    setSessionTopics(null);
+    fetchTopics(); // Refetch to get updated stats
+  }
+
+  const renderContent = () => {
+    if (isLoading) {
+      return <Skeleton className="h-64 w-full" />
+    }
+
+    if (sessionTopics) {
+        return <RevisionSession topics={sessionTopics} onEndSession={handleEndSession}/>
+    }
+    
+    if (allTopics.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[300px]">
+                <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold">No Revision Topics Yet</h3>
+                <p className="text-muted-foreground mb-6">Click below to add your first topic and get started.</p>
+                <AddRevisionTopicDialog onTopicAdded={fetchTopics}>
+                    <Button size="lg"><PlusCircle className="mr-2 h-5 w-5" /> Add Revision Topic</Button>
+                </AddRevisionTopicDialog>
+            </div>
+        )
+    }
+
+    return (
+        <Card className="max-w-md mx-auto">
+            <CardHeader className="text-center">
+                <CardTitle className="text-2xl">Start a Recall Session</CardTitle>
+                <CardDescription>Select how many topics you want to revise right now.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center gap-4">
+                <Select value={sessionSize} onValueChange={setSessionSize}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Session Size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="5">5 Cards</SelectItem>
+                        <SelectItem value="10">10 Cards</SelectItem>
+                        <SelectItem value="20">20 Cards</SelectItem>
+                    </SelectContent>
+                </Select>
+                 <Button size="lg" onClick={handleStartSession} disabled={isStartingSession}>
+                    {isStartingSession ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Play className="mr-2 h-5 w-5" />}
+                     Start Session
+                </Button>
+            </CardContent>
+            <CardFooter className="justify-center">
+                 <AddRevisionTopicDialog onTopicAdded={fetchTopics}>
+                     <Button variant="outline"><PlusCircle className="mr-2"/> Add New Topic</Button>
+                 </AddRevisionTopicDialog>
+            </CardFooter>
+        </Card>
+    )
+  }
 
   return (
     <div className="space-y-6">
-       <div className="flex justify-end">
-           <AddRevisionTopicDialog onTopicAdded={fetchTopics} />
-       </div>
-
-       {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2">
-            <Skeleton className="h-48 w-full" />
-            <Skeleton className="h-48 w-full" />
-        </div>
-       ) : topics.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[200px]">
-            <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">No Revision Topics Yet</h3>
-            <p className="text-muted-foreground">Click "Add Revision Topic" to get started.</p>
-        </div>
-       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {topics.map(topic => (
-                <RevisionCard key={topic.id} topic={topic} />
-            ))}
-        </div>
-       )}
+       {renderContent()}
     </div>
   );
 }
+
+    
