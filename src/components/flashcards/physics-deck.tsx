@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Orbit, Wind, Atom, Waves, Thermometer, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const physicsDecks = [
     {
@@ -74,9 +75,10 @@ const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
 
 const DeckCard = ({ deck }: { deck: (typeof physicsDecks)[0] }) => {
   const isAvailable = deck.status === 'available';
-  return (
-    <Link href={deck.href}>
-        <Card className="flex flex-col h-full transition-all duration-300 hover:border-primary hover:-translate-y-1 hover:shadow-lg">
+  const cardContent = (
+    <Card className={cn("flex flex-col h-full transition-all duration-300", 
+        isAvailable ? "hover:border-primary hover:-translate-y-1 hover:shadow-lg cursor-pointer" : "opacity-70 bg-muted/50"
+    )}>
         <CardHeader className="flex-row items-start justify-between">
             <div className="p-3 rounded-full bg-primary/10 text-primary">
                 <deck.icon className="w-8 h-8" />
@@ -88,9 +90,13 @@ const DeckCard = ({ deck }: { deck: (typeof physicsDecks)[0] }) => {
             <CardDescription className="flex-grow">{deck.description}</CardDescription>
             <DifficultyBadge difficulty={deck.difficulty} />
         </CardContent>
-        </Card>
-    </Link>
+    </Card>
   );
+
+  if (isAvailable) {
+    return <Link href={deck.href}>{cardContent}</Link>
+  }
+  return <div>{cardContent}</div>;
 };
 
 export default function PhysicsDeck() {
