@@ -7,81 +7,106 @@ export const syllabusData: Syllabus = {
       {
         title: 'Mechanics',
         topics: [
+          'Physics and Measurement',
           'Kinematics',
           'Laws of Motion',
           'Work, Energy and Power',
           'Rotational Motion',
           'Gravitation',
+          'Properties of Solids and Liquids',
         ],
       },
       {
         title: 'Thermodynamics',
         topics: [
-          'Thermal Properties of Matter',
           'Thermodynamics',
-          'Kinetic Theory',
+          'Kinetic Theory of Gases',
         ],
       },
       {
-        title: 'Electricity & Magnetism',
-        topics: [
-          'Electrostatics',
-          'Current Electricity',
-          'Magnetic Effects of Current',
-          'Electromagnetic Induction & AC',
-        ],
+        title: 'Oscillations & Waves',
+        topics: ['Oscillations and Waves'],
       },
-       {
-        title: 'Optics',
+      {
+        title: 'Electrostatics & Magnetism',
         topics: [
-          'Ray Optics',
-          'Wave Optics',
-        ],
+            'Electrostatics',
+            'Current Electricity',
+            'Capacitors',
+            'Magnetic Effect of Current',
+            'Magnetism',
+            'Electromagnetic Induction',
+            'Alternating Current',
+        ]
       },
+      {
+        title: 'Optics & Modern Physics',
+        topics: [
+            'Geometrical Optics',
+            'Electromagnetic Waves',
+            'Waves Optics',
+            'Modern Physics',
+            'Errors and Instruments',
+            'Semiconductors'
+        ]
+      }
     ],
   },
   chemistry: {
     label: 'Chemistry',
     chapters: [
       {
-        title: 'Physical Chemistry',
+        title: 'Physical Chemistry I',
         topics: [
-          'Some Basic Concepts of Chemistry',
-          'Structure of Atom',
+          'Some Basic Concepts in Chemistry',
           'States of Matter',
+          'Atomic Structure',
+          'Chemical Bonding and Molecular Structure',
           'Chemical Thermodynamics',
-          'Equilibrium',
-          'Redox Reactions',
-          'Solid State',
           'Solutions',
-          'Electrochemistry',
+          'Equilibrium',
+          'Redox Reactions and Electrochemistry',
           'Chemical Kinetics',
-          'Surface Chemistry'
+        ],
+      },
+       {
+        title: 'Physical Chemistry II',
+        topics: [
+          'Liquid Solution',
+          'Electrochemistry',
+          'Solid State',
+          'Surface Chemistry',
+          'Chemical Kinetics',
         ],
       },
       {
         title: 'Inorganic Chemistry',
         topics: [
-          'Classification of Elements and Periodicity',
-          'Chemical Bonding',
+          'Classification of Elements and Periodicity in Properties',
           'Hydrogen',
           's-Block Elements',
           'p-Block Elements',
-          'd and f Block Elements',
+          'd and f-Block Elements',
           'Coordination Compounds',
+          'Environmental Chemistry',
+          'General Principles and Processes of Isolation of Metals (Metallurgy)',
+          'Qualitative Analysis (SALT ANALYSIS)',
         ],
       },
       {
         title: 'Organic Chemistry',
         topics: [
-          'Basic Principles and Techniques',
+          'Purification and Characterization of Organic Compounds',
+          'Some Basic Principles of Organic Chemistry',
           'Hydrocarbons',
-          'Haloalkanes and Haloarenes',
-          'Alcohols, Phenols and Ethers',
-          'Aldehydes, Ketones and Carboxylic Acids',
-          'Amines',
+          'Organic Compounds Containing Halogens (Haloalkanes, Grignard\'s Reagent, Reduction, Oxidation)',
+          'Organic Compounds Containing Oxygen (Alcohols and Ethers)',
+          'Organic Compounds Containing Nitrogen (Aromatic Compound, Carbonyl Compound, Carboxylic Acid and Derivatives)',
           'Biomolecules',
-          'Polymers'
+          'Polymers',
+          'Chemistry in Everyday Life',
+          'Principles Related to Practical Chemistry (POC)',
+          'Reaction Mechanism',
         ],
       },
     ],
@@ -93,40 +118,57 @@ export const syllabusData: Syllabus = {
         title: 'Algebra',
         topics: [
           'Sets, Relations and Functions',
-          'Complex Numbers',
-          'Quadratic Equations',
+          'Complex Numbers and Quadratic Equations',
           'Matrices and Determinants',
           'Permutations and Combinations',
-          'Binomial Theorem',
+          'Mathematical Induction',
+          'Binomial Theorem and its Simple Applications',
           'Sequences and Series',
         ],
       },
        {
         title: 'Calculus',
         topics: [
-          'Limits and Derivatives',
-          'Continuity and Differentiability',
-          'Applications of Derivatives',
-          'Integrals',
-          'Applications of Integrals',
+          'Limits, Continuity and Differentiability',
+          'Integral Calculus (Indefinite & Definite Integration)',
           'Differential Equations',
+          'Methods of Differentiation',
+          'Tangent and Normal',
+          'Monotonicity',
+          'Maxima and Minima',
+          'Area Under The Curve',
         ],
       },
        {
         title: 'Coordinate Geometry',
         topics: [
           'Straight Lines',
+          'Circles',
           'Conic Sections',
           'Three Dimensional Geometry',
+          'Vector Algebra',
         ],
       },
-        {
-        title: 'Vector and 3D Geometry',
+      {
+        title: 'Trigonometry & Probability',
         topics: [
-          'Vectors',
-          'Three Dimensional Geometry',
+          'Trigonometrical Ratios and Identities',
+          'Trigonometric Equations',
+          'Inverse Trigonometric Functions',
+          'Heights and Distances',
+          'Statistics and Probability',
+          'Mathematical Reasoning',
         ],
       },
+      {
+        title: 'Advanced Topics',
+        topics: [
+            'Relation, Function, Inverse Trigonometric Function',
+            'Matrices',
+            'Probability',
+            'Complex Numbers'
+        ]
+      }
     ],
   },
 };
