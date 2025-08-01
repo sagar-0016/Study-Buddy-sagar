@@ -16,7 +16,7 @@ import {
   LifeBuoy,
   Notebook,
   BrainCircuit,
-  BookPlay,
+  Library,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -34,7 +34,7 @@ export const navLinks: NavLink[] = [
   { href: "/planner", label: "Planner", icon: CalendarClock },
   { href: "/questions", label: "Questions", icon: ClipboardList },
   { href: "/flashcards", label: "Flashcards", icon: Notebook },
-  { href: "/lectures", label: "Lectures", icon: BookPlay },
+  { href: "/lectures", label: "Lectures", icon: Library },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/revisions", label: "Revisions", icon: BrainCircuit },
   { href: "/feedback", label: "AI Feedback", icon: BotMessageSquare },
