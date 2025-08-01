@@ -356,6 +356,49 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
     )
 }
 
+const MasteryDot = ({ success, fails }: { success: number, fails: number }) => {
+    const total = success + fails;
+    
+    const getMasteryStyle = () => {
+        if (total === 0) {
+            // Neutral/unattempted: gray color, no pulse
+            return {
+                backgroundColor: 'hsl(220, 8%, 75%)',
+                '--mastery-color-rgb': '188, 196, 209'
+            };
+        }
+
+        const score = success / total; // Score from 0 (all fails) to 1 (all success)
+        
+        // HSL color interpolation: Red (0) -> Yellow (60) -> Green (120)
+        const hue = score * 120; // Maps score 0-1 to hue 0-120
+        
+        // RGB values for the animation shadow
+        let r, g, b;
+        const c = 1;
+        const x = c * (1 - Math.abs((hue / 60) % 2 - 1));
+        if (hue < 60) {
+            [r,g,b] = [c,x,0];
+        } else {
+            [r,g,b] = [x,c,0];
+        }
+        
+        const masteryColorRGB = `${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}`;
+
+        return {
+            backgroundColor: `hsl(${hue}, 80%, 50%)`,
+            '--mastery-color-rgb': masteryColorRGB
+        } as React.CSSProperties;
+    };
+    
+    return (
+        <div 
+            className="w-3 h-3 rounded-full animate-mastery-pulse"
+            style={getMasteryStyle()}
+        ></div>
+    );
+};
+
 const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onTopicUpdated: () => void }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
@@ -417,9 +460,12 @@ const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onT
                 <div className="space-y-3">
                     {filteredTopics.map(topic => (
                         <Card key={topic.id} className="flex items-center justify-between p-4">
-                            <div>
-                                <p className="font-semibold">{topic.topicName}</p>
-                                <p className="text-sm text-muted-foreground">{topic.chapterName} • {topic.subject}</p>
+                            <div className="flex items-center gap-4">
+                               <MasteryDot success={topic.recallSuccess} fails={topic.recallFails} />
+                               <div>
+                                  <p className="font-semibold">{topic.topicName}</p>
+                                  <p className="text-sm text-muted-foreground">{topic.chapterName} • {topic.subject}</p>
+                               </div>
                             </div>
                             <EditRevisionTopicDialog topic={topic} onTopicUpdated={onTopicUpdated}>
                                 <Button variant="ghost" size="icon">

@@ -68,3 +68,18 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+@layer utilities {
+  @keyframes mastery-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(var(--mastery-color-rgb), 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 8px rgba(var(--mastery-color-rgb), 0);
+    }
+  }
+
+  .animate-mastery-pulse {
+    animation: mastery-pulse 2s infinite;
+  }
+}
