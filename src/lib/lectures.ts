@@ -31,10 +31,10 @@ export const addLecture = async (lectureData: {
   videoFile: File;
 }): Promise<string | null> => {
   try {
-    // First, upload the video and get the URL.
+    // 1. First, upload the video and get the URL. This must complete before proceeding.
     const videoUrl = await uploadVideo(lectureData.videoFile);
 
-    // Then, add the document to Firestore with the correct videoUrl.
+    // 2. Then, add the document to Firestore with the correct videoUrl.
     const lecturesRef = collection(db, 'lectures');
     const newDocRef = await addDoc(lecturesRef, {
       title: lectureData.title,
@@ -42,14 +42,14 @@ export const addLecture = async (lectureData: {
       subject: lectureData.subject,
       channel: lectureData.channel,
       duration: lectureData.duration,
-      videoUrl: videoUrl, // This will now be correctly populated
+      videoUrl: videoUrl, // Use the URL from the completed upload
       thumbnailUrl: `https://placehold.co/1280x720.png`, // Generic placeholder
       createdAt: serverTimestamp(),
     });
     return newDocRef.id;
   } catch (error) {
     console.error('Error adding lecture:', error);
-    throw error;
+    throw error; // Re-throw the error to be caught by the UI
   }
 };
 
@@ -61,7 +61,6 @@ export const addLecture = async (lectureData: {
 export const getLectures = async (): Promise<Lecture[]> => {
   try {
     const lecturesRef = collection(db, 'lectures');
-    // It might be useful to order them, e.g., by subject or a timestamp if added later
     const q = query(lecturesRef, orderBy('createdAt', 'desc')); 
     const querySnapshot = await getDocs(q);
 
