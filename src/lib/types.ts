@@ -71,3 +71,8 @@ export type ProgressData = {
   total: number;
   subject: string;
 };
+
+export type SyllabusTopic = {
+  id: string;
+  completed: boolean;
+};

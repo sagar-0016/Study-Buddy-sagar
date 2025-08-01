@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -14,29 +15,32 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { syllabusData } from '@/lib/data';
 import type { Subject, Chapter } from '@/lib/types';
+import { getSyllabusProgress, updateSyllabusTopicStatus } from '@/lib/syllabus';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function SubjectSyllabus({ subject }: { subject: Subject }) {
   const [checkedState, setCheckedState] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize state from localStorage or default to false
-    const initialState: Record<string, boolean> = {};
-    subject.chapters.forEach(chapter => {
-      chapter.topics.forEach(topic => {
-        const key = `${subject.label}-${chapter.title}-${topic}`;
-        const storedValue = localStorage.getItem(key);
-        initialState[key] = storedValue === 'true';
-      });
-    });
-    setCheckedState(initialState);
+    const fetchProgress = async () => {
+        setIsLoading(true);
+        const progressData = await getSyllabusProgress();
+        const initialState: Record<string, boolean> = {};
+        progressData.forEach(item => {
+            initialState[item.id] = item.completed;
+        });
+        setCheckedState(initialState);
+        setIsLoading(false);
+    };
+    fetchProgress();
   }, [subject]);
 
-  const handleCheckboxChange = (topicKey: string, checked: boolean) => {
-    setCheckedState(prevState => {
-      const newState = { ...prevState, [topicKey]: checked };
-      localStorage.setItem(topicKey, String(checked));
-      return newState;
-    });
+  const handleCheckboxChange = async (topicKey: string, checked: boolean) => {
+    // Optimistically update UI
+    setCheckedState(prevState => ({ ...prevState, [topicKey]: checked }));
+    // Update Firestore
+    await updateSyllabusTopicStatus(topicKey, checked);
   };
 
   const { completedTopics, totalTopics, progress } = useMemo(() => {
@@ -57,6 +61,18 @@ function SubjectSyllabus({ subject }: { subject: Subject }) {
       progress: total > 0 ? (completed / total) * 100 : 0,
     };
   }, [checkedState, subject]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 p-4">
+        <Skeleton className="h-8 w-1/2" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-12 w-full mt-4" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
