@@ -88,13 +88,20 @@ export const addRevisionTopic = async (topicData: {
  * @param topicId - The ID of the topic to update.
  * @param data - The data to update.
  */
-export const updateRevisionTopic = async (topicId: string, data: Partial<Pick<RevisionTopic, 'subject' | 'chapterName' | 'topicName' | 'hints'>>): Promise<void> => {
+export const updateRevisionTopic = async (topicId: string, data: Partial<Pick<RevisionTopic, 'subject' | 'chapterName' | 'topicName' | 'hints'>> & { imageFile?: File }): Promise<void> => {
     try {
         const topicRef = doc(db, 'revisions', topicId);
-        await updateDoc(topicRef, {
-            ...data,
-            lastReviewed: serverTimestamp()
-        });
+        
+        const updateData: any = { ...data };
+
+        if (data.imageFile) {
+            updateData.hintsImageURL = await uploadImageHint(data.imageFile);
+        }
+        delete updateData.imageFile; // Don't try to save the file object to Firestore
+
+        updateData.lastReviewed = serverTimestamp();
+        
+        await updateDoc(topicRef, updateData);
     } catch (error) {
         console.error(`Error updating topic ${topicId}:`, error);
         throw error;
@@ -226,5 +233,3 @@ export const getRevisionProgress = async (): Promise<{ mastered: number, total: 
         return { mastered: 0, total: 0 };
     }
 }
-
-    

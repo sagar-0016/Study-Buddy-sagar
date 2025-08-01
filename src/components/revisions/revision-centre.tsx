@@ -165,6 +165,7 @@ const EditRevisionTopicDialog = ({ topic, onTopicUpdated, children }: { topic: R
     const [chapterName, setChapterName] = useState(topic.chapterName);
     const [topicName, setTopicName] = useState(topic.topicName);
     const [hints, setHints] = useState(topic.hints);
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
@@ -172,7 +173,13 @@ const EditRevisionTopicDialog = ({ topic, onTopicUpdated, children }: { topic: R
     const handleSubmit = async () => {
         setIsSaving(true);
         try {
-            await updateRevisionTopic(topic.id, { subject, chapterName, topicName, hints });
+            await updateRevisionTopic(topic.id, { 
+                subject, 
+                chapterName, 
+                topicName, 
+                hints,
+                imageFile: imageFile || undefined 
+            });
             toast({ title: "Success!", description: "Revision topic has been updated." });
             onTopicUpdated();
             setIsOpen(false);
@@ -216,6 +223,18 @@ const EditRevisionTopicDialog = ({ topic, onTopicUpdated, children }: { topic: R
                         <Label htmlFor="hints-edit" className="text-right pt-2">Hints</Label>
                         <Textarea id="hints-edit" value={hints} onChange={(e) => setHints(e.target.value)} className="col-span-3" />
                     </div>
+                    <div className="grid grid-cols-4 items-start gap-4">
+                        <Label htmlFor="image-edit" className="text-right pt-2">New Image</Label>
+                        <Input id="image-edit" type="file" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} className="col-span-3" accept="image/*"/>
+                    </div>
+                    {topic.hintsImageURL && (
+                         <div className="grid grid-cols-4 items-start gap-4">
+                            <Label className="text-right pt-2">Current Image</Label>
+                            <div className="col-span-3">
+                                <Image src={topic.hintsImageURL} alt="Current hint" width={100} height={100} className="rounded-md border" />
+                            </div>
+                         </div>
+                    )}
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
@@ -520,5 +539,3 @@ export default function RevisionCentre() {
     </div>
   );
 }
-
-    
