@@ -6,11 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { getPersonalizedFeedbackAction } from '@/lib/actions';
 import { Loader2, Sparkles, Lightbulb, ClipboardCheck } from 'lucide-react';
-import { getSyllabusProgress } from '@/lib/syllabus';
-import { getRevisionTopics } from '@/lib/revisions';
-import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import type { Question } from '@/lib/types';
+import type { Question, RevisionTopic, SyllabusTopic } from '@/lib/types';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type Feedback = {
   appreciation: string;
@@ -22,6 +19,10 @@ export default function PersonalizedFeedback() {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localSyllabusProgress] = useLocalStorage<Record<string, boolean>>('syllabus-progress', {});
+  const [localRevisionTopics] = useLocalStorage<Record<string, { s: number; f: number }>>('revision-stats', {});
+  const [localQuestionAttempts] = useLocalStorage<Record<string, { a: string; c: boolean }>>('question-attempts', {});
+  const [localTrickyQuestionAttempts] = useLocalStorage<Record<string, { a: string; c: boolean }>>('tricky-question-attempts', {});
 
   const handleGenerateFeedback = async () => {
     setIsLoading(true);
@@ -29,33 +30,30 @@ export default function PersonalizedFeedback() {
     setError(null);
 
     try {
-      // 1. Fetch recently completed syllabus topics
-      const syllabusProgress = await getSyllabusProgress();
-      const recentlyCompletedSyllabus = syllabusProgress
-        .filter(p => p.completed)
-        .map(p => p.id.split('-').pop() || p.id) // Get topic name
-        .slice(-5); // Get most recent 5
+      // 1. Get recently completed syllabus topics from local storage
+      const recentlyCompletedSyllabus = Object.entries(localSyllabusProgress)
+        .filter(([, completed]) => completed)
+        .map(([id]) => id.split('-').pop() || id)
+        .slice(-5);
 
-      // 2. Fetch revision topics with mistakes
-      const revisionTopics = await getRevisionTopics();
-      const revisionMistakes = revisionTopics
-        .filter(t => t.recallFails > t.recallSuccess && t.recallFails > 0)
-        .sort((a,b) => b.recallFails - a.recallFails)
-        .slice(0, 5) // Get top 5 most failed
-        .map(t => ({ topic: t.topicName, fails: t.recallFails }));
+      // 2. Get revision topics with mistakes from local storage
+      const revisionMistakes = Object.entries(localRevisionTopics)
+        .filter(([, stats]) => stats.f > stats.s && stats.f > 0)
+        .sort(([, a], [, b]) => b.f - a.f)
+        .slice(0, 5)
+        .map(([topicName, stats]) => ({ topic: topicName, fails: stats.f }));
 
-      // 3. Fetch incorrectly answered questions
-      const q = query(
-        collection(db, 'questions'),
-        where('isAttempted', '==', true),
-        limit(20) // Fetch the last 20 attempted questions
-      );
-      const querySnapshot = await getDocs(q);
-      const questionMistakes = querySnapshot.docs
-        .map(doc => doc.data() as Question)
-        .filter(question => question.isCorrect === false)
-        .map(question => question.questionText)
-        .slice(0, 5); // Limit to 5 for the prompt
+      // 3. Get incorrectly answered questions from local storage
+      const allIncorrectAnswers = {
+        ...localQuestionAttempts,
+        ...localTrickyQuestionAttempts,
+      };
+
+      const questionMistakes = Object.entries(allIncorrectAnswers)
+        .filter(([, attempt]) => !attempt.c)
+        .map(([questionText]) => questionText)
+        .slice(0, 5);
+
 
       // 4. Call the AI action
       const result = await getPersonalizedFeedbackAction({

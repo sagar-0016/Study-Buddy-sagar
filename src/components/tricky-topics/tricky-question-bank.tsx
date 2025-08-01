@@ -17,13 +17,14 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import BrainstormingTool from './brainstorming-tool';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const QuestionCard = ({
   question,
   onAttempt,
 }: {
   question: Question;
-  onAttempt: (id: string, answer: string, isCorrect: boolean) => void;
+  onAttempt: (id: string, answer: string, isCorrect: boolean, questionText: string) => void;
 }) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [showResult, setShowResult] = useState(false);
@@ -32,7 +33,7 @@ const QuestionCard = ({
     e.preventDefault();
     if (!userAnswer) return;
     setShowResult(true);
-    onAttempt(question.id, userAnswer, userAnswer === question.correctAnswer);
+    onAttempt(question.id, userAnswer, userAnswer === question.correctAnswer, question.questionText);
   };
 
   const ResultDisplay = () => {
@@ -113,7 +114,7 @@ const QuestionList = ({
 }: {
   questions: Question[];
   isLoading: boolean;
-  onAttempt: (id: string, answer: string, isCorrect: boolean) => void;
+  onAttempt: (id: string, answer: string, isCorrect: boolean, questionText: string) => void;
 }) => {
   if (isLoading) {
     return (
@@ -148,6 +149,7 @@ export default function TrickyQuestionBank() {
   const [attemptedQuestions, setAttemptedQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [, setLocalAttempts] = useLocalStorage<Record<string, { a: string; c: boolean }>>('tricky-question-attempts', {});
   const { toast } = useToast();
 
   const fetchQuestions = useCallback(async () => {
@@ -172,8 +174,11 @@ export default function TrickyQuestionBank() {
     fetchQuestions();
   }, [fetchQuestions]);
 
-  const handleAttempt = async (id: string, userAnswer: string, isCorrect: boolean) => {
+  const handleAttempt = async (id: string, userAnswer: string, isCorrect: boolean, questionText: string) => {
     try {
+       // Save to local storage
+      setLocalAttempts(prev => ({ ...prev, [questionText]: { a: userAnswer, c: isCorrect } }));
+
       const questionDocRef = doc(db, 'tricky-questions', id);
       await updateDoc(questionDocRef, {
         isAttempted: true,

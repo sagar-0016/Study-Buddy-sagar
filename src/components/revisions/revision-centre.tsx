@@ -25,36 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Confetti from 'react-confetti';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Custom hook for localStorage
-function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.log(error);
-      return initialValue;
-    }
-  });
-
-  const setValue = (value: T) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  return [storedValue, setValue];
-}
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 
 const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () => void, children: React.ReactNode }) => {
@@ -296,6 +267,7 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
     const [showHints, setShowHints] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
     const [recentlyViewed, setRecentlyViewed] = useLocalStorage<string[]>('recentlyViewedRevision', []);
+    const [, setLocalRevisionStats] = useLocalStorage<Record<string, { s: number; f: number }>>('revision-stats', {});
     const { toast } = useToast();
 
     const currentTopic = topics[currentIndex];
@@ -312,6 +284,18 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
     const handleNext = async (result: 'success' | 'fail') => {
         setShowHints(false);
         try {
+            // Update local storage
+            setLocalRevisionStats(prev => {
+                const current = prev[currentTopic.topicName] || { s: 0, f: 0 };
+                return {
+                    ...prev,
+                    [currentTopic.topicName]: {
+                        s: current.s + (result === 'success' ? 1 : 0),
+                        f: current.f + (result === 'fail' ? 1 : 0),
+                    }
+                };
+            });
+            // Update Firestore
             await updateRecallStats(currentTopic.id, result);
         } catch (error) {
             toast({ title: 'Error', description: 'Could not save your progress.', variant: 'destructive'})

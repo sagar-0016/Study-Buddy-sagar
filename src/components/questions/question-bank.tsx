@@ -15,13 +15,14 @@ import { CheckCircle2, XCircle, AlertTriangle, Lightbulb, Image as ImageIcon } f
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const QuestionCard = ({
   question,
   onAttempt,
 }: {
   question: Question;
-  onAttempt: (id: string, answer: string, isCorrect: boolean) => void;
+  onAttempt: (id: string, answer: string, isCorrect: boolean, questionText: string) => void;
 }) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [showResult, setShowResult] = useState(false);
@@ -30,7 +31,7 @@ const QuestionCard = ({
     e.preventDefault();
     if (!userAnswer) return;
     setShowResult(true);
-    onAttempt(question.id, userAnswer, userAnswer === question.correctAnswer);
+    onAttempt(question.id, userAnswer, userAnswer === question.correctAnswer, question.questionText);
   };
 
   const ResultDisplay = () => {
@@ -111,7 +112,7 @@ const QuestionList = ({
 }: {
   questions: Question[];
   isLoading: boolean;
-  onAttempt: (id: string, answer: string, isCorrect: boolean) => void;
+  onAttempt: (id: string, answer: string, isCorrect: boolean, questionText: string) => void;
 }) => {
   if (isLoading) {
     return (
@@ -146,6 +147,7 @@ export default function QuestionBank() {
   const [attemptedQuestions, setAttemptedQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [, setLocalAttempts] = useLocalStorage<Record<string, { a: string; c: boolean }>>('question-attempts', {});
   const { toast } = useToast();
 
   const fetchQuestions = useCallback(async () => {
@@ -170,8 +172,12 @@ export default function QuestionBank() {
     fetchQuestions();
   }, [fetchQuestions]);
 
-  const handleAttempt = async (id: string, userAnswer: string, isCorrect: boolean) => {
+  const handleAttempt = async (id: string, userAnswer: string, isCorrect: boolean, questionText: string) => {
     try {
+      // Save to local storage
+      setLocalAttempts(prev => ({ ...prev, [questionText]: { a: userAnswer, c: isCorrect } }));
+
+      // Save to Firestore
       const questionDocRef = doc(db, 'questions', id);
       await updateDoc(questionDocRef, {
         isAttempted: true,
