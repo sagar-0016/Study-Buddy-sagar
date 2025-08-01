@@ -75,8 +75,8 @@ const UploadLectureDialog = ({ onUploadComplete }: { onUploadComplete: () => voi
     const { toast } = useToast();
 
     const canSubmit = useMemo(() => {
-        return title && description && subject && channel && duration && videoFile;
-    }, [title, description, subject, channel, duration, videoFile]);
+        return !!videoFile;
+    }, [videoFile]);
 
     const resetForm = () => {
         setTitle('');
@@ -88,10 +88,17 @@ const UploadLectureDialog = ({ onUploadComplete }: { onUploadComplete: () => voi
     }
 
     const handleSubmit = async () => {
-        if (!canSubmit) return;
+        if (!videoFile) return;
         setIsSaving(true);
         try {
-            await addLecture({ title, description, subject, channel, duration, videoFile });
+            await addLecture({ 
+                title: title || "Test Video",
+                description: description || "A test video upload.",
+                subject: subject || "Chemistry",
+                channel: channel || "Test Channel",
+                duration: duration || "0:30",
+                videoFile 
+            });
             toast({ title: 'Success!', description: 'Your lecture has been uploaded.' });
             onUploadComplete();
             resetForm();
@@ -232,3 +239,5 @@ export default function LectureLibrary() {
     </div>
   );
 }
+
+    
