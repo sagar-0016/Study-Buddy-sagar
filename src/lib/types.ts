@@ -119,3 +119,13 @@ export interface Doubt extends DocumentData {
     isCleared: boolean;
     createdAt: Timestamp;
 }
+
+export interface TechnicalHelp extends DocumentData {
+    id: string;
+    text: string;
+    category: string;
+    imageUrl?: string;
+    isAddressed: boolean;
+    isCleared: boolean;
+    createdAt: Timestamp;
+}
