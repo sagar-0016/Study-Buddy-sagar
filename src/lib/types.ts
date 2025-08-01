@@ -58,3 +58,16 @@ export interface Question extends DocumentData {
   userAnswer?: string;
   isCorrect?: boolean;
 }
+
+export type Flashcard = {
+    id: number;
+    question: string;
+    answer: string;
+};
+
+export type ProgressData = {
+  id: string;
+  completed: number;
+  total: number;
+  subject: string;
+};

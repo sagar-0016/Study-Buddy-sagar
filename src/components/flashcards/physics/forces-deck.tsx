@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, ArrowRight, RotateCw, Check, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Confetti from 'react-confetti';
+import { updateDeckProgress } from '@/lib/progress';
 
 type CardStatus = 'done' | 'later';
 
@@ -54,6 +55,9 @@ const shuffleArray = <T>(array: T[]): T[] => {
   return shuffled;
 };
 
+const DECK_ID = 'forces';
+const DECK_SUBJECT = 'Physics';
+
 export default function ForcesDeck() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardStatuses, setCardStatuses] = useLocalStorage<Record<string, CardStatus>>('forces-statuses', {});
@@ -95,14 +99,22 @@ export default function ForcesDeck() {
 
   const handleMarkAs = (status: CardStatus) => {
     if (!currentCard) return;
-    setCardStatuses({ ...cardStatuses, [currentCard.id]: status });
+
+    const newStatuses = { ...cardStatuses, [currentCard.id]: status };
+    setCardStatuses(newStatuses);
     setIsFlipped(false);
     
-    // Check for completion after state update
-    const newAvailableCards = shuffledCards.filter(c => c.id !== currentCard.id && cardStatuses[c.id] !== 'done');
-    if(newAvailableCards.length === 0 && status === 'done'){
-        setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 8000);
+    // Update progress in Firestore if marked as done
+    if (status === 'done') {
+        const completedCount = Object.values(newStatuses).filter(s => s === 'done').length;
+        updateDeckProgress(DECK_ID, completedCount, forcesFlashcards.length, DECK_SUBJECT);
+
+        // Check for completion
+        const newAvailableCards = shuffledCards.filter(c => newStatuses[c.id] !== 'done');
+        if(newAvailableCards.length === 0){
+            setShowConfetti(true);
+            setTimeout(() => setShowConfetti(false), 8000);
+        }
     }
   };
 
@@ -112,6 +124,7 @@ export default function ForcesDeck() {
     setIsFlipped(false);
     setShuffledCards(shuffleArray(forcesFlashcards));
     setShowConfetti(false);
+    updateDeckProgress(DECK_ID, 0, forcesFlashcards.length, DECK_SUBJECT);
   };
   
   useEffect(() => {
@@ -130,7 +143,11 @@ export default function ForcesDeck() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNavigation]);
 
-  const progress = forcesFlashcards.length > 0 ? ((forcesFlashcards.length - availableCards.length) / forcesFlashcards.length) * 100 : 0;
+  const completedCount = useMemo(() => {
+    return Object.values(cardStatuses).filter(s => s === 'done').length;
+  }, [cardStatuses]);
+
+  const progress = forcesFlashcards.length > 0 ? (completedCount / forcesFlashcards.length) * 100 : 0;
 
   return (
     <div className="flex flex-col h-full min-h-[75vh]">
@@ -156,7 +173,7 @@ export default function ForcesDeck() {
       <div className="mb-6 space-y-2">
         <Progress value={progress} />
         <p className="text-sm text-muted-foreground text-center">
-            {forcesFlashcards.length - availableCards.length} / {forcesFlashcards.length} cards completed
+            {completedCount} / {forcesFlashcards.length} cards completed
         </p>
       </div>
       
