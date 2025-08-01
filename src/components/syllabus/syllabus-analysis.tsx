@@ -19,7 +19,8 @@ import { Label } from '@/components/ui/label';
 import { syllabusData } from '@/lib/data';
 import type { Subject, Chapter } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { Send } from 'lucide-react';
+import { Send, Pencil, Edit } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const weightageLevels: Record<number, { label: string; description: string; color: string }> = {
     5: { label: 'Level 5', description: '>2 questions on average', color: 'bg-red-500 hover:bg-red-600 border-red-500' },
@@ -32,6 +33,7 @@ const weightageLevels: Record<number, { label: string; description: string; colo
 function SubjectAnalysis({ subject }: { subject: Subject }) {
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('weightage-desc');
+  const [isSuggestMode, setIsSuggestMode] = useState(false);
 
   const allChapters = useMemo(() => {
     return subject.chapters.flatMap(unit => 
@@ -87,31 +89,46 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
 
         <div className="space-y-3">
             {filteredAndSortedChapters.map(chapter => (
-                <Card key={chapter.name} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 gap-4">
+                <Card key={chapter.name} className="flex items-center justify-between p-4">
                     <div className="flex-1">
                         <p className="font-semibold">{chapter.name}</p>
                         <p className="text-sm text-muted-foreground">{chapter.unit}</p>
                     </div>
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <div className="flex items-center gap-4">
                         <Badge className={cn("text-white font-bold", weightageLevels[chapter.weightage].color)}>
                             {weightageLevels[chapter.weightage].label}
                         </Badge>
-                         <SuggestChangeDialog chapter={chapter} />
+                         {isSuggestMode && (
+                            <SuggestChangeDialog chapter={chapter}>
+                                <Button variant="ghost" size="icon">
+                                    <Pencil className="h-4 w-4" />
+                                </Button>
+                            </SuggestChangeDialog>
+                         )}
                     </div>
                 </Card>
             ))}
+        </div>
+        
+        <Separator className="my-6" />
+
+        <div className="flex justify-end">
+            <Button variant={isSuggestMode ? "default" : "outline"} onClick={() => setIsSuggestMode(!isSuggestMode)}>
+                <Edit className="mr-2 h-4 w-4" />
+                {isSuggestMode ? "Finish Suggesting" : "Suggest Changes"}
+            </Button>
         </div>
     </div>
   );
 }
 
-const SuggestChangeDialog = ({ chapter }: { chapter: { name: string, unit: string }}) => {
+const SuggestChangeDialog = ({ chapter, children }: { chapter: { name: string, unit: string }, children: React.ReactNode}) => {
     const [suggestion, setSuggestion] = useState('');
 
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm">Suggest Change</Button>
+                {children}
             </DialogTrigger>
             <DialogContent className="max-w-md">
                 <DialogHeader>
@@ -130,7 +147,7 @@ const SuggestChangeDialog = ({ chapter }: { chapter: { name: string, unit: strin
                     />
                 </div>
                 <DialogFooter>
-                    <Button variant="ghost">Cancel</Button>
+                    <DialogClose asChild><Button variant="ghost">Cancel</Button></DialogClose>
                      <Button>
                         <Send className="mr-2 h-4 w-4" />
                         Submit Suggestion
