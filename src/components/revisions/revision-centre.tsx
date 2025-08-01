@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search, XCircle } from 'lucide-react';
+import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search, XCircle, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
