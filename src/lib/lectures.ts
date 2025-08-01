@@ -60,7 +60,7 @@ export const getLectures = async (): Promise<Lecture[]> => {
   try {
     const lecturesRef = collection(db, 'lectures');
     // It might be useful to order them, e.g., by subject or a timestamp if added later
-    const q = query(lecturesRef, orderBy('subject')); 
+    const q = query(lecturesRef, orderBy('createdAt', 'desc')); 
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
