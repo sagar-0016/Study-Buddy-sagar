@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getSyllabusProgress } from "@/lib/syllabus";
 import { getProgressData } from "@/lib/progress";
 import { getRevisionProgress } from "@/lib/revisions";
+import { getPyqProgressStats } from "@/lib/pyq";
 import { syllabusData } from "@/lib/data";
 import { BookCheck, ClipboardList, Notebook, BrainCircuit } from "lucide-react";
 
@@ -43,11 +44,11 @@ const ProgressCard = ({ title, icon: Icon, value, total, isLoading, unit = 'topi
 export default function DashboardOverview() {
   const [syllabusProgress, setSyllabusProgress] = useState({ completed: 0, total: 0 });
   const [flashcardProgress, setFlashcardProgress] = useState({ completed: 0, total: 0 });
-  const [pyqProgress, setPyqProgress] = useState({ completed: 125, total: 500 }); // Placeholder
+  const [pyqProgress, setPyqProgress] = useState({ completed: 0, total: 0 });
   const [revisionProgress, setRevisionProgress] = useState({ completed: 0, total: 0 });
   const [isLoadingSyllabus, setIsLoadingSyllabus] = useState(true);
   const [isLoadingFlashcards, setIsLoadingFlashcards] = useState(true);
-  const [isLoadingPyqs, setIsLoadingPyqs] = useState(false); // Placeholder is not loading
+  const [isLoadingPyqs, setIsLoadingPyqs] = useState(true);
   const [isLoadingRevisions, setIsLoadingRevisions] = useState(true);
 
   useEffect(() => {
@@ -74,6 +75,13 @@ export default function DashboardOverview() {
       setFlashcardProgress({ completed, total });
       setIsLoadingFlashcards(false);
     };
+    
+    const fetchPyqData = async () => {
+      setIsLoadingPyqs(true);
+      const stats = await getPyqProgressStats();
+      setPyqProgress({ completed: stats.completed, total: stats.total });
+      setIsLoadingPyqs(false);
+    }
 
     const fetchRevisionData = async () => {
         setIsLoadingRevisions(true);
@@ -85,6 +93,7 @@ export default function DashboardOverview() {
     fetchSyllabusData();
     fetchFlashcardData();
     fetchRevisionData();
+    fetchPyqData();
   }, []);
 
   return (
@@ -111,7 +120,7 @@ export default function DashboardOverview() {
             value={pyqProgress.completed}
             total={pyqProgress.total}
             isLoading={isLoadingPyqs}
-            unit="questions"
+            unit="chapters"
         />
         <ProgressCard 
             title="Revisions Mastered"
@@ -124,5 +133,3 @@ export default function DashboardOverview() {
     </div>
   );
 }
-
-    
