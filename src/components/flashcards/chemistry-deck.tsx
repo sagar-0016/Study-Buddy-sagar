@@ -14,7 +14,7 @@ const chemDecks = [
         icon: Combine,
         status: 'available',
         difficulty: 'Advanced',
-        href: '/flashcards/not-for-you', // Placeholder
+        href: '/flashcards/chemistry/goc',
     },
     {
         title: 'Physical Chemistry',
@@ -114,3 +114,5 @@ export default function ChemistryDeck() {
     </div>
   );
 }
+
+    
