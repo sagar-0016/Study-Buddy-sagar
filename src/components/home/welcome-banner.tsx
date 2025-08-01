@@ -19,8 +19,8 @@ export default function WelcomeBanner() {
     const y = (clientY - top) / height - 0.5;
 
     // Apply the 3D transform. The multiplier adjusts the "intensity" of the effect.
-    const rotateY = x * 30; // Rotate around Y-axis
-    const rotateX = -y * 30; // Rotate around X-axis
+    const rotateY = x * 10; // Rotate around Y-axis
+    const rotateX = -y * 10; // Rotate around X-axis
 
     setTransform(`perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`);
   };
@@ -43,7 +43,7 @@ export default function WelcomeBanner() {
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           style={{ transition: 'transform 0.1s' }}
-          className="relative min-h-[15rem] h-60 md:h-full group"
+          className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group"
         >
            <Image
               src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
@@ -54,6 +54,23 @@ export default function WelcomeBanner() {
               style={{ transform: transform, transition: 'transform 0.25s ease-out' }}
             />
         </div>
+        {/* <div className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group">
+           <Image
+              src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
+              alt="IIT Delhi Emblem in a serene landscape"
+              data-ai-hint="logo university"
+              fill
+              className="w-full h-full object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105 group-hover:-translate-y-1"
+            />
+        </div> */}
+
+        {/* <div className="relative min-h-[15rem] h-60 md:h-full group"> 
+            <Image 
+            src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png" 
+            alt="IIT Delhi Emblem in a serene landscape" 
+            data-ai-hint="logo university" 
+            fill className="object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105 group-hover:-translate-y-1" /> 
+          </div> */}
       </div>
     </div>
   );
