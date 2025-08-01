@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -10,8 +11,8 @@ const decks = [
     title: 'Biology Fundamentals',
     description: 'Dive into the building blocks of life, from cellular structures to complex biological processes.',
     icon: Dna,
-    status: 'available',
-    href: '/flashcards/biology',
+    status: 'not-available',
+    href: '/flashcards/not-for-you',
   },
   {
     title: 'Mathematics',
@@ -38,32 +39,43 @@ const decks = [
     title: 'AI & Machine Learning',
     description: 'Explore the core concepts of AI, neural networks, and machine learning algorithms.',
     icon: BrainCircuit,
-    status: 'available',
-    href: '/flashcards/ai',
+    status: 'not-available',
+    href: '/flashcards/not-for-you',
   },
   {
     title: 'Space & Astronomy',
     description: 'Journey through the cosmos and learn about planets, stars, galaxies, and the mysteries of space.',
     icon: Rocket,
-    status: 'coming-soon',
-    href: '#',
+    status: 'not-for-you',
+    href: '/flashcards/not-for-you',
   },
 ];
 
 const DeckCard = ({ deck }: { deck: (typeof decks)[0] }) => {
   const isAvailable = deck.status === 'available';
+  
+  const getBadgeText = () => {
+    if (deck.status === 'available') return 'Available';
+    if (deck.status === 'not-for-you') return 'Not for you babe';
+    if (deck.status === 'not-available') return 'Not Available';
+    return 'Coming Soon';
+  }
+
   const CardContentWrapper = isAvailable ? Link : 'div';
+  
+  const cardProps = isAvailable ? { href: deck.href } : { onClick: () => { if (deck.href) window.location.href = deck.href; }, style: { cursor: 'pointer' } };
+
 
   return (
-    <Card className={`flex flex-col transition-all duration-300 ${isAvailable ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : 'opacity-70 cursor-not-allowed'}`}>
-      <CardContentWrapper href={deck.href} className="flex flex-col flex-grow p-6">
+    <Card className={`flex flex-col transition-all duration-300 ${isAvailable ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : 'opacity-80 hover:border-destructive hover:-translate-y-1 hover:shadow-lg'}`}>
+      <div {...cardProps} className="flex flex-col flex-grow p-6">
         <CardHeader className="p-0 mb-4">
           <div className="flex justify-between items-start">
-            <div className="p-3 rounded-full bg-primary/10 text-primary">
+            <div className={`p-3 rounded-full ${isAvailable ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
                 <deck.icon className="w-8 h-8" />
             </div>
-            <Badge variant={isAvailable ? 'default' : 'secondary'}>
-              {isAvailable ? 'Available' : 'Coming Soon'}
+            <Badge variant={isAvailable ? 'default' : 'destructive'}>
+              {getBadgeText()}
             </Badge>
           </div>
         </CardHeader>
@@ -71,7 +83,7 @@ const DeckCard = ({ deck }: { deck: (typeof decks)[0] }) => {
           <CardTitle className="text-xl mb-2">{deck.title}</CardTitle>
           <CardDescription className="flex-grow">{deck.description}</CardDescription>
         </div>
-      </CardContentWrapper>
+      </div>
     </Card>
   );
 };
