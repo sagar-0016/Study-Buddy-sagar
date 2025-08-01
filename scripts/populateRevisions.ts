@@ -4,7 +4,7 @@
 // 2. Run from the root of your project: tsx ./scripts/populateRevisions.ts
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { getFirestore, collection, serverTimestamp, writeBatch, doc } from 'firebase/firestore';
 
 // IMPORTANT: Paste your Firebase config here
 const firebaseConfig = {
