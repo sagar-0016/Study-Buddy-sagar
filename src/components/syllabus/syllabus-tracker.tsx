@@ -134,9 +134,9 @@ function PyqTracker({ subject }: { subject: Subject }) {
         fetchProgress();
     }, [subject]);
     
-    const handleCheckboxChange = async (chapterKey: string, checked: boolean) => {
-        setCheckedState(prevState => ({ ...prevState, [chapterKey]: checked }));
-        await updatePyqStatus(chapterKey, checked);
+    const handleCheckboxChange = async (pyqKey: string, checked: boolean) => {
+        setCheckedState(prevState => ({ ...prevState, [pyqKey]: checked }));
+        await updatePyqStatus(pyqKey, checked);
     };
 
      if (isLoading) {
@@ -150,26 +150,30 @@ function PyqTracker({ subject }: { subject: Subject }) {
     return (
          <div className="space-y-4">
             <Accordion type="multiple" className="w-full">
-                {subject.chapters.map((chapter: Chapter) => {
-                    const chapterKey = `${subject.label}-${chapter.title}`;
-                    return (
-                        <AccordionItem key={chapterKey} value={chapter.title}>
-                            <AccordionTrigger>{chapter.title}</AccordionTrigger>
-                            <AccordionContent>
-                                <div className="flex items-center space-x-3 rounded-md p-2 hover:bg-muted/50 transition-colors">
-                                    <Checkbox
-                                        id={chapterKey}
-                                        checked={checkedState[chapterKey] || false}
-                                        onCheckedChange={(checked) => handleCheckboxChange(chapterKey, !!checked)}
-                                    />
-                                    <Label htmlFor={chapterKey} className="w-full font-normal cursor-pointer">
-                                        Mark all PYQs for this chapter as completed
-                                    </Label>
-                                </div>
-                            </AccordionContent>
-                        </AccordionItem>
-                    );
-                })}
+                {subject.chapters.map((chapter: Chapter) => ( // chapter is a unit like "Mechanics"
+                    <AccordionItem key={chapter.title} value={chapter.title}>
+                        <AccordionTrigger>{chapter.title}</AccordionTrigger>
+                        <AccordionContent>
+                           <div className="space-y-3">
+                                {chapter.topics.map(topic => { // topic is a chapter like "Kinematics"
+                                    const pyqKey = `${subject.label}-${chapter.title}-${topic}`;
+                                    return (
+                                        <div key={pyqKey} className="flex items-center space-x-3 rounded-md p-2 hover:bg-muted/50 transition-colors">
+                                            <Checkbox
+                                                id={pyqKey}
+                                                checked={checkedState[pyqKey] || false}
+                                                onCheckedChange={(checked) => handleCheckboxChange(pyqKey, !!checked)}
+                                            />
+                                            <Label htmlFor={pyqKey} className="w-full font-normal cursor-pointer">
+                                                {topic}
+                                            </Label>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                ))}
             </Accordion>
         </div>
     )
