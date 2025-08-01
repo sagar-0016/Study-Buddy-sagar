@@ -14,7 +14,7 @@ const physicsDecks = [
         icon: Wind,
         status: 'available',
         difficulty: 'Basic',
-        href: '/flashcards/not-for-you', // Placeholder
+        href: '/flashcards/physics/kinematics',
     },
     {
         title: "Forces, Newton's Laws & Friction",
