@@ -33,7 +33,7 @@ const decks = [
     description: 'Understand the fundamental laws that govern our universe, from mechanics to quantum physics.',
     icon: Atom,
     status: 'available',
-    href: '/flashcards/not-for-you',
+    href: '/flashcards/physics',
   },
    {
     title: 'AI & Machine Learning',
