@@ -30,40 +30,34 @@ const weightageLevels: Record<number, { label: string; description: string; colo
     1: { label: 'Level 1', description: 'Quite rare to have a question', color: 'bg-blue-500 hover:bg-blue-600 border-blue-500' },
 };
 
-// Define a new type for the flattened structure
-type ChapterWithUnit = SyllabusChapter & { unit: string };
-
-
 function SubjectAnalysis({ subject }: { subject: Subject }) {
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('weightage-desc');
   const [isSuggestMode, setIsSuggestMode] = useState(false);
 
-  const allChaptersWithUnit = useMemo(() => {
-    return subject.chapters.flatMap(chapter => 
-        chapter.topics.map(topic => ({ ...topic, unit: chapter.title }))
-    );
+  const allTopics = useMemo(() => {
+    return subject.chapters.flatMap(chapter => chapter.topics);
   }, [subject]);
 
-  const filteredAndSortedChapters = useMemo(() => {
-    let chapters: ChapterWithUnit[] = [...allChaptersWithUnit];
+  const filteredAndSortedTopics = useMemo(() => {
+    let topics: SyllabusChapter[] = [...allTopics];
     
     // Filter
     if (filter !== 'all') {
-      chapters = chapters.filter(c => c.weightage === parseInt(filter));
+      topics = topics.filter(c => c.weightage === parseInt(filter));
     }
 
     // Sort
     if (sort === 'weightage-desc') {
-      chapters.sort((a, b) => b.weightage - a.weightage);
+      topics.sort((a, b) => b.weightage - a.weightage);
     } else if (sort === 'weightage-asc') {
-      chapters.sort((a, b) => a.weightage - b.weightage);
+      topics.sort((a, b) => a.weightage - b.weightage);
     } else if (sort === 'alphabetical') {
-      chapters.sort((a, b) => a.name.localeCompare(b.name));
+      topics.sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    return chapters;
-  }, [allChaptersWithUnit, filter, sort]);
+    return topics;
+  }, [allTopics, filter, sort]);
 
   return (
     <div className="space-y-6">
@@ -74,7 +68,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">All Levels</SelectItem>
-                    {Object.entries(weightageLevels).map(([level, { label }]) => (
+                    {Object.entries(weightageLevels).sort((a,b) => parseInt(b[0]) - parseInt(a[0])).map(([level, { label }]) => (
                         <SelectItem key={level} value={level}>{label}</SelectItem>
                     ))}
                 </SelectContent>
@@ -92,18 +86,18 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
         </div>
 
         <div className="space-y-3">
-            {filteredAndSortedChapters.map(chapter => (
-                <Card key={chapter.name} className="flex items-center justify-between p-4">
+            {filteredAndSortedTopics.map(topic => (
+                <Card key={topic.name} className="flex items-center justify-between p-4">
                     <div className="flex-1">
-                        <p className="font-semibold">{chapter.name}</p>
-                        <p className="text-sm text-muted-foreground">{chapter.unit}</p>
+                        <p className="font-semibold">{topic.name}</p>
+                        <p className="text-sm text-muted-foreground">{topic.unit}</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <Badge className={cn("text-white font-bold", weightageLevels[chapter.weightage].color)}>
-                            {weightageLevels[chapter.weightage].label}
+                        <Badge className={cn("text-white font-bold", weightageLevels[topic.weightage].color)}>
+                            {weightageLevels[topic.weightage].label}
                         </Badge>
                          {isSuggestMode && (
-                            <SuggestChangeDialog chapter={chapter}>
+                            <SuggestChangeDialog topic={topic}>
                                 <Button variant="ghost" size="icon">
                                     <Pencil className="h-4 w-4" />
                                 </Button>
@@ -126,7 +120,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
   );
 }
 
-const SuggestChangeDialog = ({ chapter, children }: { chapter: ChapterWithUnit, children: React.ReactNode}) => {
+const SuggestChangeDialog = ({ topic, children }: { topic: SyllabusChapter, children: React.ReactNode}) => {
     const [suggestion, setSuggestion] = useState('');
 
     return (
@@ -138,7 +132,7 @@ const SuggestChangeDialog = ({ chapter, children }: { chapter: ChapterWithUnit, 
                 <DialogHeader>
                     <DialogTitle>Suggest Weightage Change</DialogTitle>
                     <DialogDescription>
-                        Your feedback on the weightage for "{chapter.name}" helps improve the app. This will be reviewed.
+                        Your feedback on the weightage for "{topic.name}" helps improve the app. This will be reviewed.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-2">

@@ -11,6 +11,7 @@ export type NavLink = {
 export type SyllabusChapter = {
     name: string;
     weightage: number;
+    unit: string;
 }
 
 export type Chapter = {
