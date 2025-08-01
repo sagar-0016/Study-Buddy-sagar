@@ -115,12 +115,6 @@ export default function BrainstormingTool() {
                                 <Badge variant="secondary">{topic.subject}</Badge>
                             </div>
                         </CardHeader>
-                         <CardFooter>
-                            <p className="text-sm text-primary font-medium flex items-center gap-2">
-                                <BookCheck className="h-4 w-4" />
-                                Click to start brainstorming and submit your thoughts
-                            </p>
-                        </CardFooter>
                     </Card>
                 </SubmissionDialog>
             ))}
