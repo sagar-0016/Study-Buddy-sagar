@@ -94,23 +94,24 @@ const DeckCard = ({ deck }: { deck: (typeof mathDecks)[0] }) => {
 
 export default function MathsDeck() {
   return (
-    <div className="space-y-8">
-        <div className="p-8 text-center bg-gradient-to-br from-primary to-accent rounded-lg text-primary-foreground relative overflow-hidden">
-             <div className="absolute inset-0 bg-grid-slate-100/[0.05] bg-[bottom_1px_center] dark:bg-grid-slate-400/[0.05] dark:bg-bottom dark:border-b dark:border-slate-100/5 [mask-image:linear-gradient(to_bottom,transparent,white)]"></div>
-            <h1 className="text-4xl font-bold">Mathematics</h1>
-            <p className="text-lg mt-2 opacity-90 max-w-2xl mx-auto">Master mathematical concepts from basic arithmetic to advanced calculus with our comprehensive flashcard collection.</p>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Mathematics Flashcards</h1>
+        <p className="text-muted-foreground">
+          Select a chapter to begin your study session.
+        </p>
+      </div>
+      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {mathDecks.map((deck) => (
             <DeckCard key={deck.title} deck={deck} />
         ))}
-        </div>
-        <div className="text-center">
-            <Link href="/flashcards" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                <ArrowLeft className="w-4 h-4" />
-                Back to all subjects
-            </Link>
-        </div>
+      </div>
+      <div className="text-center pt-4">
+        <Link href="/flashcards" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to all subjects
+        </Link>
+      </div>
     </div>
   );
 }
