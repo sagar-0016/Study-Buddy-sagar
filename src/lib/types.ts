@@ -98,3 +98,14 @@ export type PyqProgress = {
   id: string;
   completed: boolean;
 };
+
+export interface Lecture extends DocumentData {
+  id: string;
+  title: string;
+  description: string;
+  subject: 'Physics' | 'Chemistry' | 'Maths';
+  videoUrl: string;
+  thumbnailUrl: string;
+  channel: string;
+  duration: string;
+}
