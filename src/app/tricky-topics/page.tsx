@@ -1,6 +1,6 @@
+
 import type { Metadata } from 'next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Flame } from 'lucide-react';
+import TrickyQuestionBank from '@/components/tricky-topics/tricky-question-bank';
 
 export const metadata: Metadata = {
   title: 'Tricky & Brainstormers',
@@ -8,20 +8,14 @@ export const metadata: Metadata = {
 
 export default function TrickyTopicsPage() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="mx-auto bg-primary/10 p-4 rounded-full">
-            <Flame className="h-12 w-12 text-primary" />
-          </div>
-          <CardTitle className="mt-4">Tricky & Brainstormers Section Coming Soon!</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            A dedicated space for all those confusing topics and exceptions is on its way. You'll be able to share and discuss them here!
-          </p>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+       <div>
+        <h1 className="text-2xl font-bold tracking-tight">Tricky Questions & Brainstormers</h1>
+        <p className="text-muted-foreground">
+          Challenge yourself with some of the trickiest questions.
+        </p>
+      </div>
+      <TrickyQuestionBank />
     </div>
   );
 }
