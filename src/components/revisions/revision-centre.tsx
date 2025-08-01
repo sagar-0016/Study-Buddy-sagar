@@ -25,7 +25,6 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Confetti from 'react-confetti';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 
 
 const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () => void, children: React.ReactNode }) => {
@@ -266,36 +265,13 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showHints, setShowHints] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
-    const [recentlyViewed, setRecentlyViewed] = useLocalStorage<string[]>('recentlyViewedRevision', []);
-    const [, setLocalRevisionStats] = useLocalStorage<Record<string, { s: number; f: number }>>('revision-stats', {});
     const { toast } = useToast();
 
     const currentTopic = topics[currentIndex];
 
-    useEffect(() => {
-        if(currentTopic) {
-            // Add to recently viewed, keep list unique and limited
-            const updatedViewed = [currentTopic.id, ...recentlyViewed.filter(id => id !== currentTopic.id)].slice(0, 20);
-            setRecentlyViewed(updatedViewed);
-        }
-    }, [currentTopic, recentlyViewed, setRecentlyViewed])
-
-
     const handleNext = async (result: 'success' | 'fail') => {
         setShowHints(false);
         try {
-            // Update local storage
-            setLocalRevisionStats(prev => {
-                const current = prev[currentTopic.topicName] || { s: 0, f: 0 };
-                return {
-                    ...prev,
-                    [currentTopic.topicName]: {
-                        s: current.s + (result === 'success' ? 1 : 0),
-                        f: current.f + (result === 'fail' ? 1 : 0),
-                    }
-                };
-            });
-            // Update Firestore
             await updateRecallStats(currentTopic.id, result);
         } catch (error) {
             toast({ title: 'Error', description: 'Could not save your progress.', variant: 'destructive'})
@@ -394,19 +370,12 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
 const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onTopicUpdated: () => void }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
-    const [recentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedRevision', []);
 
     const filteredTopics = useMemo(() => {
         let filtered = topics;
 
         if (filter !== 'All') {
-            if (filter === 'Recent') {
-                const recentSet = new Set(recentlyViewedIds);
-                filtered = topics.filter(t => recentSet.has(t.id))
-                                .sort((a,b) => recentlyViewedIds.indexOf(a.id) - recentlyViewedIds.indexOf(b.id));
-            } else {
-                 filtered = topics.filter(t => t.subject === filter);
-            }
+            filtered = topics.filter(t => t.subject === filter);
         }
         
         if (searchTerm) {
@@ -419,9 +388,9 @@ const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onT
         }
 
         return filtered;
-    }, [topics, searchTerm, filter, recentlyViewedIds]);
+    }, [topics, searchTerm, filter]);
 
-    const filters = ['All', 'Physics', 'Chemistry', 'Maths', 'Recent'];
+    const filters = ['All', 'Physics', 'Chemistry', 'Maths'];
 
     return (
         <div className="space-y-6">

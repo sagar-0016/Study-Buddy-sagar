@@ -21,12 +21,10 @@ import { getPyqProgress, updatePyqStatus } from '@/lib/pyq';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClipboardCheck, AreaChart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 
 function SubjectSyllabus({ subject }: { subject: Subject }) {
   const [checkedState, setCheckedState] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [, setLocalProgress] = useLocalStorage<Record<string, boolean>>('syllabus-progress', {});
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -37,17 +35,14 @@ function SubjectSyllabus({ subject }: { subject: Subject }) {
             initialState[item.id] = item.completed;
         });
         setCheckedState(initialState);
-        setLocalProgress(initialState); // Sync local storage on initial load
         setIsLoading(false);
     };
     fetchProgress();
-  }, [subject, setLocalProgress]);
+  }, [subject]);
 
   const handleCheckboxChange = async (topicKey: string, checked: boolean) => {
     // Optimistically update UI
-    const newState = { ...checkedState, [topicKey]: checked };
-    setCheckedState(newState);
-    setLocalProgress(newState); // Update local storage
+    setCheckedState(prevState => ({ ...prevState, [topicKey]: checked }));
     
     // Update Firestore
     await updateSyllabusTopicStatus(topicKey, checked);

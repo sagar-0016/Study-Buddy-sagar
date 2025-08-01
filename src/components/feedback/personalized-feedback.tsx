@@ -1,13 +1,14 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getPersonalizedFeedbackAction } from '@/lib/actions';
 import { Loader2, Sparkles, Lightbulb, ClipboardCheck } from 'lucide-react';
 import type { Question, RevisionTopic, SyllabusTopic } from '@/lib/types';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query } from 'firebase/firestore';
 
 type Feedback = {
   appreciation: string;
@@ -19,10 +20,6 @@ export default function PersonalizedFeedback() {
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [localSyllabusProgress] = useLocalStorage<Record<string, boolean>>('syllabus-progress', {});
-  const [localRevisionTopics] = useLocalStorage<Record<string, { s: number; f: number }>>('revision-stats', {});
-  const [localQuestionAttempts] = useLocalStorage<Record<string, { a: string; c: boolean }>>('question-attempts', {});
-  const [localTrickyQuestionAttempts] = useLocalStorage<Record<string, { a: string; c: boolean }>>('tricky-question-attempts', {});
 
   const handleGenerateFeedback = async () => {
     setIsLoading(true);
@@ -30,28 +27,35 @@ export default function PersonalizedFeedback() {
     setError(null);
 
     try {
-      // 1. Get recently completed syllabus topics from local storage
-      const recentlyCompletedSyllabus = Object.entries(localSyllabusProgress)
-        .filter(([, completed]) => completed)
-        .map(([id]) => id.split('-').pop() || id)
+      // 1. Get recently completed syllabus topics from Firestore
+      const syllabusProgressSnapshot = await getDocs(collection(db, 'syllabus-progress'));
+      const syllabusProgress = syllabusProgressSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const recentlyCompletedSyllabus = syllabusProgress
+        .filter(item => item.completed)
+        .map(item => item.id.split('-').pop() || item.id)
         .slice(-5);
 
-      // 2. Get revision topics with mistakes from local storage
-      const revisionMistakes = Object.entries(localRevisionTopics)
-        .filter(([, stats]) => stats.f > stats.s && stats.f > 0)
-        .sort(([, a], [, b]) => b.f - a.f)
+      // 2. Get revision topics with mistakes from Firestore
+      const revisionsSnapshot = await getDocs(collection(db, 'revisions'));
+      const revisionTopics = revisionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RevisionTopic));
+      const revisionMistakes = revisionTopics
+        .filter(topic => topic.recallFails > topic.recallSuccess && topic.recallFails > 0)
+        .sort((a, b) => b.recallFails - a.recallFails)
         .slice(0, 5)
-        .map(([topicName, stats]) => ({ topic: topicName, fails: stats.f }));
+        .map(topic => ({ topic: topic.topicName, fails: topic.recallFails }));
 
-      // 3. Get incorrectly answered questions from local storage
-      const allIncorrectAnswers = {
-        ...localQuestionAttempts,
-        ...localTrickyQuestionAttempts,
-      };
+      // 3. Get incorrectly answered questions from Firestore
+      const questionsSnapshot = await getDocs(query(collection(db, 'questions')));
+      const trickyQuestionsSnapshot = await getDocs(query(collection(db, 'tricky-questions')));
+      
+      const allQuestions: Question[] = [
+          ...questionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question)),
+          ...trickyQuestionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Question))
+      ];
 
-      const questionMistakes = Object.entries(allIncorrectAnswers)
-        .filter(([, attempt]) => !attempt.c)
-        .map(([questionText]) => questionText)
+      const questionMistakes = allQuestions
+        .filter(q => q.isAttempted && !q.isCorrect)
+        .map(q => q.questionText)
         .slice(0, 5);
 
 

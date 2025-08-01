@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -15,14 +16,13 @@ import { CheckCircle2, XCircle, AlertTriangle, Lightbulb, Image as ImageIcon } f
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 
 const QuestionCard = ({
   question,
   onAttempt,
 }: {
   question: Question;
-  onAttempt: (id: string, answer: string, isCorrect: boolean, questionText: string) => void;
+  onAttempt: (id: string, answer: string, isCorrect: boolean) => void;
 }) => {
   const [userAnswer, setUserAnswer] = useState('');
   const [showResult, setShowResult] = useState(false);
@@ -31,7 +31,7 @@ const QuestionCard = ({
     e.preventDefault();
     if (!userAnswer) return;
     setShowResult(true);
-    onAttempt(question.id, userAnswer, userAnswer === question.correctAnswer, question.questionText);
+    onAttempt(question.id, userAnswer, userAnswer === question.correctAnswer);
   };
 
   const ResultDisplay = () => {
@@ -112,7 +112,7 @@ const QuestionList = ({
 }: {
   questions: Question[];
   isLoading: boolean;
-  onAttempt: (id: string, answer: string, isCorrect: boolean, questionText: string) => void;
+  onAttempt: (id: string, answer: string, isCorrect: boolean) => void;
 }) => {
   if (isLoading) {
     return (
@@ -147,7 +147,6 @@ export default function QuestionBank() {
   const [attemptedQuestions, setAttemptedQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [, setLocalAttempts] = useLocalStorage<Record<string, { a: string; c: boolean }>>('question-attempts', {});
   const { toast } = useToast();
 
   const fetchQuestions = useCallback(async () => {
@@ -172,12 +171,8 @@ export default function QuestionBank() {
     fetchQuestions();
   }, [fetchQuestions]);
 
-  const handleAttempt = async (id: string, userAnswer: string, isCorrect: boolean, questionText: string) => {
+  const handleAttempt = async (id: string, userAnswer: string, isCorrect: boolean) => {
     try {
-      // Save to local storage
-      setLocalAttempts(prev => ({ ...prev, [questionText]: { a: userAnswer, c: isCorrect } }));
-
-      // Save to Firestore
       const questionDocRef = doc(db, 'questions', id);
       await updateDoc(questionDocRef, {
         isAttempted: true,
@@ -185,7 +180,6 @@ export default function QuestionBank() {
         isCorrect,
       });
 
-      // Optimistically update UI
       const questionToMove = unattemptedQuestions.find(q => q.id === id);
       if (questionToMove) {
         setUnattemptedQuestions(prev => prev.filter(q => q.id !== id));
@@ -203,7 +197,6 @@ export default function QuestionBank() {
         description: "Could not save your answer. Please try again.",
         variant: "destructive",
       });
-      // Revert UI change on failure if needed, or just refetch
       fetchQuestions();
     }
   };
