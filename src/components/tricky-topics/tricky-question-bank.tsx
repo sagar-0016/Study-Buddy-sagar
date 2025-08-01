@@ -16,6 +16,7 @@ import { CheckCircle2, XCircle, AlertTriangle, Lightbulb, Image as ImageIcon } f
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import BrainstormingTool from './brainstorming-tool';
 
 const QuestionCard = ({
   question,
@@ -212,24 +213,35 @@ export default function TrickyQuestionBank() {
   }
 
   return (
-     <Tabs defaultValue="unattempted" className="w-full">
+     <Tabs defaultValue="questions" className="w-full">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="unattempted">Unattempted ({unattemptedQuestions.length})</TabsTrigger>
-        <TabsTrigger value="attempted">Attempted ({attemptedQuestions.length})</TabsTrigger>
+        <TabsTrigger value="questions">Tricky Questions</TabsTrigger>
+        <TabsTrigger value="brainstorm">Brainstorming Tool</TabsTrigger>
       </TabsList>
-      <TabsContent value="unattempted" className="mt-4">
-        <QuestionList
-          questions={unattemptedQuestions}
-          isLoading={isLoading}
-          onAttempt={handleAttempt}
-        />
+      <TabsContent value="questions" className="mt-4">
+        <Tabs defaultValue="unattempted" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="unattempted">Unattempted ({unattemptedQuestions.length})</TabsTrigger>
+            <TabsTrigger value="attempted">Attempted ({attemptedQuestions.length})</TabsTrigger>
+          </TabsList>
+          <TabsContent value="unattempted" className="mt-4">
+            <QuestionList
+              questions={unattemptedQuestions}
+              isLoading={isLoading}
+              onAttempt={handleAttempt}
+            />
+          </TabsContent>
+          <TabsContent value="attempted" className="mt-4">
+            <QuestionList
+              questions={attemptedQuestions}
+              isLoading={isLoading}
+              onAttempt={() => {}}
+            />
+          </TabsContent>
+        </Tabs>
       </TabsContent>
-      <TabsContent value="attempted" className="mt-4">
-         <QuestionList
-          questions={attemptedQuestions}
-          isLoading={isLoading}
-          onAttempt={() => {}}
-        />
+      <TabsContent value="brainstorm" className="mt-4">
+         <BrainstormingTool />
       </TabsContent>
     </Tabs>
   );

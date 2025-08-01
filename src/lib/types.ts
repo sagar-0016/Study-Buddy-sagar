@@ -129,3 +129,10 @@ export interface TechnicalHelp extends DocumentData {
     isCleared: boolean;
     createdAt: Timestamp;
 }
+
+export interface BrainstormingTopic extends DocumentData {
+    id: string;
+    subject: string;
+    question: string;
+    guideline: string;
+}
