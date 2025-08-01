@@ -26,14 +26,14 @@ const decks = [
     description: 'Master the periodic table, chemical reactions, and fundamental principles of chemistry.',
     icon: FlaskConical,
     status: 'available',
-    href: '/flashcards/chemistry',
+    href: '/flashcards/not-for-you',
   },
   {
     title: 'Physics Concepts',
     description: 'Understand the fundamental laws that govern our universe, from mechanics to quantum physics.',
     icon: Atom,
     status: 'available',
-    href: '/flashcards/physics',
+    href: '/flashcards/not-for-you',
   },
    {
     title: 'AI & Machine Learning',
@@ -46,7 +46,7 @@ const decks = [
     title: 'Space & Astronomy',
     description: 'Journey through the cosmos and learn about planets, stars, galaxies, and the mysteries of space.',
     icon: Rocket,
-    status: 'not-for-you',
+    status: 'not-available',
     href: '/flashcards/not-for-you',
   },
 ];
@@ -57,7 +57,7 @@ const DeckCard = ({ deck }: { deck: (typeof decks)[0] }) => {
   const getBadgeText = () => {
     if (deck.status === 'available') return 'Available';
     if (deck.status === 'not-for-you') return 'Not for you babe';
-    if (deck.status === 'not-available') return 'Not Available';
+    if (deck.status === 'not-available') return 'Not for you babe';
     return 'Coming Soon';
   }
 
