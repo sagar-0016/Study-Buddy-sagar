@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Accordion,
@@ -171,10 +171,6 @@ function PyqTracker({ subject }: { subject: Subject }) {
                     );
                 })}
             </Accordion>
-            <div className="mt-6 p-4 bg-accent/20 border-l-4 border-accent text-accent-foreground rounded-lg">
-                <p className="font-semibold">Note:</p>
-                <p className="text-sm">For the chapters which you have marked as completed in the syllabus, do move forward with their PYQs.</p>
-            </div>
         </div>
     )
 }
@@ -228,6 +224,11 @@ export default function SyllabusTracker() {
           </TabsContent>
         </Tabs>
       </CardContent>
+       <CardFooter className="p-4 bg-accent/20 border-t text-accent-foreground rounded-b-lg">
+          <p className="text-sm">
+            <span className="font-semibold">Note:</span> For the chapters which you have marked as completed in the syllabus, do move forward with their PYQs.
+          </p>
+      </CardFooter>
     </Card>
   );
 }
