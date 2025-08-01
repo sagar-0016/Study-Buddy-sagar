@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { kinematicsFlashcards } from '@/lib/flashcard-data';
+import { kinematicsFlashcards } from '@/lib/flashcards/kinematics';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
