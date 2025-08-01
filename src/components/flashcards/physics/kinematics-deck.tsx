@@ -61,10 +61,11 @@ export default function KinematicsDeck() {
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
+    // Initial shuffle if the deck is new
     if (shuffledCards.length === 0) {
       setShuffledCards(shuffleArray(kinematicsFlashcards));
     }
-  }, [shuffledCards, setShuffledCards]);
+  }, [shuffledCards.length, setShuffledCards]);
 
 
   const availableCards = useMemo(() => {
@@ -77,7 +78,7 @@ export default function KinematicsDeck() {
     if (currentIndex >= availableCards.length && availableCards.length > 0) {
       setCurrentIndex(availableCards.length - 1);
     }
-  }, [availableCards, currentIndex]);
+  }, [availableCards.length, currentIndex]);
   
   const currentCard = availableCards[currentIndex];
   
@@ -129,7 +130,7 @@ export default function KinematicsDeck() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNavigation]);
 
-  const progress = ((kinematicsFlashcards.length - availableCards.length) / kinematicsFlashcards.length) * 100;
+  const progress = kinematicsFlashcards.length > 0 ? ((kinematicsFlashcards.length - availableCards.length) / kinematicsFlashcards.length) * 100 : 0;
 
   return (
     <div className="flex flex-col h-full min-h-[75vh]">
@@ -160,7 +161,7 @@ export default function KinematicsDeck() {
       </div>
       
       <main className="flex-grow flex flex-col items-center justify-center">
-        {availableCards.length > 0 ? (
+        {currentCard ? (
           <>
             <div className="w-full max-w-2xl h-[350px] [perspective:1000px]">
               <div 

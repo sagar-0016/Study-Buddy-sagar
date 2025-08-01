@@ -1695,6 +1695,6 @@ export const forcesFlashcards: Flashcard[] = [
 
       // Initialize app when page loads
       document.addEventListener("DOMContentLoaded", initializeApp);
-    </script>
-  </body>
-</html>
+//     </script>
+//   </body>
+// </html>
