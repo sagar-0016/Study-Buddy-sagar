@@ -134,7 +134,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded }: { onTopicAdded: () => void }) 
                         <Input id="chapter" value={chapterName} onChange={(e) => setChapterName(e.target.value)} className="col-span-3" placeholder="e.g., Rotational Motion" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="topic" className="text-right">Topic</Label>
+                        <Label htmlFor="topic" className="text-right">Topic to Recall</Label>
                         <Input id="topic" value={topicName} onChange={(e) => setTopicName(e.target.value)} className="col-span-3" placeholder="e.g., Moment of Inertia" />
                     </div>
                      <div className="grid grid-cols-4 items-start gap-4">
