@@ -37,7 +37,7 @@ const lectures = [
         title: "Test Video: Hair Tutorial",
         description: "A test video added to demonstrate the lecture library functionality with user-uploaded content.",
         subject: "Chemistry", // Assigning to a subject for filtering
-        videoUrl: "PASTE_THE_URL_FROM_FIREBASE_STORAGE_HERE",
+        videoUrl: "https://firebasestorage.googleapis.com/v0/b/study-buddy-7357a.appspot.com/o/I%20was%20SHAKING%20doing%20this%20%F0%9F%A5%B6%20%23hairstyle%20%23haircut%20%23hairtutorial%20%23shorts%20%23beauty%20%5B5qI0g3lOVGM%5D.webm?alt=media&token=c1371c13-4234-422f-b6cc-47132d4a7535",
         thumbnailUrl: "https://placehold.co/1280x720.png",
         channel: "Test Channel",
         duration: "0:30"
