@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search } from 'lucide-react';
+import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
@@ -227,7 +227,7 @@ const EditRevisionTopicDialog = ({ topic, onTopicUpdated, children }: { topic: R
                         <Label htmlFor="image-edit" className="text-right pt-2">New Image</Label>
                         <Input id="image-edit" type="file" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} className="col-span-3" accept="image/*"/>
                     </div>
-                    {topic.hintsImageURL && (
+                    {topic.hintsImageURL && !imageFile && (
                          <div className="grid grid-cols-4 items-start gap-4">
                             <Label className="text-right pt-2">Current Image</Label>
                             <div className="col-span-3">
@@ -248,6 +248,48 @@ const EditRevisionTopicDialog = ({ topic, onTopicUpdated, children }: { topic: R
     )
 }
 
+const MasteryDot = ({ success, fails }: { success: number, fails: number }) => {
+    const total = success + fails;
+    
+    const getMasteryStyle = () => {
+        if (total === 0) {
+            // Neutral/unattempted: gray color, no pulse
+            return {
+                backgroundColor: 'hsl(220, 8%, 75%)',
+                '--mastery-color-rgb': '188, 196, 209'
+            };
+        }
+
+        const score = success / total; // Score from 0 (all fails) to 1 (all success)
+        
+        // HSL color interpolation: Red (0) -> Yellow (60) -> Green (120)
+        const hue = score * 120; // Maps score 0-1 to hue 0-120
+        
+        // RGB values for the animation shadow
+        let r, g, b;
+        const c = 1;
+        const x = c * (1 - Math.abs((hue / 60) % 2 - 1));
+        if (hue < 60) {
+            [r,g,b] = [c,x,0];
+        } else {
+            [r,g,b] = [x,c,0];
+        }
+        
+        const masteryColorRGB = `${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}`;
+
+        return {
+            backgroundColor: `hsl(${hue}, 80%, 50%)`,
+            '--mastery-color-rgb': masteryColorRGB
+        } as React.CSSProperties;
+    };
+    
+    return (
+        <div 
+            className="w-3 h-3 rounded-full animate-mastery-pulse"
+            style={getMasteryStyle()}
+        ></div>
+    );
+};
 
 const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], onEndSession: () => void }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -300,15 +342,23 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
 
     return (
         <div className="w-full max-w-2xl mx-auto">
-             <div className="mb-4 text-center text-sm font-semibold text-muted-foreground">
-                Card {currentIndex + 1} of {topics.length}
+             <div className="flex justify-between items-center mb-4">
+                <span className="text-sm font-semibold text-muted-foreground">
+                    Card {currentIndex + 1} of {topics.length}
+                </span>
+                 <Button variant="ghost" onClick={onEndSession} className="text-muted-foreground">
+                     <XCircle className="mr-2 h-4 w-4" /> End Session
+                 </Button>
             </div>
              <Card className="min-h-[350px] flex flex-col">
                 <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <CardTitle>{currentTopic.topicName}</CardTitle>
-                            <CardDescription>{currentTopic.chapterName}</CardDescription>
+                    <div className="flex justify-between items-start gap-4">
+                        <div className="flex items-center gap-3">
+                             <MasteryDot success={currentTopic.recallSuccess} fails={currentTopic.recallFails} />
+                            <div>
+                                <CardTitle>{currentTopic.topicName}</CardTitle>
+                                <CardDescription>{currentTopic.chapterName}</CardDescription>
+                            </div>
                         </div>
                         <Badge variant="secondary">{currentTopic.subject}</Badge>
                     </div>
@@ -356,48 +406,6 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
     )
 }
 
-const MasteryDot = ({ success, fails }: { success: number, fails: number }) => {
-    const total = success + fails;
-    
-    const getMasteryStyle = () => {
-        if (total === 0) {
-            // Neutral/unattempted: gray color, no pulse
-            return {
-                backgroundColor: 'hsl(220, 8%, 75%)',
-                '--mastery-color-rgb': '188, 196, 209'
-            };
-        }
-
-        const score = success / total; // Score from 0 (all fails) to 1 (all success)
-        
-        // HSL color interpolation: Red (0) -> Yellow (60) -> Green (120)
-        const hue = score * 120; // Maps score 0-1 to hue 0-120
-        
-        // RGB values for the animation shadow
-        let r, g, b;
-        const c = 1;
-        const x = c * (1 - Math.abs((hue / 60) % 2 - 1));
-        if (hue < 60) {
-            [r,g,b] = [c,x,0];
-        } else {
-            [r,g,b] = [x,c,0];
-        }
-        
-        const masteryColorRGB = `${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}`;
-
-        return {
-            backgroundColor: `hsl(${hue}, 80%, 50%)`,
-            '--mastery-color-rgb': masteryColorRGB
-        } as React.CSSProperties;
-    };
-    
-    return (
-        <div 
-            className="w-3 h-3 rounded-full animate-mastery-pulse"
-            style={getMasteryStyle()}
-        ></div>
-    );
-};
 
 const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onTopicUpdated: () => void }) => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -517,14 +525,9 @@ export default function RevisionCentre() {
     fetchTopics();
   }
 
-  const renderRecallSession = () => {
-    if (isLoading) return <Skeleton className="h-64 w-full" />
-    
-    if (sessionTopics) {
-        return <RevisionSession topics={sessionTopics} onEndSession={handleEndSession}/>
-    }
-
-    if (allTopics.length === 0) {
+  const renderRecallSetup = () => {
+     if (isLoading) return <Skeleton className="h-64 w-full" />
+     if (allTopics.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[300px]">
                 <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
@@ -559,29 +562,41 @@ export default function RevisionCentre() {
         </div>
     )
   }
+  
+  const renderContent = () => {
+      if (sessionTopics) {
+          return <RevisionSession topics={sessionTopics} onEndSession={handleEndSession}/>
+      }
 
-  return (
-    <div className="relative min-h-[calc(100vh-200px)]">
-        <Tabs defaultValue="recall" className="w-full">
+      return (
+         <Tabs defaultValue="recall" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="recall">Recall Session</TabsTrigger>
                 <TabsTrigger value="browse">Browse Topics</TabsTrigger>
             </TabsList>
             <TabsContent value="recall">
-                {renderRecallSession()}
+                {renderRecallSetup()}
             </TabsContent>
             <TabsContent value="browse">
                 <BrowseTopics topics={allTopics} onTopicUpdated={fetchTopics} />
             </TabsContent>
         </Tabs>
+      )
+  }
 
-       <div className="fixed bottom-8 right-8 z-50">
-           <AddRevisionTopicDialog onTopicAdded={fetchTopics}>
-                <Button className="rounded-full h-14 w-14 p-4 shadow-lg flex items-center justify-center">
-                    <Plus className="h-6 w-6" />
-                </Button>
-           </AddRevisionTopicDialog>
-       </div>
+  return (
+    <div className="relative min-h-[calc(100vh-200px)]">
+       {renderContent()}
+
+       {!sessionTopics && (
+            <div className="fixed bottom-8 right-8 z-50">
+               <AddRevisionTopicDialog onTopicAdded={fetchTopics}>
+                    <Button className="rounded-full h-14 w-14 p-4 shadow-lg flex items-center justify-center">
+                        <Plus className="h-6 w-6" />
+                    </Button>
+               </AddRevisionTopicDialog>
+           </div>
+       )}
     </div>
   );
 }
