@@ -22,17 +22,17 @@ export default function WelcomeBanner() {
     // Apply the 3D transform. The multiplier adjusts the "intensity" of the effect.
     const rotateY = x * 10; // Rotate around Y-axis
     const rotateX = -y * 10; // Rotate around X-axis
-    setTransform(`perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`);
+    setTransform(`perspective(500px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`);
 
     // Apply the dynamic shadow. Shadow moves opposite to the cursor.
     const shadowX = -x * 20;
     const shadowY = -y * 20;
-    setShadow(`${shadowX}px ${shadowY}px 30px rgba(0, 0, 0, 0.3)`);
+    setShadow(`${shadowX}px ${shadowY}px 30px rgba(0, 0, 0, 0.6)`);
   };
 
   const handleMouseLeave = () => {
     setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)');
-    setShadow('0px 0px 15px rgba(0, 0, 0, 0.1)');
+    setShadow('0px 0px 15px rgba(0, 0, 0, 0.5)');
   };
 
   return (
@@ -49,7 +49,7 @@ export default function WelcomeBanner() {
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
           style={{ transition: 'transform 0.1s, box-shadow 0.1s', boxShadow: shadow }}
-          className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group rounded-lg"
+          className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group rounded-lg overflow-hidden"
         >
            <Image
               src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
