@@ -4,16 +4,24 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Atom, Zap, Thermometer, Orbit, Waves } from 'lucide-react';
+import { ArrowLeft, Orbit, Wind, Atom, Waves, Thermometer, Zap } from 'lucide-react';
 
 const physicsDecks = [
     {
-        title: 'Mechanics',
-        description: 'Understand motion, forces, and energy, from kinematics to rotational dynamics.',
+        title: 'Kinematics',
+        description: 'Study motion, including displacement, velocity, and acceleration, without considering its causes.',
+        icon: Wind,
+        status: 'available',
+        difficulty: 'Basic',
+        href: '/flashcards/not-for-you', // Placeholder
+    },
+    {
+        title: "Forces, Newton's Laws & Friction",
+        description: 'Understand the fundamental principles governing motion and the forces that resist it.',
         icon: Orbit,
-        status: 'coming-soon',
-        difficulty: 'Advanced',
-        href: '/flashcards/not-for-you',
+        status: 'available',
+        difficulty: 'Intermediate',
+        href: '/flashcards/not-for-you', // Placeholder
     },
     {
         title: 'Thermodynamics',
@@ -65,6 +73,7 @@ const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
 
 
 const DeckCard = ({ deck }: { deck: (typeof physicsDecks)[0] }) => {
+  const isAvailable = deck.status === 'available';
   return (
     <Link href={deck.href}>
         <Card className="flex flex-col h-full transition-all duration-300 hover:border-primary hover:-translate-y-1 hover:shadow-lg">
@@ -72,7 +81,7 @@ const DeckCard = ({ deck }: { deck: (typeof physicsDecks)[0] }) => {
             <div className="p-3 rounded-full bg-primary/10 text-primary">
                 <deck.icon className="w-8 h-8" />
             </div>
-             <Badge variant="outline">Coming Soon</Badge>
+             <Badge variant={isAvailable ? 'default' : 'outline'}>{isAvailable ? 'Available' : 'Coming Soon'}</Badge>
         </CardHeader>
         <CardContent className="flex flex-col flex-grow">
             <CardTitle className="text-xl mb-2">{deck.title}</CardTitle>
