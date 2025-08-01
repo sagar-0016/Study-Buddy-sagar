@@ -30,17 +30,26 @@ const weightageLevels: Record<number, { label: string; description: string; colo
     1: { label: 'Level 1', description: 'Quite rare to have a question', color: 'bg-blue-500 hover:bg-blue-600 border-blue-500' },
 };
 
+// We create a new type here for the flattened list of topics with their parent chapter title
+type TopicWithUnit = SyllabusChapter & { unit: string };
+
+
 function SubjectAnalysis({ subject }: { subject: Subject }) {
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('weightage-desc');
   const [isSuggestMode, setIsSuggestMode] = useState(false);
 
-  const allTopics = useMemo(() => {
-    return subject.chapters.flatMap(chapter => chapter.topics);
+  const allTopicsWithUnit = useMemo(() => {
+    return subject.chapters.flatMap(chapter => 
+        chapter.topics.map(topic => ({
+            ...topic,
+            unit: chapter.title // Add the chapter title as the 'unit'
+        }))
+    );
   }, [subject]);
 
   const filteredAndSortedTopics = useMemo(() => {
-    let topics: SyllabusChapter[] = [...allTopics];
+    let topics: TopicWithUnit[] = [...allTopicsWithUnit];
     
     // Filter
     if (filter !== 'all') {
@@ -57,7 +66,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
     }
 
     return topics;
-  }, [allTopics, filter, sort]);
+  }, [allTopicsWithUnit, filter, sort]);
 
   return (
     <div className="space-y-6">
@@ -120,7 +129,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
   );
 }
 
-const SuggestChangeDialog = ({ topic, children }: { topic: SyllabusChapter, children: React.ReactNode}) => {
+const SuggestChangeDialog = ({ topic, children }: { topic: TopicWithUnit, children: React.ReactNode}) => {
     const [suggestion, setSuggestion] = useState('');
 
     return (
