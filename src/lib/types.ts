@@ -109,3 +109,13 @@ export interface Lecture extends DocumentData {
   channel: string;
   duration: string;
 }
+
+export interface Doubt extends DocumentData {
+    id: string;
+    text: string;
+    subject: string;
+    imageUrl?: string;
+    isAddressed: boolean;
+    isCleared: boolean;
+    createdAt: Timestamp;
+}

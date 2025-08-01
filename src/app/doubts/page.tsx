@@ -1,6 +1,6 @@
+
 import type { Metadata } from 'next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquareQuote } from 'lucide-react';
+import DoubtCentre from '@/components/doubts/doubt-centre';
 
 export const metadata: Metadata = {
   title: 'Doubt Centre',
@@ -8,20 +8,14 @@ export const metadata: Metadata = {
 
 export default function DoubtsPage() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="mx-auto bg-primary/10 p-4 rounded-full">
-            <MessageSquareQuote className="h-12 w-12 text-primary" />
-          </div>
-          <CardTitle className="mt-4">Doubt Centre Coming Soon!</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            A forum to ask questions and get answers from peers and experts is being built. Get ready to clear all your doubts!
-          </p>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+       <div>
+        <h1 className="text-2xl font-bold tracking-tight">Doubt Centre</h1>
+        <p className="text-muted-foreground">
+          Ask questions, get answers, and clear your doubts.
+        </p>
+      </div>
+      <DoubtCentre />
     </div>
   );
 }
