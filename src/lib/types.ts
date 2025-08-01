@@ -76,3 +76,14 @@ export type SyllabusTopic = {
   id: string;
   completed: boolean;
 };
+
+export interface RevisionTopic extends DocumentData {
+  id: string;
+  subject: string;
+  chapterName: string;
+  topicName: string;
+  hints: string;
+  recallSuccess: number;
+  recallFails: number;
+  lastReviewed: Timestamp;
+}

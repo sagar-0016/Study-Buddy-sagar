@@ -1,7 +1,6 @@
 
 import type { Metadata } from 'next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BrainCircuit } from 'lucide-react';
+import RevisionCentre from '@/components/revisions/revision-centre';
 
 export const metadata: Metadata = {
   title: 'Revisions',
@@ -9,20 +8,14 @@ export const metadata: Metadata = {
 
 export default function RevisionsPage() {
   return (
-    <div className="flex flex-col items-center justify-center h-full text-center">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="mx-auto bg-primary/10 p-4 rounded-full">
-            <BrainCircuit className="h-12 w-12 text-primary" />
-          </div>
-          <CardTitle className="mt-4">Revision Centre Coming Soon!</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            A dedicated space to master your tricky topics with smart recall is being built. Get ready to conquer your revisions!
-          </p>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+       <div>
+        <h1 className="text-2xl font-bold tracking-tight">Revision Centre</h1>
+        <p className="text-muted-foreground">
+          Strengthen your memory by reviewing key topics.
+        </p>
+      </div>
+      <RevisionCentre />
     </div>
   );
 }
