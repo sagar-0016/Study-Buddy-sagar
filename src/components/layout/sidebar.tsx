@@ -14,6 +14,7 @@ import {
   Flame,
   MessageSquareQuote,
   LifeBuoy,
+  Notebook,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export const navLinks: NavLink[] = [
   { href: "/syllabus", label: "Syllabus", icon: BookCheck },
   { href: "/planner", label: "Planner", icon: CalendarClock },
   { href: "/questions", label: "Questions", icon: ClipboardList },
+  { href: "/flashcards", label: "Flashcards", icon: Notebook },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/feedback", label: "AI Feedback", icon: BotMessageSquare },
 ];
@@ -46,7 +48,7 @@ function SidebarNav({ links, isCollapsed }: { links: NavLink[]; isCollapsed: boo
   return (
      <nav className={cn("grid gap-1 px-2", isCollapsed ? "justify-center" : "")}>
       {links.map((link) => {
-        const isActive = pathname === link.href;
+        const isActive = pathname.startsWith(link.href) && (link.href !== '/' || pathname === '/');
         const navLink = (
           <Link
             key={link.href}
@@ -83,22 +85,22 @@ export default function Sidebar() {
   const isCollapsed = false; // Add logic to collapse sidebar if needed
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[220px] border-r bg-muted/40 md:block lg:w-[280px]">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[220px] flex-col border-r bg-muted/40 md:flex lg:w-[280px]">
       <TooltipProvider>
-        <div className="flex h-full max-h-screen flex-col gap-2">
-          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <GraduationCap className="h-6 w-6 text-primary" />
               <span className="">Pranjal's Study Buddy</span>
             </Link>
           </div>
-          <div className="flex-1 overflow-y-auto">
-             <SidebarNav links={navLinks} isCollapsed={isCollapsed} />
+          <div className="flex flex-1 flex-col gap-y-2 overflow-y-auto">
+             <div className="flex-1">
+                <SidebarNav links={navLinks} isCollapsed={isCollapsed} />
+             </div>
+             <div className="mt-auto p-4">
+                <SidebarNav links={secondaryNavLinks} isCollapsed={isCollapsed} />
+             </div>
           </div>
-          <div className="mt-auto p-4">
-             <SidebarNav links={secondaryNavLinks} isCollapsed={isCollapsed} />
-          </div>
-        </div>
       </TooltipProvider>
     </aside>
   );

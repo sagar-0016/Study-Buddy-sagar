@@ -25,8 +25,8 @@ export default function WelcomeBanner() {
     setTransform(`perspective(500px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`);
 
     // Apply the dynamic shadow. Shadow moves opposite to the cursor.
-    const shadowX = -x * 20;
-    const shadowY = -y * 20;
+    const shadowX = -x * 80;
+    const shadowY = -y * 80;
     setShadow(`${shadowX}px ${shadowY}px 30px rgba(0, 0, 0, 0.6)`);
   };
 

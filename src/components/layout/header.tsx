@@ -41,8 +41,14 @@ import { ThemeToggle } from "./theme-toggle";
 
 export default function Header() {
   const pathname = usePathname();
-  const currentPath = pathname.split('/').filter(p => p).pop() || 'home';
-  const pageTitle = currentPath.charAt(0).toUpperCase() + currentPath.slice(1);
+  const pathSegments = pathname.split('/').filter(p => p);
+  
+  const breadcrumbs = pathSegments.map((segment, index) => {
+    const href = "/" + pathSegments.slice(0, index + 1).join('/');
+    const label = segment.charAt(0).toUpperCase() + segment.slice(1);
+    const isLast = index === pathSegments.length - 1;
+    return { href, label, isLast };
+  });
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
@@ -66,7 +72,7 @@ export default function Header() {
                <Link
                 key={link.href}
                 href={link.href}
-                className={`flex items-center gap-4 px-2.5 ${pathname === link.href ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`flex items-center gap-4 px-2.5 ${pathname.startsWith(link.href) && (link.href !== '/' || pathname === '/') ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
               >
                 <link.icon className="h-5 w-5" />
                 {link.label}
@@ -82,14 +88,20 @@ export default function Header() {
               <Link href="/">Home</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          {pathname !== '/' && (
-            <>
+          {breadcrumbs.map((crumb, index) => (
+            <React.Fragment key={crumb.href}>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+                {crumb.isLast ? (
+                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link href={crumb.href}>{crumb.label}</Link>
+                  </BreadcrumbLink>
+                )}
               </BreadcrumbItem>
-            </>
-          )}
+            </React.Fragment>
+          ))}
         </BreadcrumbList>
       </Breadcrumb>
       <div className="relative ml-auto flex items-center gap-2 md:grow-0">
