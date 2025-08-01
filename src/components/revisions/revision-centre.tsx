@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Plus, Image as ImageIcon } from 'lucide-react';
+import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getRevisionTopics, addRevisionTopic, getRecallSessionTopics, updateRecallStats } from '@/lib/revisions';
+import { getRevisionTopics, addRevisionTopic, getRecallSessionTopics, updateRecallStats, updateRevisionTopic } from '@/lib/revisions';
 import type { RevisionTopic } from '@/lib/types';
 import {
   Select,
@@ -24,6 +24,38 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Confetti from 'react-confetti';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// Custom hook for localStorage
+function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    if (typeof window === 'undefined') {
+      return initialValue;
+    }
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.log(error);
+      return initialValue;
+    }
+  });
+
+  const setValue = (value: T) => {
+    try {
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      setStoredValue(valueToStore);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  return [storedValue, setValue];
+}
+
 
 const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () => void, children: React.ReactNode }) => {
     const [subject, setSubject] = useState('');
@@ -128,13 +160,93 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
     )
 }
 
+const EditRevisionTopicDialog = ({ topic, onTopicUpdated, children }: { topic: RevisionTopic, onTopicUpdated: () => void, children: React.ReactNode }) => {
+    const [subject, setSubject] = useState(topic.subject);
+    const [chapterName, setChapterName] = useState(topic.chapterName);
+    const [topicName, setTopicName] = useState(topic.topicName);
+    const [hints, setHints] = useState(topic.hints);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+    const { toast } = useToast();
+
+    const handleSubmit = async () => {
+        setIsSaving(true);
+        try {
+            await updateRevisionTopic(topic.id, { subject, chapterName, topicName, hints });
+            toast({ title: "Success!", description: "Revision topic has been updated." });
+            onTopicUpdated();
+            setIsOpen(false);
+        } catch (error) {
+             toast({ title: "Error", description: "Could not update the topic.", variant: "destructive" });
+        } finally {
+            setIsSaving(false);
+        }
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent className="sm:max-w-[480px]">
+                <DialogHeader>
+                    <DialogTitle>Edit Revision Topic</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="subject-edit" className="text-right">Subject</Label>
+                        <Select onValueChange={setSubject} value={subject}>
+                            <SelectTrigger id="subject-edit" className="col-span-3">
+                                <SelectValue placeholder="Select a subject" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Physics">Physics</SelectItem>
+                                <SelectItem value="Chemistry">Chemistry</SelectItem>
+                                <SelectItem value="Maths">Maths</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="chapter-edit" className="text-right">Chapter</Label>
+                        <Input id="chapter-edit" value={chapterName} onChange={(e) => setChapterName(e.target.value)} className="col-span-3" />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="topic-edit" className="text-right">Topic to Recall</Label>
+                        <Input id="topic-edit" value={topicName} onChange={(e) => setTopicName(e.target.value)} className="col-span-3" />
+                    </div>
+                     <div className="grid grid-cols-4 items-start gap-4">
+                        <Label htmlFor="hints-edit" className="text-right pt-2">Hints</Label>
+                        <Textarea id="hints-edit" value={hints} onChange={(e) => setHints(e.target.value)} className="col-span-3" />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                     <Button onClick={handleSubmit} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Update Topic
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+
 const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], onEndSession: () => void }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [showHints, setShowHints] = useState(false);
     const [showConfetti, setShowConfetti] = useState(false);
+    const [recentlyViewed, setRecentlyViewed] = useLocalStorage<string[]>('recentlyViewedRevision', []);
     const { toast } = useToast();
 
     const currentTopic = topics[currentIndex];
+
+    useEffect(() => {
+        if(currentTopic) {
+            // Add to recently viewed, keep list unique and limited
+            const updatedViewed = [currentTopic.id, ...recentlyViewed.filter(id => id !== currentTopic.id)].slice(0, 20);
+            setRecentlyViewed(updatedViewed);
+        }
+    }, [currentTopic, recentlyViewed, setRecentlyViewed])
+
 
     const handleNext = async (result: 'success' | 'fail') => {
         setShowHints(false);
@@ -147,7 +259,6 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
         if (currentIndex < topics.length - 1) {
             setCurrentIndex(prev => prev + 1);
         } else {
-            // End of session
             setShowConfetti(true);
             setTimeout(() => {
                 onEndSession();
@@ -162,7 +273,7 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
                 <h2 className="text-2xl font-bold mb-2">🎉 Session Complete!</h2>
                 <p className="text-muted-foreground mb-6">Great job on your recall session. Keep up the consistent effort!</p>
                 <Button onClick={onEndSession}>
-                    <RotateCw className="mr-2 h-4 w-4" /> Start Another Session
+                    <RotateCw className="mr-2 h-4 w-4" /> Go to Main Menu
                 </Button>
             </div>
         )
@@ -188,32 +299,30 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
                         <Wand className="mr-2 h-4 w-4" />
                         {showHints ? 'Hide' : 'Show'} Hints
                     </Button>
-                    <div className={cn("transition-opacity duration-300", showHints ? 'opacity-100' : 'opacity-0')}>
-                        {showHints && (
-                            <div className="p-4 bg-muted/50 rounded-lg border-l-4 border-accent space-y-4">
-                                {currentTopic.hints && (
-                                     <p className="text-sm text-muted-foreground italic">
-                                        {currentTopic.hints}
-                                    </p>
-                                )}
-                                {currentTopic.hintsImageURL && (
-                                     <Dialog>
-                                        <DialogTrigger asChild>
-                                             <button type="button" className="mt-2 rounded-lg overflow-hidden border w-full md:w-1/2 group relative">
-                                                <Image src={currentTopic.hintsImageURL} alt="Hint visual aid" width={300} height={150} className="object-cover w-full" />
-                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <ImageIcon className="h-8 w-8 text-white" />
-                                                </div>
-                                            </button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-3xl">
-                                            <Image src={currentTopic.hintsImageURL} alt="Question visual aid" width={800} height={600} className="rounded-lg object-contain" />
-                                        </DialogContent>
-                                    </Dialog>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                    {showHints && (
+                        <div className="p-4 bg-muted/50 rounded-lg border-l-4 border-accent space-y-4 animate-in fade-in-50">
+                            {currentTopic.hints && (
+                                 <p className="text-sm text-muted-foreground italic">
+                                    {currentTopic.hints}
+                                </p>
+                            )}
+                            {currentTopic.hintsImageURL && (
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <button type="button" className="mt-2 rounded-lg overflow-hidden border w-full md:w-1/2 group relative">
+                                            <Image src={currentTopic.hintsImageURL} alt="Hint visual aid" width={300} height={150} className="object-cover w-full" />
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <ImageIcon className="h-8 w-8 text-white" />
+                                            </div>
+                                        </button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-3xl">
+                                        <Image src={currentTopic.hintsImageURL} alt="Hint visual aid" width={800} height={600} className="rounded-lg object-contain" />
+                                    </DialogContent>
+                                </Dialog>
+                            )}
+                        </div>
+                    )}
                 </CardContent>
                 <CardFooter className="flex flex-col sm:flex-row justify-center gap-4">
                     <Button variant="destructive" size="lg" className="w-full sm:w-auto" onClick={() => handleNext('fail')}>
@@ -224,6 +333,90 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
                     </Button>
                 </CardFooter>
             </Card>
+        </div>
+    )
+}
+
+const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onTopicUpdated: () => void }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filter, setFilter] = useState('All');
+    const [recentlyViewedIds] = useLocalStorage<string[]>('recentlyViewedRevision', []);
+
+    const filteredTopics = useMemo(() => {
+        let filtered = topics;
+
+        if (filter !== 'All') {
+            if (filter === 'Recent') {
+                const recentSet = new Set(recentlyViewedIds);
+                filtered = topics.filter(t => recentSet.has(t.id))
+                                .sort((a,b) => recentlyViewedIds.indexOf(a.id) - recentlyViewedIds.indexOf(b.id));
+            } else {
+                 filtered = topics.filter(t => t.subject === filter);
+            }
+        }
+        
+        if (searchTerm) {
+            const lowercasedTerm = searchTerm.toLowerCase();
+            filtered = filtered.filter(t => 
+                t.topicName.toLowerCase().includes(lowercasedTerm) ||
+                t.chapterName.toLowerCase().includes(lowercasedTerm) ||
+                t.hints.toLowerCase().includes(lowercasedTerm)
+            );
+        }
+
+        return filtered;
+    }, [topics, searchTerm, filter, recentlyViewedIds]);
+
+    const filters = ['All', 'Physics', 'Chemistry', 'Maths', 'Recent'];
+
+    return (
+        <div className="space-y-6">
+            <div className="space-y-2">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search topics, chapters, or hints..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-full"
+                    />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {filters.map(f => (
+                        <Button
+                            key={f}
+                            variant={filter === f ? 'default' : 'outline'}
+                            onClick={() => setFilter(f)}
+                        >
+                            {f}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+            
+            {filteredTopics.length > 0 ? (
+                <div className="space-y-3">
+                    {filteredTopics.map(topic => (
+                        <Card key={topic.id} className="flex items-center justify-between p-4">
+                            <div>
+                                <p className="font-semibold">{topic.topicName}</p>
+                                <p className="text-sm text-muted-foreground">{topic.chapterName} • {topic.subject}</p>
+                            </div>
+                            <EditRevisionTopicDialog topic={topic} onTopicUpdated={onTopicUpdated}>
+                                <Button variant="ghost" size="icon">
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                            </EditRevisionTopicDialog>
+                        </Card>
+                    ))}
+                </div>
+            ) : (
+                 <div className="text-center p-8 border-2 border-dashed rounded-lg min-h-[200px] flex flex-col justify-center items-center">
+                    <Lightbulb className="h-10 w-10 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold">No Topics Found</h3>
+                    <p className="text-muted-foreground">Try adjusting your search or filters.</p>
+                </div>
+            )}
         </div>
     )
 }
@@ -256,18 +449,16 @@ export default function RevisionCentre() {
 
   const handleEndSession = () => {
     setSessionTopics(null);
-    fetchTopics(); // Refetch to get updated stats
+    fetchTopics();
   }
 
-  const renderContent = () => {
-    if (isLoading) {
-      return <Skeleton className="h-64 w-full" />
-    }
-
+  const renderRecallSession = () => {
+    if (isLoading) return <Skeleton className="h-64 w-full" />
+    
     if (sessionTopics) {
         return <RevisionSession topics={sessionTopics} onEndSession={handleEndSession}/>
     }
-    
+
     if (allTopics.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[300px]">
@@ -306,20 +497,28 @@ export default function RevisionCentre() {
 
   return (
     <div className="relative min-h-[calc(100vh-200px)]">
-       <div className="text-left">
-            {renderContent()}
-        </div>
+        <Tabs defaultValue="recall" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="recall">Recall Session</TabsTrigger>
+                <TabsTrigger value="browse">Browse Topics</TabsTrigger>
+            </TabsList>
+            <TabsContent value="recall">
+                {renderRecallSession()}
+            </TabsContent>
+            <TabsContent value="browse">
+                <BrowseTopics topics={allTopics} onTopicUpdated={fetchTopics} />
+            </TabsContent>
+        </Tabs>
 
-       <div className="fixed bottom-8 right-8 z-50 group">
+       <div className="fixed bottom-8 right-8 z-50">
            <AddRevisionTopicDialog onTopicAdded={fetchTopics}>
-                 <Button className="rounded-full h-14 w-auto p-4 shadow-lg flex items-center justify-center">
+                <Button className="rounded-full h-14 w-14 p-4 shadow-lg flex items-center justify-center">
                     <Plus className="h-6 w-6" />
-                    <span className="ml-2 hidden group-hover:block">
-                        Add New Topic
-                    </span>
                 </Button>
            </AddRevisionTopicDialog>
        </div>
     </div>
   );
 }
+
+    

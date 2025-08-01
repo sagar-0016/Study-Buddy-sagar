@@ -84,6 +84,25 @@ export const addRevisionTopic = async (topicData: {
 };
 
 /**
+ * Updates an existing revision topic in Firestore.
+ * @param topicId - The ID of the topic to update.
+ * @param data - The data to update.
+ */
+export const updateRevisionTopic = async (topicId: string, data: Partial<Pick<RevisionTopic, 'subject' | 'chapterName' | 'topicName' | 'hints'>>): Promise<void> => {
+    try {
+        const topicRef = doc(db, 'revisions', topicId);
+        await updateDoc(topicRef, {
+            ...data,
+            lastReviewed: serverTimestamp()
+        });
+    } catch (error) {
+        console.error(`Error updating topic ${topicId}:`, error);
+        throw error;
+    }
+}
+
+
+/**
  * Updates the recall stats for a specific revision topic.
  * @param {string} topicId - The ID of the topic document to update.
  * @param {'success' | 'fail'} result - The outcome of the recall attempt.
@@ -128,7 +147,6 @@ export const getRecallSessionTopics = async (sessionSize: number): Promise<Revis
         return shuffleArray(allTopics);
     }
 
-    // Categorize topics
     const mastered: RevisionTopic[] = [];
     const needsPractice: RevisionTopic[] = [];
     const reviewing: RevisionTopic[] = [];
@@ -137,21 +155,17 @@ export const getRecallSessionTopics = async (sessionSize: number): Promise<Revis
         const totalAttempts = topic.recallSuccess + topic.recallFails;
         const successRate = totalAttempts > 0 ? topic.recallSuccess / totalAttempts : 0;
         
-        // Mastered: More than 5 successes and high success rate
         if (topic.recallSuccess > 5 && successRate > 0.7) {
              mastered.push(topic);
         } 
-        // Needs Practice: More fails than successes, or no attempts yet
         else if (topic.recallFails > topic.recallSuccess || totalAttempts === 0) {
             needsPractice.push(topic);
         }
-        // Reviewing: Everything else
         else {
             reviewing.push(topic);
         }
     });
 
-    // Shuffle each category to ensure variety
     shuffleArray(mastered);
     shuffleArray(needsPractice);
     shuffleArray(reviewing);
@@ -169,17 +183,14 @@ export const getRecallSessionTopics = async (sessionSize: number): Promise<Revis
         }
     }
 
-    // Target counts based on percentages
     const targetMastered = Math.ceil(sessionSize * 0.10);
     const targetNeedsPractice = Math.ceil(sessionSize * 0.50);
     const targetReviewing = Math.ceil(sessionSize * 0.40);
 
-    // Build the session list based on percentages
     addTopics(needsPractice, targetNeedsPractice);
     addTopics(reviewing, targetNeedsPractice + targetReviewing);
     addTopics(mastered, targetNeedsPractice + targetReviewing + targetMastered);
     
-    // Fill remaining spots if needed, following the hierarchy
     if (sessionTopics.length < sessionSize) {
         const fillHierarchy = [...needsPractice, ...reviewing, ...mastered];
         for(const topic of fillHierarchy) {
@@ -215,3 +226,5 @@ export const getRevisionProgress = async (): Promise<{ mastered: number, total: 
         return { mastered: 0, total: 0 };
     }
 }
+
+    
