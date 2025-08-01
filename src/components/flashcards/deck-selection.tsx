@@ -53,39 +53,37 @@ const decks = [
 
 const DeckCard = ({ deck }: { deck: (typeof decks)[0] }) => {
   const isAvailable = deck.status === 'available';
-  
+
   const getBadgeText = () => {
     if (deck.status === 'available') return 'Available';
-    if (deck.status === 'not-for-you') return 'Not for you babe';
-    if (deck.status === 'not-available') return 'Not for you babe';
+    if (deck.status === 'not-for-you' || deck.status === 'not-available') return 'Not for you babe';
     return 'Coming Soon';
-  }
+  };
 
-  const CardContentWrapper = isAvailable ? Link : 'div';
-  
-  const cardProps = isAvailable ? { href: deck.href } : { onClick: () => { if (deck.href) window.location.href = deck.href; }, style: { cursor: 'pointer' } };
-
-
-  return (
-    <Card className={`flex flex-col transition-all duration-300 ${isAvailable ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : 'opacity-80 hover:border-destructive hover:-translate-y-1 hover:shadow-lg'}`}>
-      <div {...cardProps} className="flex flex-col flex-grow p-6">
-        <CardHeader className="p-0 mb-4">
-          <div className="flex justify-between items-start">
-            <div className={`p-3 rounded-full ${isAvailable ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
-                <deck.icon className="w-8 h-8" />
-            </div>
-            <Badge variant={isAvailable ? 'default' : 'destructive'}>
-              {getBadgeText()}
-            </Badge>
+  const cardContent = (
+    <Card className={`flex flex-col h-full transition-all duration-300 ${isAvailable ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : 'opacity-80 hover:border-destructive hover:-translate-y-1 hover:shadow-lg'}`}>
+      <CardHeader className="p-6 pb-4">
+        <div className="flex justify-between items-start">
+          <div className={`p-3 rounded-full ${isAvailable ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
+            <deck.icon className="w-8 h-8" />
           </div>
-        </CardHeader>
-        <div className="flex flex-col flex-grow">
-          <CardTitle className="text-xl mb-2">{deck.title}</CardTitle>
-          <CardDescription className="flex-grow">{deck.description}</CardDescription>
+          <Badge variant={isAvailable ? 'default' : 'destructive'}>
+            {getBadgeText()}
+          </Badge>
         </div>
-      </div>
+      </CardHeader>
+      <CardContent className="p-6 pt-0 flex flex-col flex-grow">
+        <CardTitle className="text-xl mb-2">{deck.title}</CardTitle>
+        <CardDescription className="flex-grow">{deck.description}</CardDescription>
+      </CardContent>
     </Card>
   );
+
+  if (isAvailable) {
+    return <Link href={deck.href}>{cardContent}</Link>;
+  }
+
+  return <div onClick={() => { if (deck.href) window.location.href = deck.href; }} style={{ cursor: 'pointer' }}>{cardContent}</div>;
 };
 
 export default function DeckSelection() {
