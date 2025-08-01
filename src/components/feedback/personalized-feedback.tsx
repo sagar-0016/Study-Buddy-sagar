@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -9,6 +10,7 @@ import { getSyllabusProgress } from '@/lib/syllabus';
 import { getRevisionTopics } from '@/lib/revisions';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import type { Question } from '@/lib/types';
 
 type Feedback = {
   appreciation: string;
@@ -32,7 +34,7 @@ export default function PersonalizedFeedback() {
       const recentlyCompletedSyllabus = syllabusProgress
         .filter(p => p.completed)
         .map(p => p.id.split('-').pop() || p.id) // Get topic name
-        .slice(0, 5); // Limit to most recent 5 for brevity
+        .slice(-5); // Get most recent 5
 
       // 2. Fetch revision topics with mistakes
       const revisionTopics = await getRevisionTopics();
@@ -46,11 +48,14 @@ export default function PersonalizedFeedback() {
       const q = query(
         collection(db, 'questions'),
         where('isAttempted', '==', true),
-        where('isCorrect', '==', false),
-        limit(5)
+        limit(20) // Fetch the last 20 attempted questions
       );
       const querySnapshot = await getDocs(q);
-      const questionMistakes = querySnapshot.docs.map(doc => doc.data().questionText as string);
+      const questionMistakes = querySnapshot.docs
+        .map(doc => doc.data() as Question)
+        .filter(question => question.isCorrect === false)
+        .map(question => question.questionText)
+        .slice(0, 5); // Limit to 5 for the prompt
 
       // 4. Call the AI action
       const result = await getPersonalizedFeedbackAction({
