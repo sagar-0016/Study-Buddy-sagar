@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import ProgressCharts from '@/components/dashboard/progress-charts';
+import DashboardOverview from '@/components/dashboard/dashboard-overview';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -11,10 +11,10 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Performance Dashboard</h1>
         <p className="text-muted-foreground">
-          Visualize your journey and track your progress.
+          Visualize your journey and track your progress across all study areas.
         </p>
       </div>
-      <ProgressCharts />
+      <DashboardOverview />
     </div>
   );
 }
