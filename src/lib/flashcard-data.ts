@@ -1533,11 +1533,11 @@ export const forcesFlashcards: Flashcard[] = [
 
         if (availableCards.length === 0) {
           container.innerHTML = `
-                                                                                                                                    <div class="empty-state">
-                                                                                                                                        <h2>🎉 Congratulations!</h2>
-                                                                                                                                        <p>You've completed all flashcards. Click "Reset Progress" to start over.</p>
-                                                                                                                                    </div>
-                                                                                                                                `;
+                                                                                                <div class="empty-state">
+                                                                                                    <h2>🎉 Congratulations!</h2>
+                                                                                                    <p>You've completed all flashcards. Click "Reset Progress" to start over.</p>
+                                                                                                </div>
+                                                                                            `;
           return;
         }
 
@@ -1545,32 +1545,32 @@ export const forcesFlashcards: Flashcard[] = [
         const isMarkedForLater = cardStatuses[card.id] === "later";
 
         container.innerHTML = `
-                                                                                                                                <div class="flashcard ${
-                                                                                                                                  isFlipped
-                                                                                                                                    ? "flipped"
-                                                                                                                                    : ""
-                                                                                                                                }" onclick="flipCard()">
-                                                                                                                                    <div class="flashcard-inner">
-                                                                                                                                        <div class="flashcard-content">
-                                                                                                                                            <div class="flashcard-question">${
-                                                                                                                                              card.question
-                                                                                                                                            }</div>
-                                                                                                                                            <div class="flip-hint">Click to reveal answer</div>
-                                                                                                                                            ${
-                                                                                                                                              isMarkedForLater
-                                                                                                                                                ? '<div style="position: absolute; top: 1rem; right: 1rem; background: var(--warning); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">⏰ See Later</div>'
-                                                                                                                                                : ""
-                                                                                                                                            }
-                                                                                                                                        </div>
-                                                                                                                                        <div class="flashcard-content flashcard-back">
-                                                                                                                                            <div class="flashcard-answer">${
-                                                                                                                                              card.answer
-                                                                                                                                            }</div>
-                                                                                                                                            <div class="flip-hint">Click to see question</div>
-                                                                                                                                        </div>
-                                                                                                                                    </div>
-                                                                                                                                </div>
-                                                                                                                            `;
+                                                                                            <div class="flashcard ${
+                                                                                              isFlipped
+                                                                                                ? "flipped"
+                                                                                                : ""
+                                                                                            }" onclick="flipCard()">
+                                                                                                <div class="flashcard-inner">
+                                                                                                    <div class="flashcard-content">
+                                                                                                        <div class="flashcard-question">${
+                                                                                                          card.question
+                                                                                                        }</div>
+                                                                                                        <div class="flip-hint">Click to reveal answer</div>
+                                                                                                        ${
+                                                                                                          isMarkedForLater
+                                                                                                            ? '<div style="position: absolute; top: 1rem; right: 1rem; background: var(--warning); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">⏰ See Later</div>'
+                                                                                                            : ""
+                                                                                                        }
+                                                                                                    </div>
+                                                                                                    <div class="flashcard-content flashcard-back">
+                                                                                                        <div class="flashcard-answer">${
+                                                                                                          card.answer
+                                                                                                        }</div>
+                                                                                                        <div class="flip-hint">Click to see question</div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        `;
       }
 
       // Flip card
