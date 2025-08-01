@@ -270,7 +270,7 @@ export const kinematicsFlashcards: Flashcard[] = [
       question:
         "How do you identify non-uniform acceleration from a velocity-time graph?",
       answer:
-        "If the graph is curved (not a straight line), it shows non-uniform acceleration.",
+        "If the graph is a curve (not a straight line), it shows non-uniform acceleration.",
     },
     {
       id: 45,
