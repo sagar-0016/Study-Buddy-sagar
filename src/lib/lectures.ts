@@ -61,9 +61,7 @@ export const addLecture = async (lectureData: {
 export const getLectures = async (): Promise<Lecture[]> => {
   try {
     const lecturesRef = collection(db, 'lectures');
-    // To see user-uploaded videos first, we'll sort by creation time descending.
-    const q = query(lecturesRef, orderBy('createdAt', 'desc')); 
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await getDocs(lecturesRef);
 
     if (querySnapshot.empty) {
       return [];
