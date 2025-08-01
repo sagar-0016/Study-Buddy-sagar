@@ -48,8 +48,7 @@ export default function WelcomeBanner() {
           ref={containerRef}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
-          style={{ transition: 'transform 0.1s, box-shadow 0.1s', boxShadow: shadow }}
-          className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group rounded-lg overflow-hidden"
+          className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group"
         >
            <Image
               src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
@@ -57,7 +56,11 @@ export default function WelcomeBanner() {
               data-ai-hint="logo university"
               fill
               className="object-cover rounded-lg"
-              style={{ transform: transform, transition: 'transform 0.25s ease-out' }}
+              style={{ 
+                transform: transform, 
+                boxShadow: shadow,
+                transition: 'transform 0.25s ease-out, box-shadow 0.25s ease-out' 
+              }}
             />
         </div>
         {/* <div className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group">
