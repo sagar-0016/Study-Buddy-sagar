@@ -7,9 +7,14 @@ export type NavLink = {
   icon: React.ElementType;
 };
 
+export type SyllabusChapter = {
+    name: string;
+    weightage: number;
+}
+
 export type Chapter = {
   title: string;
-  topics: string[];
+  topics: SyllabusChapter[];
 };
 
 export type Subject = {
