@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Flame } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Tricky Topics',
+  title: 'Ticky & Brainstormers',
 };
 
 export default function TrickyTopicsPage() {
@@ -14,7 +14,7 @@ export default function TrickyTopicsPage() {
           <div className="mx-auto bg-primary/10 p-4 rounded-full">
             <Flame className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="mt-4">Tricky Topics Section Coming Soon!</CardTitle>
+          <CardTitle className="mt-4">Ticky & Brainstormers Section Coming Soon!</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
