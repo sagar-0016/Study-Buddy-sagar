@@ -31,8 +31,10 @@ export const addLecture = async (lectureData: {
   videoFile: File;
 }): Promise<string | null> => {
   try {
+    // First, upload the video and get the URL.
     const videoUrl = await uploadVideo(lectureData.videoFile);
 
+    // Then, add the document to Firestore with the correct videoUrl.
     const lecturesRef = collection(db, 'lectures');
     const newDocRef = await addDoc(lecturesRef, {
       title: lectureData.title,
@@ -40,7 +42,7 @@ export const addLecture = async (lectureData: {
       subject: lectureData.subject,
       channel: lectureData.channel,
       duration: lectureData.duration,
-      videoUrl: videoUrl,
+      videoUrl: videoUrl, // This will now be correctly populated
       thumbnailUrl: `https://placehold.co/1280x720.png`, // Generic placeholder
       createdAt: serverTimestamp(),
     });
