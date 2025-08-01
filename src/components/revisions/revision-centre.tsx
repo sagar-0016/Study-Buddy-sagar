@@ -275,9 +275,9 @@ export default function RevisionCentre() {
 
        <div className="fixed bottom-8 right-8 z-50">
            <AddRevisionTopicDialog onTopicAdded={fetchTopics}>
-                <Button className="rounded-full h-14 w-14 p-0 shadow-lg group transition-all duration-300 ease-in-out hover:w-48">
-                    <Plus className="h-7 w-7 transition-transform duration-300 group-hover:rotate-90" />
-                    <span className="sr-only sm:not-sr-only sm:w-0 sm:opacity-0 sm:transition-all sm:duration-300 sm:ease-in-out group-hover:w-auto group-hover:opacity-100 group-hover:ml-2">
+                <Button className="rounded-full h-14 w-auto p-4 shadow-lg">
+                    <Plus className="h-6 w-6" />
+                    <span className="ml-2">
                         Add New Topic
                     </span>
                 </Button>
