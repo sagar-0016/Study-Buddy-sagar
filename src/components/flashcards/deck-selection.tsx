@@ -26,7 +26,7 @@ const decks = [
     description: 'Master the periodic table, chemical reactions, and fundamental principles of chemistry.',
     icon: FlaskConical,
     status: 'available',
-    href: '/flashcards/not-for-you',
+    href: '/flashcards/chemistry',
   },
   {
     title: 'Physics Concepts',
@@ -82,8 +82,8 @@ const DeckCard = ({ deck }: { deck: (typeof decks)[0] }) => {
   if (isAvailable) {
     return <Link href={deck.href}>{cardContent}</Link>;
   }
-
-  return <div onClick={() => { if (deck.href) window.location.href = deck.href; }} style={{ cursor: 'pointer' }}>{cardContent}</div>;
+  
+  return <Link href={deck.href}>{cardContent}</Link>;
 };
 
 export default function DeckSelection() {
