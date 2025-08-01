@@ -1,7 +1,34 @@
 
+"use client";
+
+import { useState, useRef } from 'react';
 import Image from "next/image";
 
 export default function WelcomeBanner() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [transform, setTransform] = useState('');
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+
+    const { clientX, clientY } = e;
+    const { left, top, width, height } = containerRef.current.getBoundingClientRect();
+    
+    // Calculate cursor position from the center of the element (-0.5 to 0.5)
+    const x = (clientX - left) / width - 0.5;
+    const y = (clientY - top) / height - 0.5;
+
+    // Apply the 3D transform. The multiplier adjusts the "intensity" of the effect.
+    const rotateY = x * 30; // Rotate around Y-axis
+    const rotateX = -y * 30; // Rotate around X-axis
+
+    setTransform(`perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`);
+  };
+
+  const handleMouseLeave = () => {
+    setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)');
+  };
+
   return (
     <div className="relative transition-transform duration-300 ease-in-out">
       <div className="grid md:grid-cols-2 items-center">
@@ -11,25 +38,22 @@ export default function WelcomeBanner() {
             Your journey to IIT Delhi starts now. Seize the day!
           </p>
         </div>
-        <div className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group overflow-hidden">
+        <div 
+          ref={containerRef}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          style={{ transition: 'transform 0.1s' }}
+          className="relative min-h-[15rem] h-60 md:h-full group"
+        >
            <Image
               src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
               alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
               fill
-              className="w-full h-full object-cover"
+              className="object-cover rounded-lg"
+              style={{ transform: transform, transition: 'transform 0.25s ease-out' }}
             />
         </div>
-{/* 
-        <div className="relative h-60 md:h-full group">
-           <Image
-              src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
-              alt="IIT Delhi Emblem in a serene landscape"
-              data-ai-hint="logo university"
-              fill
-              className="w-full h-full object-contain md:object-cover"
-            />
-        </div> */}
       </div>
     </div>
   );
