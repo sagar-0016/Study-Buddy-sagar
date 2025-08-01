@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play } from 'lucide-react';
+import { PlusCircle, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
@@ -238,23 +238,20 @@ export default function RevisionCentre() {
             <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[300px]">
                 <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold">No Revision Topics Yet</h3>
-                <p className="text-muted-foreground mb-6">Click below to add your first topic and get started.</p>
-                <AddRevisionTopicDialog onTopicAdded={fetchTopics}>
-                    <Button size="lg"><PlusCircle className="mr-2 h-5 w-5" /> Add Revision Topic</Button>
-                </AddRevisionTopicDialog>
+                <p className="text-muted-foreground mb-6">Click the button in the corner to add your first topic.</p>
             </div>
         )
     }
 
     return (
-        <Card className="max-w-md mx-auto">
-            <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Start a Recall Session</CardTitle>
-                <CardDescription>Select how many topics you want to revise right now.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center gap-4">
+        <div className="space-y-6">
+            <div className="text-left">
+                <h2 className="text-2xl font-bold tracking-tight">Start a Recall Session</h2>
+                <p className="text-muted-foreground">Select how many topics you want to revise right now.</p>
+            </div>
+            <div className="flex flex-col items-start gap-4">
                 <Select value={sessionSize} onValueChange={setSessionSize}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-full max-w-[240px]">
                         <SelectValue placeholder="Session Size" />
                     </SelectTrigger>
                     <SelectContent>
@@ -267,21 +264,25 @@ export default function RevisionCentre() {
                     {isStartingSession ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Play className="mr-2 h-5 w-5" />}
                      Start Session
                 </Button>
-            </CardContent>
-            <CardFooter className="justify-center">
-                 <AddRevisionTopicDialog onTopicAdded={fetchTopics}>
-                     <Button variant="outline"><PlusCircle className="mr-2"/> Add New Topic</Button>
-                 </AddRevisionTopicDialog>
-            </CardFooter>
-        </Card>
+            </div>
+        </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="relative min-h-[calc(100vh-200px)]">
        {renderContent()}
+
+       <div className="fixed bottom-8 right-8 z-50">
+           <AddRevisionTopicDialog onTopicAdded={fetchTopics}>
+                <Button className="rounded-full h-14 w-14 p-0 shadow-lg group transition-all duration-300 ease-in-out hover:w-48">
+                    <Plus className="h-7 w-7 transition-transform duration-300 group-hover:rotate-90" />
+                    <span className="sr-only sm:not-sr-only sm:w-0 sm:opacity-0 sm:transition-all sm:duration-300 sm:ease-in-out group-hover:w-auto group-hover:opacity-100 group-hover:ml-2">
+                        Add New Topic
+                    </span>
+                </Button>
+           </AddRevisionTopicDialog>
+       </div>
     </div>
   );
 }
-
-    
