@@ -88,6 +88,7 @@ const LectureCard = ({ lecture }: { lecture: Lecture }) => {
   );
 };
 
+/*
 const UploadLectureDialog = ({ onUploadComplete }: { onUploadComplete: () => void }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -195,6 +196,7 @@ const UploadLectureDialog = ({ onUploadComplete }: { onUploadComplete: () => voi
         </Dialog>
     )
 }
+*/
 
 export default function LectureLibrary() {
   const [lectures, setLectures] = useState<Lecture[]>([]);
@@ -235,7 +237,7 @@ export default function LectureLibrary() {
                 className="pl-10"
             />
         </div>
-        <UploadLectureDialog onUploadComplete={fetchLectures} />
+        {/* <UploadLectureDialog onUploadComplete={fetchLectures} /> */}
       </div>
 
       {isLoading ? (
