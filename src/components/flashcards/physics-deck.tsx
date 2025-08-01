@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -22,7 +21,7 @@ const physicsDecks = [
         icon: Orbit,
         status: 'available',
         difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you', // Placeholder
+        href: '/flashcards/physics/forces',
     },
     {
         title: 'Thermodynamics',
