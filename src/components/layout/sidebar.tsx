@@ -15,6 +15,7 @@ import {
   MessageSquareQuote,
   LifeBuoy,
   Notebook,
+  BrainCircuit,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -33,13 +34,14 @@ export const navLinks: NavLink[] = [
   { href: "/questions", label: "Questions", icon: ClipboardList },
   { href: "/flashcards", label: "Flashcards", icon: Notebook },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
+  { href: "/revisions", label: "Revisions", icon: BrainCircuit },
   { href: "/feedback", label: "AI Feedback", icon: BotMessageSquare },
 ];
 
 const secondaryNavLinks: NavLink[] = [
     { href: "/tricky-topics", label: "Tricky Topics", icon: Flame },
     { href: "/doubts", label: "Doubt Centre", icon: MessageSquareQuote },
-    { href: "/help", label: "Help", icon: LifeBuoy },
+    { href: "/help", label: "Technical Help", icon: LifeBuoy },
 ]
 
 function SidebarNav({ links, isCollapsed }: { links: NavLink[]; isCollapsed: boolean }) {

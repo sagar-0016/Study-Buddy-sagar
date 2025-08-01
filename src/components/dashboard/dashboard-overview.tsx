@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getSyllabusProgress } from "@/lib/syllabus";
 import { getProgressData } from "@/lib/progress";
 import { syllabusData } from "@/lib/data";
-import { BookCheck, ClipboardList, Notebook } from "lucide-react";
+import { BookCheck, ClipboardList, Notebook, BrainCircuit } from "lucide-react";
 
 const ProgressCard = ({ title, icon: Icon, value, total, isLoading, unit = 'topics' }: { title: string, icon: React.ElementType, value: number, total: number, isLoading: boolean, unit?: string }) => {
     const percentage = total > 0 ? (value / total) * 100 : 0;
@@ -43,9 +43,11 @@ export default function DashboardOverview() {
   const [syllabusProgress, setSyllabusProgress] = useState({ completed: 0, total: 0 });
   const [flashcardProgress, setFlashcardProgress] = useState({ completed: 0, total: 0 });
   const [pyqProgress, setPyqProgress] = useState({ completed: 125, total: 500 }); // Placeholder
+  const [revisionProgress, setRevisionProgress] = useState({ completed: 10, total: 50 }); // Placeholder
   const [isLoadingSyllabus, setIsLoadingSyllabus] = useState(true);
   const [isLoadingFlashcards, setIsLoadingFlashcards] = useState(true);
   const [isLoadingPyqs, setIsLoadingPyqs] = useState(false); // Placeholder is not loading
+  const [isLoadingRevisions, setIsLoadingRevisions] = useState(false); // Placeholder is not loading
 
   useEffect(() => {
     const fetchSyllabusData = async () => {
@@ -77,7 +79,7 @@ export default function DashboardOverview() {
   }, []);
 
   return (
-    <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <ProgressCard 
             title="Syllabus Completion"
             icon={BookCheck}
@@ -101,6 +103,14 @@ export default function DashboardOverview() {
             total={pyqProgress.total}
             isLoading={isLoadingPyqs}
             unit="questions"
+        />
+        <ProgressCard 
+            title="Revisions Mastered"
+            icon={BrainCircuit}
+            value={revisionProgress.completed}
+            total={revisionProgress.total}
+            isLoading={isLoadingRevisions}
+            unit="topics"
         />
     </div>
   );
