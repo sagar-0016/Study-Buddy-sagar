@@ -22,6 +22,16 @@ const db = getFirestore(app);
 console.log("Firebase initialized for script.");
 
 const lectures = [
+    // Test Video from GitHub
+    {
+        title: "Test Video from GitHub",
+        description: "A test video added to demonstrate the lecture library functionality with an external URL.",
+        subject: "Physics", // Assigning to a subject for filtering
+        videoUrl: "https://github.com/sagar-0016/Flashcards/raw/refs/heads/main/This%20one%20might%20take%20you%20some%20time%20%23sofimanassyan%20%23relatable%20%23funny%20%5BFkWzWPqPif0%5D.webm",
+        thumbnailUrl: "https://placehold.co/1280x720.png",
+        channel: "Test Channel",
+        duration: "0:30"
+    },
     // Test Video
     {
         title: "Test Video: Hair Tutorial",
