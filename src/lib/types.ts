@@ -83,6 +83,7 @@ export interface RevisionTopic extends DocumentData {
   chapterName: string;
   topicName: string;
   hints: string;
+  hintsImageURL?: string;
   recallSuccess: number;
   recallFails: number;
   lastReviewed: Timestamp;

@@ -1,5 +1,5 @@
 
-import { db } from './firebase';
+import { db, storage } from './firebase';
 import {
   collection,
   doc,
@@ -11,7 +11,23 @@ import {
   orderBy,
   increment,
 } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { RevisionTopic } from './types';
+import { v4 as uuidv4 } from 'uuid';
+
+/**
+ * Uploads an image to Firebase Storage and returns the download URL.
+ * @param {File} file - The image file to upload.
+ * @returns {Promise<string>} The public URL of the uploaded image.
+ */
+const uploadImageHint = async (file: File): Promise<string> => {
+    const fileId = uuidv4();
+    const storageRef = ref(storage, `revision-hints/${fileId}-${file.name}`);
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
+}
+
 
 /**
  * Fetches all revision topics from Firestore.
@@ -41,11 +57,21 @@ export const addRevisionTopic = async (topicData: {
   chapterName: string;
   topicName: string;
   hints: string;
+  imageFile?: File;
 }): Promise<string | null> => {
   try {
+    let hintsImageURL: string | undefined = undefined;
+    if (topicData.imageFile) {
+        hintsImageURL = await uploadImageHint(topicData.imageFile);
+    }
+
     const revisionsRef = collection(db, 'revisions');
     const newDocRef = await addDoc(revisionsRef, {
-      ...topicData,
+      subject: topicData.subject,
+      chapterName: topicData.chapterName,
+      topicName: topicData.topicName,
+      hints: topicData.hints,
+      hintsImageURL,
       recallSuccess: 0,
       recallFails: 0,
       lastReviewed: serverTimestamp(),
@@ -189,5 +215,3 @@ export const getRevisionProgress = async (): Promise<{ mastered: number, total: 
         return { mastered: 0, total: 0 };
     }
 }
-
-    

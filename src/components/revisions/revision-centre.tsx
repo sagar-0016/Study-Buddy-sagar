@@ -2,8 +2,9 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Plus } from 'lucide-react';
+import { PlusCircle, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Plus, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
@@ -29,6 +30,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
     const [chapterName, setChapterName] = useState('');
     const [topicName, setTopicName] = useState('');
     const [hints, setHints] = useState('');
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
@@ -37,21 +39,30 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
         return subject && chapterName && topicName && hints;
     }, [subject, chapterName, topicName, hints]);
 
+    const resetForm = () => {
+        setSubject('');
+        setChapterName('');
+        setTopicName('');
+        setHints('');
+        setImageFile(null);
+    }
+
     const handleSubmit = async () => {
         if (!canSubmit) return;
 
         setIsSaving(true);
         try {
-            const newTopic = { subject, chapterName, topicName, hints };
-            await addRevisionTopic(newTopic);
+            await addRevisionTopic({
+                subject,
+                chapterName,
+                topicName,
+                hints,
+                imageFile: imageFile || undefined
+            });
             toast({ title: "Success!", description: "New revision topic has been added." });
             onTopicAdded();
             setIsOpen(false);
-            // Reset form
-            setSubject('');
-            setChapterName('');
-            setTopicName('');
-            setHints('');
+            resetForm();
         } catch (error) {
              toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
         } finally {
@@ -60,7 +71,10 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
     }
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            setIsOpen(open);
+            if (!open) resetForm();
+        }}>
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
@@ -96,6 +110,10 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
                      <div className="grid grid-cols-4 items-start gap-4">
                         <Label htmlFor="hints" className="text-right pt-2">Hints</Label>
                         <Textarea id="hints" value={hints} onChange={(e) => setHints(e.target.value)} className="col-span-3" placeholder="Add some keywords or formulas to jog your memory." />
+                    </div>
+                     <div className="grid grid-cols-4 items-start gap-4">
+                        <Label htmlFor="image" className="text-right pt-2">Image Hint</Label>
+                        <Input id="image" type="file" onChange={(e) => setImageFile(e.target.files ? e.target.files[0] : null)} className="col-span-3" accept="image/*"/>
                     </div>
                 </div>
                 <DialogFooter>
@@ -172,10 +190,27 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
                     </Button>
                     <div className={cn("transition-opacity duration-300", showHints ? 'opacity-100' : 'opacity-0')}>
                         {showHints && (
-                            <div className="p-4 bg-muted/50 rounded-lg border-l-4 border-accent">
-                                <p className="text-sm text-muted-foreground italic">
-                                    {currentTopic.hints}
-                                </p>
+                            <div className="p-4 bg-muted/50 rounded-lg border-l-4 border-accent space-y-4">
+                                {currentTopic.hints && (
+                                     <p className="text-sm text-muted-foreground italic">
+                                        {currentTopic.hints}
+                                    </p>
+                                )}
+                                {currentTopic.hintsImageURL && (
+                                     <Dialog>
+                                        <DialogTrigger asChild>
+                                             <button type="button" className="mt-2 rounded-lg overflow-hidden border w-full md:w-1/2 group relative">
+                                                <Image src={currentTopic.hintsImageURL} alt="Hint visual aid" width={300} height={150} className="object-cover w-full" />
+                                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <ImageIcon className="h-8 w-8 text-white" />
+                                                </div>
+                                            </button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-3xl">
+                                            <Image src={currentTopic.hintsImageURL} alt="Question visual aid" width={800} height={600} className="rounded-lg object-contain" />
+                                        </DialogContent>
+                                    </Dialog>
+                                )}
                             </div>
                         )}
                     </div>
@@ -271,13 +306,15 @@ export default function RevisionCentre() {
 
   return (
     <div className="relative min-h-[calc(100vh-200px)]">
-       {renderContent()}
+       <div className="text-left">
+            {renderContent()}
+        </div>
 
-       <div className="fixed bottom-8 right-8 z-50">
+       <div className="fixed bottom-8 right-8 z-50 group">
            <AddRevisionTopicDialog onTopicAdded={fetchTopics}>
-                <Button className="rounded-full h-14 w-auto p-4 shadow-lg">
+                 <Button className="rounded-full h-14 w-auto p-4 shadow-lg flex items-center justify-center">
                     <Plus className="h-6 w-6" />
-                    <span className="ml-2">
+                    <span className="ml-2 hidden group-hover:block">
                         Add New Topic
                     </span>
                 </Button>
