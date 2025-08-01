@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { syllabusData } from '@/lib/data';
-import type { Subject, Chapter } from '@/lib/types';
+import type { Subject, SyllabusChapter } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Send, Pencil, Edit } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -30,19 +30,23 @@ const weightageLevels: Record<number, { label: string; description: string; colo
     1: { label: 'Level 1', description: 'Quite rare to have a question', color: 'bg-blue-500 hover:bg-blue-600 border-blue-500' },
 };
 
+// Define a new type for the flattened structure
+type ChapterWithUnit = SyllabusChapter & { unit: string };
+
+
 function SubjectAnalysis({ subject }: { subject: Subject }) {
   const [filter, setFilter] = useState('all');
   const [sort, setSort] = useState('weightage-desc');
   const [isSuggestMode, setIsSuggestMode] = useState(false);
 
-  const allChapters = useMemo(() => {
-    return subject.chapters.flatMap(unit => 
-        unit.topics.map(topic => ({ ...topic, unit: unit.title }))
+  const allChaptersWithUnit = useMemo(() => {
+    return subject.chapters.flatMap(chapter => 
+        chapter.topics.map(topic => ({ ...topic, unit: chapter.title }))
     );
   }, [subject]);
 
   const filteredAndSortedChapters = useMemo(() => {
-    let chapters = [...allChapters];
+    let chapters: ChapterWithUnit[] = [...allChaptersWithUnit];
     
     // Filter
     if (filter !== 'all') {
@@ -59,7 +63,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
     }
 
     return chapters;
-  }, [allChapters, filter, sort]);
+  }, [allChaptersWithUnit, filter, sort]);
 
   return (
     <div className="space-y-6">
@@ -122,7 +126,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
   );
 }
 
-const SuggestChangeDialog = ({ chapter, children }: { chapter: { name: string, unit: string }, children: React.ReactNode}) => {
+const SuggestChangeDialog = ({ chapter, children }: { chapter: ChapterWithUnit, children: React.ReactNode}) => {
     const [suggestion, setSuggestion] = useState('');
 
     return (
