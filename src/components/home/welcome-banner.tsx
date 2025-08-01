@@ -11,15 +11,25 @@ export default function WelcomeBanner() {
             Your journey to IIT Delhi starts now. Seize the day!
           </p>
         </div>
+        <div className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group overflow-hidden">
+           <Image
+              src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
+              alt="IIT Delhi Emblem in a serene landscape"
+              data-ai-hint="logo university"
+              fill
+              className="w-full h-full object-cover"
+            />
+        </div>
+{/* 
         <div className="relative h-60 md:h-full group">
            <Image
               src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
               alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
               fill
-              className="object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105 group-hover:-translate-y-1"
+              className="w-full h-full object-contain md:object-cover"
             />
-        </div>
+        </div> */}
       </div>
     </div>
   );

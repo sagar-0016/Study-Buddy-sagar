@@ -49,11 +49,11 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased" suppressHydrationWarning>
-        <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+        <div className="relative flex min-h-screen w-full">
           <Sidebar />
-          <div className="flex flex-col">
+          <div className="flex flex-1 flex-col md:pl-[220px] lg:pl-[280px]">
             <Header />
-            <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-6">
               {children}
             </main>
           </div>

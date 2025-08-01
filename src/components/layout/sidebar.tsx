@@ -83,7 +83,7 @@ export default function Sidebar() {
   const isCollapsed = false; // Add logic to collapse sidebar if needed
 
   return (
-    <aside className="hidden border-r bg-muted/40 md:block">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[220px] border-r bg-muted/40 md:block lg:w-[280px]">
       <TooltipProvider>
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
@@ -92,7 +92,7 @@ export default function Sidebar() {
               <span className="">Pranjal's Study Buddy</span>
             </Link>
           </div>
-          <div className="flex-1">
+          <div className="flex-1 overflow-y-auto">
              <SidebarNav links={navLinks} isCollapsed={isCollapsed} />
           </div>
           <div className="mt-auto p-4">
