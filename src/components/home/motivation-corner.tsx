@@ -50,7 +50,7 @@ export default function MotivationCorner() {
               key={mood.label}
               variant={selectedMood === mood.label ? "default" : "outline"}
               className={cn(
-                "flex flex-col h-20 text-base hover:bg-muted px-2",
+                "flex flex-col h-20 text-base hover:bg-muted px-10",
                 {
                   "border-0": selectedMood !== mood.label,
                 }
