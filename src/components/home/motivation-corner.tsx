@@ -51,7 +51,7 @@ export default function MotivationCorner() {
               key={mood.label}
               variant={selectedMood === mood.label ? "default" : "outline"}
               className={cn("flex flex-col h-20 text-base", {
-                "border-0": selectedMood !== mood.label
+                "border-0": selectedMood !== mood.label,
               })}
               onClick={() => handleMoodSelect(mood.label)}
             >
