@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 const moods = [
   { emoji: "😊", label: "Happy" },
   { emoji: "😟", label: "Worried" },
-  { emoji: "🤔", label: "Confused" },
   { emoji: "😴", label: "Tired" },
 ];
 
@@ -45,7 +44,7 @@ export default function MotivationCorner() {
     <Card className="flex flex-col transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg border-0">
       <CardContent className="flex-grow space-y-4 pt-6">
         <p className="text-lg font-medium text-center">How are you feeling, Pranjal?</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-md mx-auto">
+        <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
           {moods.map((mood) => (
             <Button
               key={mood.label}
