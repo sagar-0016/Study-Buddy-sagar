@@ -43,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     try {
         sessionStorage.removeItem('study-buddy-session-active');
+        // We also clear the device verification on logout for security
         localStorage.removeItem('study-buddy-device-verified');
         toast({
             title: "Logged Out",
