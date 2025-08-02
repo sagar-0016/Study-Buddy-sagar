@@ -8,31 +8,54 @@ import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { AuthProvider, useAuth } from '@/context/auth-context';
+import LoginScreen from '@/components/auth/login-screen';
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+function AppContent({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const logAppOpen = async () => {
       try {
-        await addDoc(collection(db, "opened"), {
-          time: new Date(),
-        });
-        console.log("App open event logged to Firestore.");
+        if (isAuthenticated) {
+            await addDoc(collection(db, "opened"), {
+              time: new Date(),
+            });
+            console.log("App open event logged to Firestore.");
+        }
       } catch (error) {
         console.error("Error logging app open event: ", error);
       }
     };
 
     logAppOpen();
-  }, []);
+  }, [isAuthenticated]);
 
+  if (!isAuthenticated) {
+    return <LoginScreen />;
+  }
 
   return (
-    <html lang="en">
+    <div className="relative flex min-h-screen w-full">
+      <Sidebar />
+      <div className="flex flex-1 flex-col md:pl-[220px] lg:pl-[280px]">
+        <Header />
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" suppressHydrationWarning>
       <head>
         <title>Pranjal's Study Buddy</title>
         <meta name="description" content="Your personalized companion for JEE preparation." />
@@ -48,17 +71,11 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased" suppressHydrationWarning>
-        <div className="relative flex min-h-screen w-full">
-          <Sidebar />
-          <div className="flex flex-1 flex-col md:pl-[220px] lg:pl-[280px]">
-            <Header />
-            <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-              {children}
-            </main>
-          </div>
-        </div>
-        <Toaster />
+      <body className="font-body antialiased">
+        <AuthProvider>
+            <AppContent>{children}</AppContent>
+            <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );
