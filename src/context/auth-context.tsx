@@ -19,10 +19,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     try {
+      // Check if the device has been verified in the past
+      const deviceVerified = localStorage.getItem('study-buddy-device-verified') === 'true';
+      // An active session is only for the current browser tab
       const sessionActive = sessionStorage.getItem('study-buddy-session-active') === 'true';
-      setIsAuthenticated(sessionActive);
+
+      // If the device is verified, we can consider the user authenticated for this session
+      if (deviceVerified) {
+        setIsAuthenticated(true);
+        // Ensure session is marked as active if it's not already
+        if (!sessionActive) {
+            sessionStorage.setItem('study-buddy-session-active', 'true');
+        }
+      } else {
+        setIsAuthenticated(false);
+      }
     } catch (e) {
-        console.error("Session storage not available.");
+        console.error("Local/Session storage not available.");
     } finally {
         setIsLoading(false);
     }
@@ -31,8 +44,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = () => {
     try {
         sessionStorage.setItem('study-buddy-session-active', 'true');
+        // This is set in the login screen, but we ensure it's set on login.
+        localStorage.setItem('study-buddy-device-verified', 'true');
     } catch (e) {
-        console.error("Session storage not available.");
+        console.error("Local/Session storage not available.");
     }
     setIsAuthenticated(true);
   };

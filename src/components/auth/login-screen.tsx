@@ -95,7 +95,7 @@ export default function LoginScreen() {
                         {isFirstTime ? 'Welcome to Your Study Buddy' : `Welcome Back, ${SETUP_USERNAME}`}
                     </CardTitle>
                     <CardDescription>
-                        {isFirstTime ? 'Please verify your device to continue.' : 'Please enter your secret key to continue.'}
+                        {isFirstTime ? 'Please verify your device to continue.' : 'Please enter your password to continue.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -136,7 +136,7 @@ export default function LoginScreen() {
                     ) : (
                         <form onSubmit={handleSubsequentLogin} className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="key-input">Secret Key</Label>
+                                <Label htmlFor="key-input">Password</Label>
                                  <div className="relative">
                                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
