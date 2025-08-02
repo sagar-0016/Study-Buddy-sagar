@@ -43,9 +43,18 @@ const prompt = ai.definePrompt({
   - Keep the feedback concise and focused on a few key areas.
 
   USER'S RECENT ACTIVITY:
-  - Recently Completed Syllabus Topics: {{jsonStringify recentlyCompletedSyllabus}}
-  - Revision Topics with Mistakes: {{jsonStringify revisionMistakes}}
-  - Incorrectly Answered Questions: {{jsonStringify questionMistakes}}
+  - Recently Completed Syllabus Topics: 
+    {{#each recentlyCompletedSyllabus}}
+    - {{this}}
+    {{/each}}
+  - Revision Topics with Mistakes: 
+    {{#each revisionMistakes}}
+    - Topic: {{this.topic}}, Fails: {{this.fails}}
+    {{/each}}
+  - Incorrectly Answered Questions: 
+    {{#each questionMistakes}}
+    - {{this}}
+    {{/each}}
 
   YOUR TASK:
   Generate a personalized feedback response with three sections:
