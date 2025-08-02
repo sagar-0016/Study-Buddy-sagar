@@ -9,9 +9,9 @@ import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const moods = [
-  { emoji: "💪", label: "Motivated" },
+  { emoji: "✨", label: "Motivated" },
   { emoji: "😟", label: "Worried" },
-  { emoji: "😐", label: "Focused" },
+  { emoji: "🧘‍♀️", label: "Focused" },
 ];
 
 export default function MotivationCorner() {
