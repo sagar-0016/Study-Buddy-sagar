@@ -5,10 +5,12 @@ import { useState, useEffect } from 'react';
 import VerifyDeviceScreen from './verify-device';
 import UnlockScreen from './unlock-screen';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
 
 export default function LoginFlow() {
     const [isVerified, setIsVerified] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const { login } = useAuth();
 
     useEffect(() => {
         try {
@@ -38,7 +40,7 @@ export default function LoginFlow() {
     return (
         <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
             {isVerified ? (
-                <UnlockScreen />
+                <UnlockScreen onUnlock={login} />
             ) : (
                 <VerifyDeviceScreen onVerified={handleDeviceVerified} />
             )}

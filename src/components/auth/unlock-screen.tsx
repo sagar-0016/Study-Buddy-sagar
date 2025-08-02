@@ -2,7 +2,6 @@
 "use client";
 
 import { useState } from 'react';
-import { useAuth } from '@/context/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,8 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 const SECRET_KEY = 'p';
 const SETUP_USERNAME = 'pranjal';
 
-export default function UnlockScreen() {
-    const { login } = useAuth();
+export default function UnlockScreen({ onUnlock }: { onUnlock: () => void }) {
     const [keyInput, setKeyInput] = useState('');
     const [error, setError] = useState('');
     const { toast } = useToast();
@@ -26,7 +24,7 @@ export default function UnlockScreen() {
             toast({
               title: `Welcome back, ${SETUP_USERNAME}!`,
             });
-            login();
+            onUnlock();
         } else {
             setError('The key is incorrect. Try again.');
         }

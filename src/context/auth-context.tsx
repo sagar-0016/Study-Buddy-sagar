@@ -3,6 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -18,7 +19,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // This effect only checks for an active session.
     try {
       const sessionActive = sessionStorage.getItem('study-buddy-session-active') === 'true';
       if (sessionActive) {
@@ -42,9 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     try {
-        // Clear session for immediate logout
         sessionStorage.removeItem('study-buddy-session-active');
-        // Clear local storage to forget the device verification
         localStorage.removeItem('study-buddy-device-verified');
         toast({
             title: "Logged Out",
@@ -57,8 +55,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   if (isLoading) {
-    // Render nothing or a loading spinner while checking session state
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   return (
