@@ -4,26 +4,36 @@
 
 @layer base {
   :root {
-    --background: 120 60% 97%;
+    --background: 120 100% 97%; /* Very light desaturated green (#F0FFF0) */
     --foreground: 222.2 84% 4.9%;
-    --card: 120 60% 97%;
+
+    --card: 120 100% 97%;
     --card-foreground: 222.2 84% 4.9%;
-    --popover: 120 60% 97%;
+
+    --popover: 120 100% 97%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 120 41% 45%;
-    --primary-foreground: 120 86% 97%;
-    --secondary: 120 20% 92%;
+
+    --primary: 120 73% 75%; /* Muted green (#90EE90) */
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 120 60% 94%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 120 20% 92%;
+
+    --muted: 120 60% 94%;
     --muted-foreground: 224 7.1% 44.1%;
-    --accent: 182 80% 45%;
-    --accent-foreground: 182 25% 98%;
+
+    --accent: 182 100% 74%; /* Blue (#7DF9FF) */
+    --accent-foreground: 222.2 47.4% 11.2%;
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 120 20% 88%;
-    --input: 120 20% 88%;
-    --ring: 120 41% 45%;
-    --radius: 0.8rem;
+
+    --border: 120 50% 90%;
+    --input: 120 50% 90%;
+    --ring: 120 73% 75%;
+
+    --radius: 0.5rem;
+
     --chart-1: 120 70% 50%;
     --chart-2: 182 70% 50%;
     --chart-3: 43 74% 66%;
@@ -32,25 +42,34 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 224 71.4% 4.1%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+
+    --card: 224 71.4% 4.1%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+
+    --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 40% 98%;
-    --primary: 120 50% 65%;
-    --primary-foreground: 120 25% 10%;
+
+    --primary: 120 73% 75%; /* Muted green (#90EE90) */
+    --primary-foreground: 222.2 47.4% 11.2%;
+
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
+
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 182 70% 65%;
-    --accent-foreground: 182 25% 10%;
+
+    --accent: 182 100% 74%; /* Blue (#7DF9FF) */
+    --accent-foreground: 222.2 47.4% 11.2%;
+
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
+
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 120 50% 65%;
+    --ring: 120 73% 75%;
+    
     --chart-1: 120 70% 60%;
     --chart-2: 182 70% 60%;
     --chart-3: 43 74% 56%;
