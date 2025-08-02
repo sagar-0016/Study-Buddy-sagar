@@ -18,8 +18,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // This effect now only checks for an active session, not device verification.
-    // This ensures the user must log in on each new session (e.g., new tab).
+    // This effect now only checks for an active session.
     try {
       const sessionActive = sessionStorage.getItem('study-buddy-session-active') === 'true';
       if (sessionActive) {
@@ -35,7 +34,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = () => {
     try {
         sessionStorage.setItem('study-buddy-session-active', 'true');
-        // The device verification is now only handled by the login screen.
     } catch (e) {
         console.error("Session storage not available.");
     }
