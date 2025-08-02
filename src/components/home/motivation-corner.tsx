@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 const moods = [
   { emoji: "✨", label: "Motivated" },
   { emoji: "🧘‍♀️", label: "Focused" },
-  { emoji: "⛈️", label: "Worried" },
+  { emoji: "🥀", label: "Worried" },
 ];
 
 export default function MotivationCorner() {
