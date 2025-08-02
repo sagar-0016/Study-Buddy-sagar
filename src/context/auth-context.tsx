@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // This effect now only checks for an active session.
+    // This effect only checks for an active session.
     try {
       const sessionActive = sessionStorage.getItem('study-buddy-session-active') === 'true';
       if (sessionActive) {

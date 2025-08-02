@@ -9,7 +9,7 @@ import Header from "@/components/layout/header";
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { AuthProvider, useAuth } from '@/context/auth-context';
-import LoginScreen from '@/components/auth/login-screen';
+import LoginFlow from '@/components/auth/login-flow';
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -32,7 +32,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {
-    return <LoginScreen />;
+    return <LoginFlow />;
   }
 
   return (
