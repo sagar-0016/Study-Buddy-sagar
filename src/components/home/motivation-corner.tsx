@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -19,8 +20,8 @@ export default function MotivationCorner() {
   const [motivation, setMotivation] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleGetMotivation = async () => {
-    if (!selectedMood) return;
+  const handleMoodSelect = async (moodLabel: string) => {
+    setSelectedMood(moodLabel);
     setIsLoading(true);
     setMotivation("");
     try {
@@ -29,7 +30,7 @@ export default function MotivationCorner() {
         recipientName: "Pranjal",
         topic: "JEE Prep",
         quizScore: 75,
-        currentMood: selectedMood,
+        currentMood: moodLabel,
       });
       setMotivation(result.motivation);
     } catch (error) {
@@ -50,15 +51,22 @@ export default function MotivationCorner() {
               key={mood.label}
               variant={selectedMood === mood.label ? "default" : "outline"}
               className="flex flex-col h-20 text-base"
-              onClick={() => setSelectedMood(mood.label)}
+              onClick={() => handleMoodSelect(mood.label)}
             >
               <span className="text-3xl">{mood.emoji}</span>
               <span className="mt-1">{mood.label}</span>
             </Button>
           ))}
         </div>
-        {motivation && (
-          <div className="p-4 bg-accent/10 rounded-lg text-accent-foreground border-l-4 border-accent max-w-2xl mx-auto">
+
+        {isLoading && (
+            <div className="flex items-center justify-center p-4">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+        )}
+
+        {motivation && !isLoading && (
+          <div className="p-4 bg-accent/10 rounded-lg text-accent-foreground border-l-4 border-accent max-w-2xl mx-auto animate-in fade-in-50 duration-500">
             <div className="flex items-start">
               <Sparkles className="h-5 w-5 mr-3 mt-1 text-accent flex-shrink-0" />
               <p className="italic">"{motivation}"</p>
@@ -67,21 +75,6 @@ export default function MotivationCorner() {
           </div>
         )}
       </CardContent>
-      <CardFooter className="justify-center">
-        <Button
-          onClick={handleGetMotivation}
-          disabled={!selectedMood || isLoading}
-          className="w-full max-w-xs"
-          size="lg"
-        >
-          {isLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Wand2 className="mr-2 h-4 w-4" />
-          )}
-          Get Motivated
-        </Button>
-      </CardFooter>
     </Card>
   );
 }
