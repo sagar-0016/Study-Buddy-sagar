@@ -50,7 +50,9 @@ export default function MotivationCorner() {
             <Button
               key={mood.label}
               variant={selectedMood === mood.label ? "default" : "outline"}
-              className="flex flex-col h-20 text-base"
+              className={cn("flex flex-col h-20 text-base", {
+                "border-0": selectedMood !== mood.label
+              })}
               onClick={() => handleMoodSelect(mood.label)}
             >
               <span className="text-3xl">{mood.emoji}</span>
