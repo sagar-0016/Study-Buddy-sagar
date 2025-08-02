@@ -17,7 +17,7 @@ const SECRET_KEY = 'p';
 
 export default function LoginScreen() {
     const { login } = useAuth();
-    const [isFirstTime, setIsFirstTime] = useState(false);
+    const [isFirstTime, setIsFirstTime] = useState(true); // Assume first time until checked
     const [isLoading, setIsLoading] = useState(true);
     
     // State for first-time setup
@@ -31,9 +31,12 @@ export default function LoginScreen() {
     const { toast } = useToast();
 
     useEffect(() => {
+        // This check determines which login screen to show.
         try {
             const isVerified = localStorage.getItem('study-buddy-device-verified');
-            if (!isVerified) {
+            if (isVerified === 'true') {
+                setIsFirstTime(false);
+            } else {
                 setIsFirstTime(true);
             }
         } catch (error) {
@@ -52,7 +55,7 @@ export default function LoginScreen() {
                 localStorage.setItem('study-buddy-device-verified', 'true');
                 toast({
                     title: `Welcome, ${username}!`,
-                    description: "Your device is verified. You'll use your secret key next time.",
+                    description: "Your device is now verified. You'll use your secret key next time.",
                 });
                 login();
             } catch (error) {
@@ -67,9 +70,9 @@ export default function LoginScreen() {
         e.preventDefault();
         setError('');
         if (keyInput === SECRET_KEY) {
-                toast({
-                title: `Welcome back, ${SETUP_USERNAME}!`,
-                });
+            toast({
+              title: `Welcome back, ${SETUP_USERNAME}!`,
+            });
             login();
         } else {
             setError('The key is incorrect. Try again.');
@@ -92,10 +95,10 @@ export default function LoginScreen() {
                         <GraduationCap className="h-10 w-10 text-primary" />
                     </div>
                     <CardTitle className="mt-4 text-2xl">
-                        {isFirstTime ? 'Welcome to Your Study Buddy' : `Welcome Back, ${SETUP_USERNAME}`}
+                        {isFirstTime ? 'Device Verification' : `Welcome Back, ${SETUP_USERNAME}`}
                     </CardTitle>
                     <CardDescription>
-                        {isFirstTime ? 'Please verify your device to continue.' : 'Please enter your password to continue.'}
+                        {isFirstTime ? 'Please enter your credentials to set up this device.' : 'Please enter your password to unlock.'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -145,8 +148,9 @@ export default function LoginScreen() {
                                         value={keyInput}
                                         onChange={(e) => setKeyInput(e.target.value)}
                                         placeholder="••••••••"
-                                        className="pl-9 text-center tracking-[0.5em]"
+                                        className="pl-9"
                                         required
+                                        autoFocus
                                     />
                                 </div>
                             </div>
