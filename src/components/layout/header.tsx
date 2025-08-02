@@ -4,14 +4,9 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  Home,
-  BookCheck,
-  LayoutDashboard,
-  BotMessageSquare,
   PanelLeft,
   GraduationCap,
   User,
-  Settings,
   LogOut,
 } from "lucide-react";
 import {
@@ -39,9 +34,11 @@ import {
 import { usePathname } from 'next/navigation';
 import { navLinks } from './sidebar';
 import { ThemeToggle } from "./theme-toggle";
+import { useAuth } from "@/context/auth-context";
 
 export default function Header() {
   const pathname = usePathname();
+  const { logout } = useAuth();
   const pathSegments = pathname.split('/').filter(p => p);
   
   const breadcrumbs = pathSegments.map((segment, index) => {
@@ -120,10 +117,9 @@ export default function Header() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem><Settings className="mr-2 h-4 w-4" />Settings</DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem><LogOut className="mr-2 h-4 w-4" />Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />Logout
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

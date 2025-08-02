@@ -2,6 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 type AuthContextType = {
   isAuthenticated: boolean;
@@ -14,9 +15,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check session storage for an active session flag
     try {
       const sessionActive = sessionStorage.getItem('study-buddy-session-active') === 'true';
       setIsAuthenticated(sessionActive);
@@ -38,16 +39,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     try {
+        // Clear session for immediate logout
         sessionStorage.removeItem('study-buddy-session-active');
+        // Clear local storage to forget the device verification
+        localStorage.removeItem('study-buddy-device-verified');
+        toast({
+            title: "Logged Out",
+            description: "You have been successfully logged out."
+        })
     } catch (e) {
-        console.error("Session storage not available.");
+        console.error("Session/Local storage not available.");
     }
     setIsAuthenticated(false);
   };
 
-  // While checking the session, you might want to render a loader or nothing
   if (isLoading) {
-    return null; // Or a loading spinner component
+    return null;
   }
 
   return (
