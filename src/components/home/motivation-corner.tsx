@@ -2,16 +2,16 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getMotivationAction } from "@/lib/actions";
-import { Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const moods = [
-  { emoji: "😊", label: "Happy" },
+  { emoji: "💪", label: "Motivated" },
   { emoji: "😟", label: "Worried" },
-  { emoji: "😴", label: "Tired" },
+  { emoji: "😐", label: "Focused" },
 ];
 
 export default function MotivationCorner() {
