@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { getRandomMotivationByMood } from '@/lib/motivation';
 
 const MotivationInputSchema = z.object({
   senderName: z.string().describe("The name of the sender, e.g., 'Saurabh'."),
@@ -25,26 +26,39 @@ const MotivationOutputSchema = z.object({
 });
 export type MotivationOutput = z.infer<typeof MotivationOutputSchema>;
 
+// Extend the input schema for the prompt to include the fetched quote
+const MotivationPromptInputSchema = MotivationInputSchema.extend({
+    fetchedQuote: z.string().describe("A pre-fetched quote based on the user's mood."),
+});
+
 export async function getMotivation(input: MotivationInput): Promise<MotivationOutput> {
-  return motivationFlow(input);
+  // 1. Fetch a random quote based on the mood
+  const fetchedQuote = await getRandomMotivationByMood(input.currentMood);
+
+  // 2. Call the flow with the original input AND the fetched quote
+  return motivationFlow({ ...input, fetchedQuote });
 }
 
 const motivationPrompt = ai.definePrompt({
   name: 'motivationPrompt',
-  input: {schema: MotivationInputSchema},
+  input: {schema: MotivationPromptInputSchema},
   output: {schema: MotivationOutputSchema},
   prompt: `You are Saurabh, and you are providing playful and flirtatious motivation to Pranjal.
 
-  Pranjal is currently studying {{topic}} and got a quiz score of {{quizScore}}. Pranjal is feeling {{currentMood}}.
+  Pranjal is currently studying {{topic}} and is feeling {{currentMood}}.
 
-  Craft a short, playful, and flirtatious motivational message to encourage Pranjal to keep studying, despite their current mood. Keep it light and fun.
+  Use the following quote as the core of your message, but rephrase it in your own playful, flirtatious, and encouraging voice. Make it sound like it's coming from you naturally.
+
+  Core Quote: "{{fetchedQuote}}"
+  
+  Keep your final message short, fun, and personal to Pranjal.
   `,
 });
 
 const motivationFlow = ai.defineFlow(
   {
     name: 'motivationFlow',
-    inputSchema: MotivationInputSchema,
+    inputSchema: MotivationPromptInputSchema, // The flow now expects the fetchedQuote
     outputSchema: MotivationOutputSchema,
   },
   async input => {
