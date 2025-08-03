@@ -1,5 +1,6 @@
 
 
+
 import { DocumentData, Timestamp } from 'firebase/firestore';
 
 export type NavLink = {
@@ -70,6 +71,17 @@ export type Flashcard = {
     question: string;
     answer: string;
 };
+
+export interface FlashcardDeck extends DocumentData {
+    id: string;
+    category: 'main' | 'physics' | 'chemistry' | 'maths';
+    title: string;
+    description: string;
+    icon: string;
+    status: 'available' | 'coming-soon' | 'not-available';
+    href: string;
+    difficulty?: 'Basic' | 'Intermediate' | 'Advanced';
+}
 
 export type ProgressData = {
   id: string;

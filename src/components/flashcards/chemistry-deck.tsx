@@ -1,54 +1,21 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Beaker, Atom, FlaskConical, Combine, TestTube } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowLeft, Beaker, Atom, FlaskConical, Combine, TestTube, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getFlashcardDecks } from '@/lib/flashcards';
+import type { FlashcardDeck } from '@/lib/types';
 
-const chemDecks = [
-    {
-        title: 'General Organic Chemistry (GOC)',
-        description: 'Master the fundamental concepts that govern organic reactions and structures.',
-        icon: Combine,
-        status: 'available',
-        difficulty: 'Advanced',
-        href: '/flashcards/chemistry/goc',
-    },
-    {
-        title: 'Physical Chemistry',
-        description: 'Explore the fundamental principles governing chemical systems, energy, and matter.',
-        icon: Atom,
-        status: 'coming-soon',
-        difficulty: 'Advanced',
-        href: '/flashcards/not-for-you',
-    },
-    {
-        title: 'Inorganic Chemistry',
-        description: 'Study the properties and behavior of inorganic compounds, including metals and minerals.',
-        icon: TestTube,
-        status: 'coming-soon',
-        difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you',
-    },
-    {
-        title: 'Stoichiometry',
-        description: 'Master the quantitative relationships between reactants and products in chemical reactions.',
-        icon: Beaker,
-        status: 'coming-soon',
-        difficulty: 'Basic',
-        href: '/flashcards/not-for-you',
-    },
-     {
-        title: 'Chemical Bonding',
-        description: 'Understand the forces that hold atoms together to form molecules and compounds.',
-        icon: FlaskConical,
-        status: 'coming-soon',
-        difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you',
-    },
-];
+
+const iconMap: { [key: string]: React.ElementType } = {
+    Beaker, Atom, FlaskConical, Combine, TestTube
+};
+
 
 const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
     const getDifficultyClass = () => {
@@ -65,22 +32,24 @@ const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
 }
 
 
-const DeckCard = ({ deck }: { deck: (typeof chemDecks)[0] }) => {
+const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   const isAvailable = deck.status === 'available';
+  const IconComponent = iconMap[deck.icon] || FlaskConical;
+
   const cardContent = (
     <Card className={cn("flex flex-col h-full transition-all duration-300", 
         isAvailable ? "hover:border-primary hover:-translate-y-1 hover:shadow-lg cursor-pointer" : "opacity-70 bg-muted/50"
     )}>
         <CardHeader className="flex-row items-start justify-between">
             <div className="p-3 rounded-full bg-primary/10 text-primary">
-                <deck.icon className="w-8 h-8" />
+                <IconComponent className="w-8 h-8" />
             </div>
              <Badge variant={isAvailable ? 'default' : 'outline'}>{isAvailable ? 'Available' : 'Coming Soon'}</Badge>
         </CardHeader>
         <CardContent className="flex flex-col flex-grow">
             <CardTitle className="text-xl mb-2">{deck.title}</CardTitle>
             <CardDescription className="flex-grow">{deck.description}</CardDescription>
-            <DifficultyBadge difficulty={deck.difficulty} />
+            {deck.difficulty && <DifficultyBadge difficulty={deck.difficulty} />}
         </CardContent>
     </Card>
   );
@@ -92,6 +61,56 @@ const DeckCard = ({ deck }: { deck: (typeof chemDecks)[0] }) => {
 };
 
 export default function ChemistryDeck() {
+  const [decks, setDecks] = useState<FlashcardDeck[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+      const fetchDecks = async () => {
+          try {
+              setIsLoading(true);
+              const fetchedDecks = await getFlashcardDecks('chemistry');
+              setDecks(fetchedDecks);
+          } catch(err) {
+              console.error(err);
+              setError("Could not load Chemistry decks.");
+          } finally {
+              setIsLoading(false);
+          }
+      };
+      fetchDecks();
+  }, []);
+
+  const renderContent = () => {
+    if (isLoading) {
+        return (
+            <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {[...Array(5)].map((_, i) => (
+                    <div key={i} className="space-y-3">
+                        <Skeleton className="h-48 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                    </div>
+                ))}
+            </div>
+        );
+    }
+    if (error) {
+         return (
+            <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg bg-destructive/10 border-destructive">
+                <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+                <h3 className="text-lg font-semibold text-destructive-foreground">{error}</h3>
+            </div>
+        );
+    }
+    return (
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {decks.map((deck) => (
+                <DeckCard key={deck.id} deck={deck} />
+            ))}
+        </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -100,11 +119,9 @@ export default function ChemistryDeck() {
           Select a chapter to begin your study session.
         </p>
       </div>
-      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {chemDecks.map((deck) => (
-            <DeckCard key={deck.title} deck={deck} />
-        ))}
-      </div>
+      
+      {renderContent()}
+
       <div className="text-center pt-4">
         <Link href="/flashcards" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
             <ArrowLeft className="w-4 h-4" />
@@ -114,5 +131,3 @@ export default function ChemistryDeck() {
     </div>
   );
 }
-
-    

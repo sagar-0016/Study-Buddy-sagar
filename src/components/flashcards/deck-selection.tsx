@@ -1,58 +1,28 @@
 
 "use client";
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dna, Sigma, FlaskConical, Atom, Rocket, BrainCircuit } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Dna, Sigma, FlaskConical, Atom, Rocket, BrainCircuit, AlertTriangle } from 'lucide-react';
+import { getFlashcardDecks } from '@/lib/flashcards';
+import type { FlashcardDeck } from '@/lib/types';
 
-const decks = [
-  {
-    title: 'Biology Fundamentals',
-    description: 'Dive into the building blocks of life, from cellular structures to complex biological processes.',
-    icon: Dna,
-    status: 'not-available',
-    href: '/flashcards/not-for-you',
-  },
-  {
-    title: 'Mathematics',
-    description: 'Master algebra, geometry, and calculus concepts with interactive problem-solving flashcards.',
-    icon: Sigma,
-    status: 'available',
-    href: '/flashcards/maths',
-  },
-  {
-    title: 'Chemistry Basics',
-    description: 'Master the periodic table, chemical reactions, and fundamental principles of chemistry.',
-    icon: FlaskConical,
-    status: 'available',
-    href: '/flashcards/chemistry',
-  },
-  {
-    title: 'Physics Concepts',
-    description: 'Understand the fundamental laws that govern our universe, from mechanics to quantum physics.',
-    icon: Atom,
-    status: 'available',
-    href: '/flashcards/physics',
-  },
-   {
-    title: 'AI & Machine Learning',
-    description: 'Explore the core concepts of AI, neural networks, and machine learning algorithms.',
-    icon: BrainCircuit,
-    status: 'not-available',
-    href: '/flashcards/not-for-you',
-  },
-  {
-    title: 'Space & Astronomy',
-    description: 'Journey through the cosmos and learn about planets, stars, galaxies, and the mysteries of space.',
-    icon: Rocket,
-    status: 'not-available',
-    href: '/flashcards/not-for-you',
-  },
-];
+// Icon mapping
+const iconMap: { [key: string]: React.ElementType } = {
+  Dna,
+  Sigma,
+  FlaskConical,
+  Atom,
+  Rocket,
+  BrainCircuit,
+};
 
-const DeckCard = ({ deck }: { deck: (typeof decks)[0] }) => {
+const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   const isAvailable = deck.status === 'available';
+  const IconComponent = iconMap[deck.icon] || Atom;
 
   const getBadgeText = () => {
     if (deck.status === 'available') return 'Available';
@@ -65,7 +35,7 @@ const DeckCard = ({ deck }: { deck: (typeof decks)[0] }) => {
       <CardHeader className="p-6 pb-4">
         <div className="flex justify-between items-start">
           <div className={`p-3 rounded-full ${isAvailable ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
-            <deck.icon className="w-8 h-8" />
+            <IconComponent className="w-8 h-8" />
           </div>
           <Badge variant={isAvailable ? 'default' : 'destructive'}>
             {getBadgeText()}
@@ -79,18 +49,59 @@ const DeckCard = ({ deck }: { deck: (typeof decks)[0] }) => {
     </Card>
   );
 
-  if (isAvailable) {
-    return <Link href={deck.href}>{cardContent}</Link>;
-  }
-  
   return <Link href={deck.href}>{cardContent}</Link>;
 };
 
 export default function DeckSelection() {
+  const [decks, setDecks] = useState<FlashcardDeck[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDecks = async () => {
+        try {
+            setIsLoading(true);
+            const fetchedDecks = await getFlashcardDecks('main');
+            setDecks(fetchedDecks);
+        } catch (err) {
+            console.error(err);
+            setError('Could not load flashcard decks. Please try again later.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    fetchDecks();
+  }, []);
+
+
+  if (isLoading) {
+    return (
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+                <div key={i} className="space-y-3">
+                    <Skeleton className="h-48 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                </div>
+            ))}
+        </div>
+    );
+  }
+
+  if (error) {
+    return (
+        <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg bg-destructive/10 border-destructive">
+            <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+            <h3 className="text-lg font-semibold text-destructive-foreground">An Error Occurred</h3>
+            <p className="text-destructive-foreground/80">{error}</p>
+        </div>
+    );
+  }
+  
   return (
     <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {decks.map((deck) => (
-        <DeckCard key={deck.title} deck={deck} />
+        <DeckCard key={deck.id} deck={deck} />
       ))}
     </div>
   );
