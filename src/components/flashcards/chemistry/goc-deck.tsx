@@ -3,47 +3,18 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { gocFlashcards } from '@/lib/flashcards/goc';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, ArrowRight, RotateCw, Check, Clock } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, ArrowRight, RotateCw, Check, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Confetti from 'react-confetti';
+import Confetti from 'react-etti';
 import { updateDeckProgress } from '@/lib/progress';
+import { getFlashcardsForDeck } from '@/lib/flashcards';
+import type { Flashcard } from '@/lib/types';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 type CardStatus = 'done' | 'later';
-
-// Custom hook for localStorage
-function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.log(error);
-      return initialValue;
-    }
-  });
-
-  const setValue = (value: T) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  return [storedValue, setValue];
-}
-
 
 // Fisher-Yates shuffle algorithm
 const shuffleArray = <T>(array: T[]): T[] => {
@@ -59,17 +30,26 @@ const DECK_ID = 'goc';
 const DECK_SUBJECT = 'Chemistry';
 
 export default function GocDeck() {
+  const [allCards, setAllCards] = useState<Flashcard[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardStatuses, setCardStatuses] = useLocalStorage<Record<string, CardStatus>>('goc-statuses', {});
-  const [shuffledCards, setShuffledCards] = useLocalStorage('goc-shuffled-deck', []);
+  const [shuffledCards, setShuffledCards] = useLocalStorage<Flashcard[]>('goc-shuffled-deck', []);
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
-    // Initial shuffle if the deck is new
-    if (shuffledCards.length === 0) {
-      setShuffledCards(shuffleArray(gocFlashcards));
-    }
-  }, [shuffledCards.length, setShuffledCards]);
+    const fetchCards = async () => {
+      setIsLoading(true);
+      const fetchedCards = await getFlashcardsForDeck(DECK_ID);
+      setAllCards(fetchedCards);
+      // Initial shuffle if the deck is new or has changed
+      if (shuffledCards.length === 0 || shuffledCards.length !== fetchedCards.length) {
+        setShuffledCards(shuffleArray(fetchedCards));
+      }
+      setIsLoading(false);
+    };
+    fetchCards();
+  }, []); // Intentionally empty to run once on mount
 
 
   const availableCards = useMemo(() => {
@@ -93,7 +73,7 @@ export default function GocDeck() {
     if (direction === 'next' && currentIndex < availableCards.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else if (direction === 'prev' && currentIndex > 0) {
-      setCurrentIndex(prev => prev + 1);
+      setCurrentIndex(prev => prev - 1);
     }
   }, [currentIndex, availableCards.length]);
 
@@ -104,12 +84,10 @@ export default function GocDeck() {
     setCardStatuses(newStatuses);
     setIsFlipped(false);
     
-    // Update progress in Firestore if marked as done
     if (status === 'done') {
         const completedCount = Object.values(newStatuses).filter(s => s === 'done').length;
-        updateDeckProgress(DECK_ID, completedCount, gocFlashcards.length, DECK_SUBJECT);
+        updateDeckProgress(DECK_ID, completedCount, allCards.length, DECK_SUBJECT);
         
-        // Check for completion
         const newAvailableCards = shuffledCards.filter(c => newStatuses[c.id] !== 'done');
         if(newAvailableCards.length === 0){
             setShowConfetti(true);
@@ -122,9 +100,9 @@ export default function GocDeck() {
     setCardStatuses({});
     setCurrentIndex(0);
     setIsFlipped(false);
-    setShuffledCards(shuffleArray(gocFlashcards));
+    setShuffledCards(shuffleArray(allCards));
     setShowConfetti(false);
-    updateDeckProgress(DECK_ID, 0, gocFlashcards.length, DECK_SUBJECT);
+    updateDeckProgress(DECK_ID, 0, allCards.length, DECK_SUBJECT);
   };
   
   useEffect(() => {
@@ -147,7 +125,15 @@ export default function GocDeck() {
     return Object.values(cardStatuses).filter(s => s === 'done').length;
   }, [cardStatuses]);
 
-  const progress = gocFlashcards.length > 0 ? (completedCount / gocFlashcards.length) * 100 : 0;
+  const progress = allCards.length > 0 ? (completedCount / allCards.length) * 100 : 0;
+
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-[75vh]">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full min-h-[75vh]">
@@ -173,7 +159,7 @@ export default function GocDeck() {
       <div className="mb-6 space-y-2">
         <Progress value={progress} />
         <p className="text-sm text-muted-foreground text-center">
-            {completedCount} / {gocFlashcards.length} cards completed
+            {completedCount} / {allCards.length} cards completed
         </p>
       </div>
       

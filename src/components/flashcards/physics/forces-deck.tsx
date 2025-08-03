@@ -3,47 +3,19 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { forcesFlashcards } from '@/lib/flashcards/forces';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, ArrowRight, RotateCw, Check, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, RotateCw, Check, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Confetti from 'react-confetti';
+import Confetti from 'react-etti';
 import { updateDeckProgress } from '@/lib/progress';
+import { getFlashcardsForDeck } from '@/lib/flashcards';
+import type { Flashcard } from '@/lib/types';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+
 
 type CardStatus = 'done' | 'later';
-
-// Custom hook for localStorage
-function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.log(error);
-      return initialValue;
-    }
-  });
-
-  const setValue = (value: T) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  return [storedValue, setValue];
-}
-
 
 // Fisher-Yates shuffle algorithm
 const shuffleArray = <T>(array: T[]): T[] => {
@@ -59,18 +31,25 @@ const DECK_ID = 'forces';
 const DECK_SUBJECT = 'Physics';
 
 export default function ForcesDeck() {
+  const [allCards, setAllCards] = useState<Flashcard[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardStatuses, setCardStatuses] = useLocalStorage<Record<string, CardStatus>>('forces-statuses', {});
-  const [shuffledCards, setShuffledCards] = useLocalStorage('forces-shuffled-deck', []);
+  const [shuffledCards, setShuffledCards] = useLocalStorage<Flashcard[]>('forces-shuffled-deck', []);
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
-    // Initial shuffle if the deck is new
-    if (shuffledCards.length === 0) {
-      setShuffledCards(shuffleArray(forcesFlashcards));
-    }
-  }, [shuffledCards.length, setShuffledCards]);
-
+    const fetchCards = async () => {
+        setIsLoading(true);
+        const fetchedCards = await getFlashcardsForDeck(DECK_ID);
+        setAllCards(fetchedCards);
+        if (shuffledCards.length === 0 || shuffledCards.length !== fetchedCards.length) {
+            setShuffledCards(shuffleArray(fetchedCards));
+        }
+        setIsLoading(false);
+    };
+    fetchCards();
+  }, []);
 
   const availableCards = useMemo(() => {
     return shuffledCards.filter((card) => cardStatuses[card.id] !== 'done');
@@ -104,12 +83,10 @@ export default function ForcesDeck() {
     setCardStatuses(newStatuses);
     setIsFlipped(false);
     
-    // Update progress in Firestore if marked as done
     if (status === 'done') {
         const completedCount = Object.values(newStatuses).filter(s => s === 'done').length;
-        updateDeckProgress(DECK_ID, completedCount, forcesFlashcards.length, DECK_SUBJECT);
+        updateDeckProgress(DECK_ID, completedCount, allCards.length, DECK_SUBJECT);
 
-        // Check for completion
         const newAvailableCards = shuffledCards.filter(c => newStatuses[c.id] !== 'done');
         if(newAvailableCards.length === 0){
             setShowConfetti(true);
@@ -122,9 +99,9 @@ export default function ForcesDeck() {
     setCardStatuses({});
     setCurrentIndex(0);
     setIsFlipped(false);
-    setShuffledCards(shuffleArray(forcesFlashcards));
+    setShuffledCards(shuffleArray(allCards));
     setShowConfetti(false);
-    updateDeckProgress(DECK_ID, 0, forcesFlashcards.length, DECK_SUBJECT);
+    updateDeckProgress(DECK_ID, 0, allCards.length, DECK_SUBJECT);
   };
   
   useEffect(() => {
@@ -147,7 +124,15 @@ export default function ForcesDeck() {
     return Object.values(cardStatuses).filter(s => s === 'done').length;
   }, [cardStatuses]);
 
-  const progress = forcesFlashcards.length > 0 ? (completedCount / forcesFlashcards.length) * 100 : 0;
+  const progress = allCards.length > 0 ? (completedCount / allCards.length) * 100 : 0;
+  
+  if (isLoading) {
+    return (
+        <div className="flex items-center justify-center min-h-[75vh]">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full min-h-[75vh]">
@@ -173,7 +158,7 @@ export default function ForcesDeck() {
       <div className="mb-6 space-y-2">
         <Progress value={progress} />
         <p className="text-sm text-muted-foreground text-center">
-            {completedCount} / {forcesFlashcards.length} cards completed
+            {completedCount} / {allCards.length} cards completed
         </p>
       </div>
       
