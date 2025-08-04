@@ -188,10 +188,10 @@ const ScheduleList = ({
     <div>
       <ul className="space-y-2">
         {schedule.formalTasks.map((task, index) => (
-          <li key={index} className="flex items-center justify-between rounded-md border p-3">
+          <li key={index} className="flex items-center justify-between rounded-md p-3 hover:bg-muted/50 transition-colors">
             <span className="text-muted-foreground">{task}</span>
             {isEditMode && (
-              <Button variant="ghost" size="icon" onClick={() => handleEditClick(index)}>
+              <Button variant="ghost" size="icon" onClick={() => handleEditClick(index)} className="transition-all">
                 <Pencil className="h-4 w-4" />
               </Button>
             )}
