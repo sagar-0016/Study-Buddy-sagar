@@ -1,16 +1,18 @@
 
-"use client";
-
 import type { Metadata } from 'next';
 import GenericDeck from '@/components/flashcards/generic-deck';
 
-export default function GocFlashcardsPage() {
+export const metadata: Metadata = {
+  title: 'Chemical Bonding Flashcards',
+};
+
+export default function ChemicalBondingFlashcardsPage() {
   return (
     <div className="container mx-auto py-4 sm:py-6 lg:py-8">
       <GenericDeck 
-        deckId="goc"
-        deckName="General Organic Chemistry"
-        deckDescription="Master the fundamental concepts of GOC."
+        deckId="chemical-bonding"
+        deckName="Chemical Bonding"
+        deckDescription="Understand the forces that hold atoms together."
         backLink="/flashcards/chemistry"
         backLinkText="Back to Chemistry"
       />

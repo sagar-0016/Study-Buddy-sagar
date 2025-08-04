@@ -8,6 +8,20 @@ import { getFirestore, collection, writeBatch, doc } from 'firebase/firestore';
 import { gocFlashcards } from '../src/lib/flashcards/goc';
 import { kinematicsFlashcards } from '../src/lib/flashcards/kinematics';
 import { forcesFlashcards } from '../src/lib/flashcards/forces';
+import { thermodynamicsFlashcards } from '../src/lib/flashcards/thermodynamics';
+import { electricityMagnetismFlashcards } from '../src/lib/flashcards/electricity-magnetism';
+import { opticsFlashcards } from '../src/lib/flashcards/optics';
+import { modernPhysicsFlashcards } from '../src/lib/flashcards/modern-physics';
+import { physicalChemistryFlashcards } from '../src/lib/flashcards/physical-chemistry';
+import { inorganicChemistryFlashcards } from '../src/lib/flashcards/inorganic-chemistry';
+import { stoichiometryFlashcards } from '../src/lib/flashcards/stoichiometry';
+import { chemicalBondingFlashcards } from '../src/lib/flashcards/chemical-bonding';
+import { algebraFlashcards } from '../src/lib/flashcards/algebra';
+import { geometryFlashcards } from '../src/lib/flashcards/geometry';
+import { trigonometryFlashcards } from '../src/lib/flashcards/trigonometry';
+import { calculus1Flashcards } from '../src/lib/flashcards/calculus1';
+import { calculus2Flashcards } from '../src/lib/flashcards/calculus2';
+import { statsProbabilityFlashcards } from '../src/lib/flashcards/stats-probability';
 
 // IMPORTANT: Paste your Firebase config here
 const firebaseConfig = {
@@ -108,9 +122,9 @@ const physicsDecks = [
         title: 'Thermodynamics',
         description: 'Explore heat, temperature, and the transfer of energy in physical systems.',
         icon: 'Thermometer',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/physics/thermodynamics',
     },
     {
         id: 'electricity-magnetism',
@@ -118,9 +132,9 @@ const physicsDecks = [
         title: 'Electricity & Magnetism',
         description: 'Delve into electric circuits, magnetic fields, and electromagnetic waves.',
         icon: 'Zap',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Advanced',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/physics/electricity-magnetism',
     },
     {
         id: 'optics',
@@ -128,9 +142,9 @@ const physicsDecks = [
         title: 'Optics',
         description: 'Study the behavior of light, from reflection and refraction to wave optics.',
         icon: 'Waves',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/physics/optics',
     },
      {
         id: 'modern-physics',
@@ -138,9 +152,9 @@ const physicsDecks = [
         title: 'Modern Physics',
         description: 'Grasp the concepts of relativity, quantum mechanics, and nuclear physics.',
         icon: 'Atom',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Advanced',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/physics/modern-physics',
     },
 ];
 
@@ -161,9 +175,9 @@ const chemistryDecks = [
         title: 'Physical Chemistry',
         description: 'Explore the fundamental principles governing chemical systems, energy, and matter.',
         icon: 'Atom',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Advanced',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/chemistry/physical-chemistry',
     },
     {
         id: 'inorganic-chemistry',
@@ -171,9 +185,9 @@ const chemistryDecks = [
         title: 'Inorganic Chemistry',
         description: 'Study the properties and behavior of inorganic compounds, including metals and minerals.',
         icon: 'TestTube',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/chemistry/inorganic-chemistry',
     },
     {
         id: 'stoichiometry',
@@ -181,9 +195,9 @@ const chemistryDecks = [
         title: 'Stoichiometry',
         description: 'Master the quantitative relationships between reactants and products in chemical reactions.',
         icon: 'Beaker',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Basic',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/chemistry/stoichiometry',
     },
      {
         id: 'chemical-bonding',
@@ -191,9 +205,9 @@ const chemistryDecks = [
         title: 'Chemical Bonding',
         description: 'Understand the forces that hold atoms together to form molecules and compounds.',
         icon: 'FlaskConical',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/chemistry/chemical-bonding',
     },
 ];
 
@@ -204,9 +218,9 @@ const mathsDecks = [
         title: 'Algebra Basics',
         description: 'Introduction to variables, expressions, and solving linear equations step by step.',
         icon: 'CaseUpper',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/maths/algebra',
     },
     {
         id: 'geometry',
@@ -214,9 +228,9 @@ const mathsDecks = [
         title: 'Geometry Fundamentals',
         description: 'Explore shapes, angles, area, perimeter, and basic geometric theorems and proofs.',
         icon: 'Shapes',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/maths/geometry',
     },
     {
         id: 'trigonometry',
@@ -224,9 +238,9 @@ const mathsDecks = [
         title: 'Trigonometry',
         description: 'Master sine, cosine, tangent, and their applications in solving triangles and wave functions.',
         icon: 'FunctionSquare',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/maths/trigonometry',
     },
     {
         id: 'calculus1',
@@ -234,9 +248,9 @@ const mathsDecks = [
         title: 'Calculus I',
         description: 'Learn limits, derivatives, and their applications in optimization and curve analysis.',
         icon: 'Sigma', // Representing ∫
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Advanced',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/maths/calculus1',
     },
      {
         id: 'calculus2',
@@ -244,9 +258,9 @@ const mathsDecks = [
         title: 'Calculus II',
         description: 'Master integration techniques, series, and applications of definite integrals.',
         icon: 'Sigma',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Advanced',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/maths/calculus2',
     },
     {
         id: 'stats-probability',
@@ -254,9 +268,9 @@ const mathsDecks = [
         title: 'Statistics & Probability',
         description: 'Understand data analysis, probability distributions, and statistical inference.',
         icon: 'Bot',
-        status: 'coming-soon',
+        status: 'available',
         difficulty: 'Intermediate',
-        href: '/flashcards/not-for-you',
+        href: '/flashcards/maths/stats-probability',
     },
 ];
 
@@ -274,34 +288,44 @@ const main = async () => {
             batch.set(docRef, deckData);
         });
         
-        // --- Populate Nested Card Collections ---
-
-        // GOC Cards
-        const gocDeckRef = doc(db, 'flashcardDecks', 'goc');
-        const gocCardsRef = collection(gocDeckRef, 'cards');
-        gocFlashcards.forEach(card => {
-            const cardDoc = doc(gocCardsRef, card.id.toString());
-            batch.set(cardDoc, { question: card.question, answer: card.answer });
-        });
-        console.log(`Prepared ${gocFlashcards.length} cards for the GOC deck.`);
-
-        // Kinematics Cards
-        const kinematicsDeckRef = doc(db, 'flashcardDecks', 'kinematics');
-        const kinematicsCardsRef = collection(kinematicsDeckRef, 'cards');
-        kinematicsFlashcards.forEach(card => {
-            const cardDoc = doc(kinematicsCardsRef, card.id.toString());
-            batch.set(cardDoc, { question: card.question, answer: card.answer });
-        });
-        console.log(`Prepared ${kinematicsFlashcards.length} cards for the Kinematics deck.`);
+        console.log(`Prepared ${allDecks.length} deck documents for batch write.`);
         
-        // Forces Cards
-        const forcesDeckRef = doc(db, 'flashcardDecks', 'forces');
-        const forcesCardsRef = collection(forcesDeckRef, 'cards');
-        forcesFlashcards.forEach(card => {
-            const cardDoc = doc(forcesCardsRef, card.id.toString());
-            batch.set(cardDoc, { question: card.question, answer: card.answer });
-        });
-        console.log(`Prepared ${forcesFlashcards.length} cards for the Forces deck.`);
+        // --- Populate Nested Card Collections ---
+        
+        const populateDeck = (deckId: string, cards: { question: string; answer: string }[]) => {
+            const deckRef = doc(db, 'flashcardDecks', deckId);
+            const cardsRef = collection(deckRef, 'cards');
+            let cardIdCounter = 1;
+            cards.forEach(card => {
+                const cardDoc = doc(cardsRef, cardIdCounter.toString());
+                batch.set(cardDoc, { question: card.question, answer: card.answer });
+                cardIdCounter++;
+            });
+            console.log(`-> Prepared ${cards.length} cards for the '${deckId}' deck.`);
+        };
+
+        // Physics Decks
+        populateDeck('kinematics', kinematicsFlashcards);
+        populateDeck('forces', forcesFlashcards);
+        populateDeck('thermodynamics', thermodynamicsFlashcards);
+        populateDeck('electricity-magnetism', electricityMagnetismFlashcards);
+        populateDeck('optics', opticsFlashcards);
+        populateDeck('modern-physics', modernPhysicsFlashcards);
+
+        // Chemistry Decks
+        populateDeck('goc', gocFlashcards);
+        populateDeck('physical-chemistry', physicalChemistryFlashcards);
+        populateDeck('inorganic-chemistry', inorganicChemistryFlashcards);
+        populateDeck('stoichiometry', stoichiometryFlashcards);
+        populateDeck('chemical-bonding', chemicalBondingFlashcards);
+
+        // Maths Decks
+        populateDeck('algebra', algebraFlashcards);
+        populateDeck('geometry', geometryFlashcards);
+        populateDeck('trigonometry', trigonometryFlashcards);
+        populateDeck('calculus1', calculus1Flashcards);
+        populateDeck('calculus2', calculus2Flashcards);
+        populateDeck('stats-probability', statsProbabilityFlashcards);
 
         await batch.commit();
 
