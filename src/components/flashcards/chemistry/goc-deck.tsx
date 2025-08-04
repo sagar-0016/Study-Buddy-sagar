@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, ArrowRight, RotateCw, Check, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Confetti from 'react-etti';
+import Confetti from 'react-confetti';
 import { updateDeckProgress } from '@/lib/progress';
 import { getFlashcardsForDeck } from '@/lib/flashcards';
 import type { Flashcard } from '@/lib/types';

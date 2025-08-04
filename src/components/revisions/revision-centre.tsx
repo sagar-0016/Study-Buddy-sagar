@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import Confetti from 'react-etti';
+import Confetti from 'react-confetti';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
