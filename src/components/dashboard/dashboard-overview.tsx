@@ -16,7 +16,7 @@ const ProgressCard = ({ title, icon: Icon, value, total, isLoading, unit = 'topi
     const percentage = total > 0 ? (value / total) * 100 : 0;
     
     return (
-        <Card>
+        <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{title}</CardTitle>
                 <Icon className="h-5 w-5 text-muted-foreground" />
