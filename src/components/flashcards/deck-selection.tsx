@@ -23,22 +23,29 @@ const iconMap: { [key: string]: React.ElementType } = {
 
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   const isAvailable = deck.status === 'available';
-  const IconComponent = iconMap[deck.icon] || Atom;
 
   const getBadgeText = () => {
     if (deck.status === 'available') return 'Available';
-    if (deck.status === 'not-for-you' || deck.status === 'not-available') return 'Not for you babe';
+    if (deck.status === 'not-for-you') return 'Not for you babe';
     return 'Coming Soon';
   };
+  
+  const getBadgeVariant = () => {
+    if (deck.status === 'available') return 'default';
+    if (deck.status === 'not-for-you') return 'destructive';
+    return 'outline';
+  }
+
+  const IconComponent = iconMap[deck.icon] || Atom;
 
   const cardContent = (
-    <Card className={`flex flex-col h-full transition-all duration-300 ${isAvailable ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : 'opacity-80 hover:border-destructive hover:-translate-y-1 hover:shadow-lg'}`}>
+    <Card className={`flex flex-col h-full transition-all duration-300 ${isAvailable ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : deck.status === 'not-for-you' ? 'opacity-80 hover:border-destructive hover:-translate-y-1 hover:shadow-lg' : 'opacity-60 cursor-not-allowed'}`}>
       <CardHeader className="p-6 pb-4">
         <div className="flex justify-between items-start">
           <div className={`p-3 rounded-full ${isAvailable ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
             <IconComponent className="w-8 h-8" />
           </div>
-          <Badge variant={isAvailable ? 'default' : 'destructive'}>
+          <Badge variant={getBadgeVariant()}>
             {getBadgeText()}
           </Badge>
         </div>
@@ -50,6 +57,9 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
     </Card>
   );
 
+  if (deck.status === 'not-available') {
+      return <div>{cardContent}</div>
+  }
   return <Link href={deck.href}>{cardContent}</Link>;
 };
 

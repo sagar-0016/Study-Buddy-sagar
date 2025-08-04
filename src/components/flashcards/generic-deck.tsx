@@ -41,22 +41,36 @@ export default function GenericDeck({ deckId, deckName, deckDescription, backLin
   const [shuffledCards, setShuffledCards] = useLocalStorage<Flashcard[]>(`${deckId}-shuffled-deck`, []);
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // Effect to fetch and initialize cards
   useEffect(() => {
-    const fetchCards = async () => {
+    const fetchAndSetupCards = async () => {
       setIsLoading(true);
       const fetchedCards = await getFlashcardsForDeck(deckId);
       setAllCards(fetchedCards);
       
-      const cardIds = new Set(fetchedCards.map(c => c.id));
-      const shuffledCardIds = new Set(shuffledCards.map(c => c.id));
+      // Only shuffle and set if the fetched deck is different from the stored one
+      // or if the stored one is empty. This prevents reshuffling on every visit.
+      const fetchedIds = new Set(fetchedCards.map(c => c.id));
+      const storedIds = new Set(shuffledCards.map(c => c.id));
+      
+      let shouldUpdateStoredShuffle = shuffledCards.length === 0 || fetchedIds.size !== storedIds.size;
+      if (!shouldUpdateStoredShuffle) {
+          for (const id of fetchedIds) {
+              if (!storedIds.has(id)) {
+                  shouldUpdateStoredShuffle = true;
+                  break;
+              }
+          }
+      }
 
-      if (shuffledCards.length === 0 || cardIds.size !== shuffledCardIds.size) {
+      if (shouldUpdateStoredShuffle) {
         setShuffledCards(shuffleArray(fetchedCards));
       }
+      
       setIsLoading(false);
     };
-    fetchCards();
-  }, [deckId, setShuffledCards]);
+    fetchAndSetupCards();
+  }, [deckId]); // Dependencies are minimal now
 
 
   const availableCards = useMemo(() => {
@@ -93,7 +107,6 @@ export default function GenericDeck({ deckId, deckName, deckDescription, backLin
     
     if (status === 'done') {
         const completedCount = Object.values(newStatuses).filter(s => s === 'done').length;
-        // Assuming subject can be inferred or is not strictly needed for this component
         updateDeckProgress(deckId, completedCount, allCards.length, "Subject");
         
         const newAvailableCards = shuffledCards.filter(c => newStatuses[c.id] !== 'done');
