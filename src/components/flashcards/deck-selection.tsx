@@ -1,14 +1,15 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dna, Sigma, FlaskConical, Atom, Rocket, BrainCircuit, AlertTriangle } from 'lucide-react';
+import { Dna, Sigma, FlaskConical, Atom, Rocket, BrainCircuit, AlertTriangle, Search, BookOpen } from 'lucide-react';
 import { getFlashcardDecks } from '@/lib/flashcards';
 import type { FlashcardDeck } from '@/lib/types';
+import { Input } from '@/components/ui/input';
 
 // Icon mapping
 const iconMap: { [key: string]: React.ElementType } = {
@@ -56,6 +57,7 @@ export default function DeckSelection() {
   const [decks, setDecks] = useState<FlashcardDeck[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchDecks = async () => {
@@ -73,36 +75,71 @@ export default function DeckSelection() {
     fetchDecks();
   }, []);
 
+  const filteredDecks = useMemo(() => {
+    if (!searchTerm) return decks;
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return decks.filter(deck => 
+      deck.title.toLowerCase().includes(lowercasedTerm) ||
+      deck.description.toLowerCase().includes(lowercasedTerm)
+    );
+  }, [decks, searchTerm]);
 
-  if (isLoading) {
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+          <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {[...Array(6)].map((_, i) => (
+                  <div key={i} className="space-y-3">
+                      <Skeleton className="h-48 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                  </div>
+              ))}
+          </div>
+      );
+    }
+
+    if (error) {
+      return (
+          <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg bg-destructive/10 border-destructive">
+              <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+              <h3 className="text-lg font-semibold text-destructive-foreground">An Error Occurred</h3>
+              <p className="text-destructive-foreground/80">{error}</p>
+          </div>
+      );
+    }
+    
+    if (filteredDecks.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[30vh]">
+                <BookOpen className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold">No Decks Found</h3>
+                <p className="text-muted-foreground">Try adjusting your search term.</p>
+            </div>
+        )
+    }
+
     return (
-        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-                <div key={i} className="space-y-3">
-                    <Skeleton className="h-48 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                    <Skeleton className="h-4 w-1/2" />
-                </div>
-            ))}
-        </div>
+      <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        {filteredDecks.map((deck) => (
+          <DeckCard key={deck.id} deck={deck} />
+        ))}
+      </div>
     );
   }
 
-  if (error) {
-    return (
-        <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg bg-destructive/10 border-destructive">
-            <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-            <h3 className="text-lg font-semibold text-destructive-foreground">An Error Occurred</h3>
-            <p className="text-destructive-foreground/80">{error}</p>
-        </div>
-    );
-  }
-  
   return (
-    <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-      {decks.map((deck) => (
-        <DeckCard key={deck.id} deck={deck} />
-      ))}
+    <div className="space-y-6">
+        <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input 
+                placeholder="Search for a subject..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+            />
+        </div>
+        {renderContent()}
     </div>
-  );
+  )
 }
