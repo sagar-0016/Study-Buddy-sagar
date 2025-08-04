@@ -77,7 +77,7 @@ export default function PersonalizedFeedback() {
   };
 
   return (
-    <Card>
+    <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
       <CardHeader>
         <CardTitle>AI Study Buddy</CardTitle>
         <CardDescription>

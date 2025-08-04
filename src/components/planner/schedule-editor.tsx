@@ -351,7 +351,7 @@ export default function ScheduleEditor() {
   }
 
   return (
-    <Card>
+    <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
       <CardContent className="p-0 sm:p-4">
         <Tabs defaultValue="holiday">
           <TabsList className="grid w-full grid-cols-2">

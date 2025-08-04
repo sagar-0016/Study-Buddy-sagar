@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import Confetti from 'react-confetti';
+import Confetti from 'react-etti';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
@@ -310,7 +310,7 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
                      <XCircle className="mr-2 h-4 w-4" /> End Session
                  </Button>
             </div>
-             <Card className="min-h-[350px] flex flex-col">
+             <Card className="min-h-[350px] flex flex-col border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
                 <CardHeader>
                     <div className="flex justify-between items-start gap-4">
                         <div className="flex items-center gap-3">
@@ -420,7 +420,7 @@ const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onT
             {filteredTopics.length > 0 ? (
                 <div className="space-y-3">
                     {filteredTopics.map(topic => (
-                        <Card key={topic.id} className="flex items-center justify-between p-4">
+                        <Card key={topic.id} className="flex items-center justify-between p-4 border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
                             <div className="flex items-center gap-4">
                                <MasteryDot success={topic.recallSuccess} fails={topic.recallFails} />
                                <div>
