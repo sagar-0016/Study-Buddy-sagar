@@ -101,4 +101,8 @@
   .animate-mastery-pulse {
     animation: mastery-pulse 2s infinite;
   }
+
+  .dark .hover\:shadow-lg:hover {
+    box-shadow: 0 10px 15px -3px rgba(255, 255, 255, 0.03), 0 4px 6px -4px rgba(255, 255, 255, 0.03);
+  }
 }
