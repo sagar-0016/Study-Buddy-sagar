@@ -5,23 +5,23 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, writeBatch, doc } from 'firebase/firestore';
-import { gocFlashcards } from '@/lib/flashcards/goc';
-import { kinematicsFlashcards } from '@/lib/flashcards/kinematics';
-import { forcesFlashcards } from '@/lib/flashcards/forces';
-import { thermodynamicsFlashcards } from '@/lib/flashcards/thermodynamics';
-import { electricityMagnetismFlashcards } from '@/lib/flashcards/electricity-magnetism';
-import { opticsFlashcards } from '@/lib/flashcards/optics';
-import { modernPhysicsFlashcards } from '@/lib/flashcards/modern-physics';
-import { physicalChemistryFlashcards } from '@/lib/flashcards/physical-chemistry';
-import { inorganicChemistryFlashcards } from '@/lib/flashcards/inorganic-chemistry';
-import { stoichiometryFlashcards } from '@/lib/flashcards/stoichiometry';
-import { chemicalBondingFlashcards } from '@/lib/flashcards/chemical-bonding';
-import { algebraFlashcards } from '@/lib/flashcards/algebra';
-import { geometryFlashcards } from '@/lib/flashcards/geometry';
-import { trigonometryFlashcards } from '@/lib/flashcards/trigonometry';
-import { calculus1Flashcards } from '@/lib/flashcards/calculus1';
-import { calculus2Flashcards } from '@/lib/flashcards/calculus2';
-import { statsProbabilityFlashcards } from '@/lib/flashcards/stats-probability';
+import { gocFlashcards } from '../src/lib/flashcards/goc';
+import { kinematicsFlashcards } from '../src/lib/flashcards/kinematics';
+import { forcesFlashcards } from '../src/lib/flashcards/forces';
+import { thermodynamicsFlashcards } from '../src/lib/flashcards/thermodynamics';
+import { electricityMagnetismFlashcards } from '../src/lib/flashcards/electricity-magnetism';
+import { opticsFlashcards } from '../src/lib/flashcards/optics';
+import { modernPhysicsFlashcards } from '../src/lib/flashcards/modern-physics';
+import { physicalChemistryFlashcards } from '../src/lib/flashcards/physical-chemistry';
+import { inorganicChemistryFlashcards } from '../src/lib/flashcards/inorganic-chemistry';
+import { stoichiometryFlashcards } from '../src/lib/flashcards/stoichiometry';
+import { chemicalBondingFlashcards } from '../src/lib/flashcards/chemical-bonding';
+import { algebraFlashcards } from '../src/lib/flashcards/algebra';
+import { geometryFlashcards } from '../src/lib/flashcards/geometry';
+import { trigonometryFlashcards } from '../src/lib/flashcards/trigonometry';
+import { calculus1Flashcards } from '../src/lib/flashcards/calculus1';
+import { calculus2Flashcards } from '../src/lib/flashcards/calculus2';
+import { statsProbabilityFlashcards } from '../src/lib/flashcards/stats-probability';
 
 // IMPORTANT: Paste your Firebase config here
 const firebaseConfig = {
