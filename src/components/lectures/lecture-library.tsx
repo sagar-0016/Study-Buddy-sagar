@@ -58,7 +58,7 @@ const LectureCard = ({ lecture }: { lecture: Lecture }) => {
   return (
     <VideoPlayerDialog lecture={lecture}>
         <div className="block group cursor-pointer">
-            <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col">
+            <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col border-0">
                 <div className="relative aspect-video">
                 <Image 
                     src={lecture.thumbnailUrl} 
