@@ -22,8 +22,8 @@
     --muted: 120 50% 92%;
     --muted-foreground: 224 7.1% 44.1%;
 
-    --accent: 182 100% 74%; /* Blue (#7DF9FF) */
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 120 55% 45%; /* Darker Green */
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -60,8 +60,8 @@
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 182 100% 74%; /* Blue (#7DF9FF) */
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 120 55% 45%; /* Darker Green */
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
