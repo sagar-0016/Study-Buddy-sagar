@@ -4,17 +4,22 @@ import { collection, doc, getDocs, setDoc, serverTimestamp } from 'firebase/fire
 import type { PyqProgress } from './types';
 import { syllabusData } from './data';
 
+type ExamType = 'jeeMain' | 'jeeAdvanced';
+
 /**
  * Updates the completion status for a specific chapter's PYQs in Firestore.
  * @param chapterKey - A unique identifier for the chapter (e.g., 'Physics-Mechanics-Kinematics').
  * @param completed - A boolean indicating if the PYQs are completed.
+ * @param examType - The exam type to update progress for.
  */
 export const updatePyqStatus = async (
   chapterKey: string,
-  completed: boolean
+  completed: boolean,
+  examType: ExamType
 ): Promise<void> => {
   try {
-    const progressDocRef = doc(db, 'pyq-progress', chapterKey);
+    const collectionName = `pyq-progress-${examType}`;
+    const progressDocRef = doc(db, collectionName, chapterKey);
     await setDoc(
       progressDocRef,
       {
@@ -24,17 +29,19 @@ export const updatePyqStatus = async (
       { merge: true }
     );
   } catch (error) {
-    console.error(`Error updating PYQ progress for ${chapterKey}:`, error);
+    console.error(`Error updating PYQ progress for ${chapterKey} in ${examType}:`, error);
   }
 };
 
 /**
- * Fetches all PYQ progress data from the 'pyq-progress' collection.
+ * Fetches all PYQ progress data from the relevant collection.
+ * @param examType - The exam type to fetch progress for.
  * @returns {Promise<PyqProgress[]>} An array of progress data for all chapters.
  */
-export const getPyqProgress = async (): Promise<PyqProgress[]> => {
+export const getPyqProgress = async (examType: ExamType): Promise<PyqProgress[]> => {
   try {
-    const progressCollectionRef = collection(db, 'pyq-progress');
+    const collectionName = `pyq-progress-${examType}`;
+    const progressCollectionRef = collection(db, collectionName);
     const querySnapshot = await getDocs(progressCollectionRef);
 
     if (querySnapshot.empty) {
@@ -47,7 +54,7 @@ export const getPyqProgress = async (): Promise<PyqProgress[]> => {
     }));
 
   } catch (error) {
-    console.error("Error fetching PYQ progress data:", error);
+    console.error(`Error fetching PYQ progress data for ${examType}:`, error);
     return [];
   }
 };
@@ -59,7 +66,9 @@ export const getPyqProgress = async (): Promise<PyqProgress[]> => {
  */
 export const getPyqProgressStats = async (): Promise<{ completed: number, total: number }> => {
     try {
-        const progressData = await getPyqProgress();
+        // This function now might need to be adapted or called for a specific exam type
+        // For now, let's assume it checks JEE Main by default for the dashboard
+        const progressData = await getPyqProgress('jeeMain');
         const completedCount = progressData.filter(p => p.completed).length;
 
         let totalChapters = 0;
