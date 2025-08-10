@@ -31,9 +31,8 @@ export function PriorityDot({ priority }: { priority: number }) {
                 )}
                 />
             </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
+            <TooltipContent>
                 <p className="font-bold">{priorityInfo.label}</p>
-                <p className="text-sm text-muted-foreground">{priorityInfo.description}</p>
             </TooltipContent>
         </Tooltip>
     </TooltipProvider>

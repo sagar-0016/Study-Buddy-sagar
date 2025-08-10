@@ -3,6 +3,7 @@ import SyllabusAnalysis from '@/components/syllabus/syllabus-analysis';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { PriorityLegend } from '@/components/syllabus/priority-legend';
 
 export const metadata: Metadata = {
   title: 'Syllabus Analysis',
@@ -18,12 +19,15 @@ export default function SyllabusAnalysisPage() {
             Analyze chapter weightage to prioritize your studies effectively.
             </p>
         </div>
-        <Button variant="outline" asChild>
-            <Link href="/syllabus">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Syllabus Tracker
-            </Link>
-        </Button>
+        <div className="flex items-center gap-4">
+            <Button variant="outline" asChild>
+                <Link href="/syllabus">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Syllabus Tracker
+                </Link>
+            </Button>
+             <PriorityLegend />
+        </div>
       </div>
       <SyllabusAnalysis />
     </div>
