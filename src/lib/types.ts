@@ -1,3 +1,4 @@
+
 import { DocumentData, Timestamp } from 'firebase/firestore';
 
 export type NavLink = {
@@ -154,4 +155,11 @@ export interface BrainstormingSubmission extends DocumentData {
     topicQuestion: string;
     thoughts: string;
     submittedAt: Timestamp;
+}
+
+export interface Message extends DocumentData {
+    id: string;
+    text: string;
+    isRead: boolean;
+    createdAt: Timestamp;
 }

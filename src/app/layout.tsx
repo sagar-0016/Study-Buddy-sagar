@@ -10,26 +10,50 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { AuthProvider, useAuth } from '@/context/auth-context';
 import LoginFlow from '@/components/auth/login-flow';
+import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
+import { useToast } from '@/hooks/use-toast';
+import { MessageSquareWarning } from 'lucide-react';
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const logAppOpen = async () => {
+    const logAppOpenAndCheckMessages = async () => {
       try {
         if (isAuthenticated) {
+            // Log the app open event
             await addDoc(collection(db, "opened"), {
               time: new Date(),
             });
             console.log("App open event logged to Firestore.");
+
+            // Check for unread messages if user has full access
+            const accessLevel = localStorage.getItem('study-buddy-access-level');
+            if (accessLevel === 'full') {
+                const messages = await getUnreadMessages();
+                messages.forEach(async (msg) => {
+                    toast({
+                        title: (
+                            <div className="flex items-center gap-2">
+                                <MessageSquareWarning className="h-5 w-5 text-primary" />
+                                <span>New Message</span>
+                            </div>
+                        ),
+                        description: msg.text,
+                        duration: 10000,
+                    });
+                    await markMessageAsRead(msg.id);
+                });
+            }
         }
       } catch (error) {
-        console.error("Error logging app open event: ", error);
+        console.error("Error during app startup tasks: ", error);
       }
     };
 
-    logAppOpen();
-  }, [isAuthenticated]);
+    logAppOpenAndCheckMessages();
+  }, [isAuthenticated, toast]);
 
   if (!isAuthenticated) {
     return <LoginFlow />;

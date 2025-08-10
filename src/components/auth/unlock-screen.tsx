@@ -9,23 +9,33 @@ import { Label } from '@/components/ui/label';
 import { GraduationCap, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const SECRET_KEY = 'p';
+const LIMITED_ACCESS_KEY = 'p';
+const FULL_ACCESS_KEY = '_';
 const SETUP_USERNAME = 'pranjal';
 
-export default function UnlockScreen({ onUnlock }: { onUnlock: () => void }) {
+export default function UnlockScreen({ onUnlock }: { onUnlock: (accessLevel: 'full' | 'limited') => void }) {
     const [keyInput, setKeyInput] = useState('');
     const [error, setError] = useState('');
     const { toast } = useToast();
 
-    const handleSubsequentLogin = (e: React.FormEvent) => {
+    const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        if (keyInput === SECRET_KEY) {
+
+        if (keyInput === FULL_ACCESS_KEY) {
             toast({
               title: `Welcome back, ${SETUP_USERNAME}!`,
+              description: "Full access granted.",
             });
-            onUnlock();
-        } else {
+            onUnlock('full');
+        } else if (keyInput === LIMITED_ACCESS_KEY) {
+            toast({
+              title: `Welcome, Guest!`,
+              description: "Limited access granted.",
+            });
+            onUnlock('limited');
+        }
+        else {
             setError('The key is incorrect. Try again.');
         }
     };
@@ -36,11 +46,11 @@ export default function UnlockScreen({ onUnlock }: { onUnlock: () => void }) {
                 <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit">
                     <GraduationCap className="h-10 w-10 text-primary" />
                 </div>
-                <CardTitle className="mt-4 text-2xl">Welcome Back, {SETUP_USERNAME}</CardTitle>
+                <CardTitle className="mt-4 text-2xl">Welcome Back</CardTitle>
                 <CardDescription>Please enter your password to unlock.</CardDescription>
             </CardHeader>
             <CardContent>
-                <form onSubmit={handleSubsequentLogin} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="key-input">Password</Label>
                             <div className="relative">

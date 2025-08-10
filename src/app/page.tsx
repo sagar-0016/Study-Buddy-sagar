@@ -4,6 +4,7 @@ import WelcomeBanner from '@/components/home/welcome-banner';
 import MotivationCorner from '@/components/home/motivation-corner';
 import CurrentTask from '@/components/home/current-task';
 import QuickStats from '@/components/home/quick-stats';
+import TipOfTheDay from '@/components/home/tip-of-the-day';
 
 export const metadata: Metadata = {
   title: 'Home',
@@ -19,6 +20,7 @@ export default function Home() {
         </div>
         <div className="space-y-6">
             <MotivationCorner />
+            <TipOfTheDay />
             <QuickStats />
         </div>
       </div>

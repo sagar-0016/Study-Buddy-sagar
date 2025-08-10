@@ -5,9 +5,11 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
+type AccessLevel = 'full' | 'limited';
+
 type AuthContextType = {
   isAuthenticated: boolean;
-  login: () => void;
+  login: (accessLevel: AccessLevel) => void;
   logout: () => void;
 };
 
@@ -31,11 +33,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const login = () => {
+  const login = (accessLevel: AccessLevel) => {
     try {
         sessionStorage.setItem('study-buddy-session-active', 'true');
+        localStorage.setItem('study-buddy-access-level', accessLevel);
     } catch (e) {
-        console.error("Session storage not available.");
+        console.error("Session/Local storage not available.");
     }
     setIsAuthenticated(true);
   };
@@ -43,7 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     try {
         sessionStorage.removeItem('study-buddy-session-active');
-        // We also clear the device verification on logout for security
+        localStorage.removeItem('study-buddy-access-level');
         localStorage.removeItem('study-buddy-device-verified');
         toast({
             title: "Logged Out",
