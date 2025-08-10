@@ -6,17 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lightbulb, Book } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getSyllabusProgress, getSyllabusData } from '@/lib/syllabus';
+import { getTotalPyqCompleted } from '@/lib/pyq';
 
 export default function QuickStats() {
     const [progress, setProgress] = useState(0);
+    const [pyqCount, setPyqCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        const fetchProgress = async () => {
+        const fetchStats = async () => {
             setIsLoading(true);
-            const [progressData, syllabusStructure] = await Promise.all([
+            const [progressData, syllabusStructure, pyqCompletedCount] = await Promise.all([
                 getSyllabusProgress(),
-                getSyllabusData()
+                getSyllabusData(),
+                getTotalPyqCompleted()
             ]);
             
             if (syllabusStructure) {
@@ -30,10 +33,11 @@ export default function QuickStats() {
                 const calculatedProgress = totalTopics > 0 ? (completedCount / totalTopics) * 100 : 0;
                 setProgress(calculatedProgress);
             }
+            setPyqCount(pyqCompletedCount);
             setIsLoading(false);
         };
 
-        fetchProgress();
+        fetchStats();
     }, []);
 
     return (
@@ -62,7 +66,11 @@ export default function QuickStats() {
                         </div>
                         <div className="ml-4">
                             <p className="text-sm font-medium">PYQs Covered</p>
-                            <p className="text-lg font-bold">125</p>
+                             {isLoading ? (
+                                <Skeleton className="h-7 w-20 mt-1" />
+                            ) : (
+                                <p className="text-lg font-bold">{pyqCount}</p>
+                            )}
                         </div>
                     </div>
                 </div>

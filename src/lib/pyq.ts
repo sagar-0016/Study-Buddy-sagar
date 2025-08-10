@@ -60,19 +60,50 @@ export const getPyqProgress = async (examType: ExamType): Promise<PyqProgress[]>
 
 
 /**
- * Calculates the number of completed PYQ chapters and the total number of chapters.
+ * Calculates the number of completed PYQ chapters and the total number of chapters for a specific exam.
  * @param {number} totalTopics - The total number of topics from the syllabus data.
  * @returns {Promise<{ completed: number, total: number }>} An object with completed and total counts.
  */
-export const getPyqProgressStats = async (totalTopics: number): Promise<{ completed: number, total: number }> => {
+export const getPyqProgressStats = async (examType: ExamType, totalTopics: number): Promise<{ completed: number, total: number }> => {
     try {
-        // This function now might need to be adapted or called for a specific exam type
-        // For now, let's assume it checks JEE Main by default for the dashboard
-        const progressData = await getPyqProgress('jeeMain');
+        const progressData = await getPyqProgress(examType);
         const completedCount = progressData.filter(p => p.completed).length;
         return { completed: completedCount, total: totalTopics };
-    } catch (error) {
-        console.error("Error fetching PYQ progress stats:", error);
+    } catch (error)
+ {
+        console.error(`Error fetching PYQ progress stats for ${examType}:`, error);
         return { completed: 0, total: 0 };
+    }
+};
+
+/**
+ * Calculates the total number of unique completed PYQ topics across all exam types.
+ * @returns {Promise<number>} The total count of completed PYQ topics.
+ */
+export const getTotalPyqCompleted = async (): Promise<number> => {
+    try {
+        const [mainProgress, advancedProgress] = await Promise.all([
+            getPyqProgress('jeeMain'),
+            getPyqProgress('jeeAdvanced')
+        ]);
+        
+        const completedIds = new Set<string>();
+
+        mainProgress.forEach(item => {
+            if (item.completed) {
+                completedIds.add(item.id);
+            }
+        });
+
+        advancedProgress.forEach(item => {
+            if (item.completed) {
+                completedIds.add(item.id);
+            }
+        });
+
+        return completedIds.size;
+    } catch (error) {
+        console.error("Error fetching total PYQ completed count:", error);
+        return 0;
     }
 };
