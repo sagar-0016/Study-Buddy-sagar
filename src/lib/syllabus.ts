@@ -1,7 +1,7 @@
 
 import { db } from './firebase';
 import { collection, doc, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
-import type { SyllabusTopic } from './types';
+import type { SyllabusTopic, Syllabus } from './types';
 
 /**
  * Updates the completion status for a specific syllabus topic in Firestore.
@@ -51,3 +51,29 @@ export const getSyllabusProgress = async (): Promise<SyllabusTopic[]> => {
     return [];
   }
 };
+
+/**
+ * Fetches the entire syllabus structure from Firestore.
+ * @returns {Promise<Syllabus | null>} The complete syllabus data object, or null on error.
+ */
+export const getSyllabusData = async (): Promise<Syllabus | null> => {
+    try {
+        const syllabusRef = collection(db, 'syllabus');
+        const querySnapshot = await getDocs(syllabusRef);
+
+        if (querySnapshot.empty) {
+            console.warn("Syllabus collection is empty in Firestore. Please run the population script.");
+            return null;
+        }
+
+        const syllabusData: Partial<Syllabus> = {};
+        querySnapshot.forEach(doc => {
+            syllabusData[doc.id as keyof Syllabus] = doc.data() as any;
+        });
+
+        return syllabusData as Syllabus;
+    } catch (error) {
+        console.error("Error fetching syllabus data from Firestore:", error);
+        return null;
+    }
+}

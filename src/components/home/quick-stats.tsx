@@ -4,9 +4,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lightbulb, Book } from 'lucide-react';
-import { syllabusData } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getSyllabusProgress } from '@/lib/syllabus';
+import { getSyllabusProgress, getSyllabusData } from '@/lib/syllabus';
 
 export default function QuickStats() {
     const [progress, setProgress] = useState(0);
@@ -15,18 +14,22 @@ export default function QuickStats() {
     useEffect(() => {
         const fetchProgress = async () => {
             setIsLoading(true);
-            const progressData = await getSyllabusProgress();
-            const completedCount = progressData.filter(p => p.completed).length;
-
-            let totalTopics = 0;
-            Object.values(syllabusData).forEach(subject => {
-                subject.chapters.forEach(chapter => {
-                    totalTopics += chapter.topics.length;
+            const [progressData, syllabusStructure] = await Promise.all([
+                getSyllabusProgress(),
+                getSyllabusData()
+            ]);
+            
+            if (syllabusStructure) {
+                const completedCount = progressData.filter(p => p.completed).length;
+                let totalTopics = 0;
+                Object.values(syllabusStructure).forEach(subject => {
+                    subject.chapters.forEach(chapter => {
+                        totalTopics += chapter.topics.length;
+                    });
                 });
-            });
-
-            const calculatedProgress = totalTopics > 0 ? (completedCount / totalTopics) * 100 : 0;
-            setProgress(calculatedProgress);
+                const calculatedProgress = totalTopics > 0 ? (completedCount / totalTopics) * 100 : 0;
+                setProgress(calculatedProgress);
+            }
             setIsLoading(false);
         };
 

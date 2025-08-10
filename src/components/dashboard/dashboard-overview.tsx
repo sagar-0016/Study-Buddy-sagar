@@ -5,11 +5,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getSyllabusProgress } from "@/lib/syllabus";
+import { getSyllabusProgress, getSyllabusData } from "@/lib/syllabus";
 import { getProgressData } from "@/lib/progress";
 import { getRevisionProgress } from "@/lib/revisions";
 import { getPyqProgressStats } from "@/lib/pyq";
-import { syllabusData } from "@/lib/data";
+import type { Syllabus } from "@/lib/types";
 import { BookCheck, ClipboardList, Notebook, BrainCircuit } from "lucide-react";
 
 const ProgressCard = ({ title, icon: Icon, value, total, isLoading, unit = 'topics' }: { title: string, icon: React.ElementType, value: number, total: number, isLoading: boolean, unit?: string }) => {
@@ -52,20 +52,37 @@ export default function DashboardOverview() {
   const [isLoadingRevisions, setIsLoadingRevisions] = useState(true);
 
   useEffect(() => {
-    const fetchSyllabusData = async () => {
-      setIsLoadingSyllabus(true);
-      const progress = await getSyllabusProgress();
-      const completedCount = progress.filter(p => p.completed).length;
+    const fetchAllData = async () => {
+        setIsLoadingSyllabus(true);
+        setIsLoadingPyqs(true);
 
-      let totalTopics = 0;
-      Object.values(syllabusData).forEach(subject => {
-        subject.chapters.forEach(chapter => {
-          totalTopics += chapter.topics.length;
-        });
-      });
-      setSyllabusProgress({ completed: completedCount, total: totalTopics });
-      setIsLoadingSyllabus(false);
+        const [syllabusProgressData, syllabusStructure] = await Promise.all([
+            getSyllabusProgress(),
+            getSyllabusData()
+        ]);
+        
+        if (syllabusStructure) {
+            const completedCount = syllabusProgressData.filter(p => p.completed).length;
+            let totalTopics = 0;
+            Object.values(syllabusStructure).forEach(subject => {
+                subject.chapters.forEach(chapter => {
+                    totalTopics += chapter.topics.length;
+                });
+            });
+            setSyllabusProgress({ completed: completedCount, total: totalTopics });
+
+            // Since PYQs are tied to topics, their total is the same
+            const pyqStats = await getPyqProgressStats(totalTopics);
+            setPyqProgress({ completed: pyqStats.completed, total: pyqStats.total });
+        } else {
+            setSyllabusProgress({ completed: 0, total: 0 });
+            setPyqProgress({ completed: 0, total: 0 });
+        }
+        
+        setIsLoadingSyllabus(false);
+        setIsLoadingPyqs(false);
     };
+
 
     const fetchFlashcardData = async () => {
       setIsLoadingFlashcards(true);
@@ -75,13 +92,6 @@ export default function DashboardOverview() {
       setFlashcardProgress({ completed, total });
       setIsLoadingFlashcards(false);
     };
-    
-    const fetchPyqData = async () => {
-      setIsLoadingPyqs(true);
-      const stats = await getPyqProgressStats();
-      setPyqProgress({ completed: stats.completed, total: stats.total });
-      setIsLoadingPyqs(false);
-    }
 
     const fetchRevisionData = async () => {
         setIsLoadingRevisions(true);
@@ -90,10 +100,9 @@ export default function DashboardOverview() {
         setIsLoadingRevisions(false);
     }
 
-    fetchSyllabusData();
+    fetchAllData();
     fetchFlashcardData();
     fetchRevisionData();
-    fetchPyqData();
   }, []);
 
   return (

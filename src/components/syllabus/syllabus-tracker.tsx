@@ -14,11 +14,10 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
-import { syllabusData } from '@/lib/data';
-import type { Subject, Chapter, SyllabusChapter } from '@/lib/types';
-import { getSyllabusProgress, updateSyllabusTopicStatus } from '@/lib/syllabus';
+import type { Subject, Chapter, SyllabusChapter, Syllabus } from '@/lib/types';
+import { getSyllabusProgress, updateSyllabusTopicStatus, getSyllabusData } from '@/lib/syllabus';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ClipboardCheck, AreaChart } from 'lucide-react';
+import { ClipboardCheck, AreaChart, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 function SubjectSyllabus({ subject }: { subject: Subject }) {
@@ -119,6 +118,40 @@ function SubjectSyllabus({ subject }: { subject: Subject }) {
 }
 
 export default function SyllabusTracker() {
+  const [syllabusData, setSyllabusData] = useState<Syllabus | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      const data = await getSyllabusData();
+      setSyllabusData(data);
+      setIsLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-[500px] w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
+  }
+
+  if (!syllabusData) {
+    return (
+        <Card className="flex flex-col items-center justify-center text-center p-8 bg-destructive/10 border-destructive">
+            <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+            <h3 className="text-lg font-semibold text-destructive-foreground">Syllabus Data Not Found</h3>
+            <p className="text-destructive-foreground/80">
+                The syllabus data could not be loaded from the database. Please run the population script.
+            </p>
+        </Card>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <Card>

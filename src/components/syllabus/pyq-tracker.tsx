@@ -12,10 +12,11 @@ import {
 } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { syllabusData } from '@/lib/data';
-import type { Subject, Chapter } from '@/lib/types';
+import type { Subject, Chapter, Syllabus } from '@/lib/types';
 import { getPyqProgress, updatePyqStatus } from '@/lib/pyq';
+import { getSyllabusData } from '@/lib/syllabus';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertTriangle } from 'lucide-react';
 
 type ExamType = 'jeeMain' | 'jeeAdvanced';
 
@@ -84,6 +85,34 @@ function SubjectPyqTracker({ subject, examType }: { subject: Subject, examType: 
 
 export default function PyqTracker() {
     const [examType, setExamType] = useState<ExamType>('jeeMain');
+    const [syllabusData, setSyllabusData] = useState<Syllabus | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            const data = await getSyllabusData();
+            setSyllabusData(data);
+            setIsLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    if (isLoading) {
+        return <Skeleton className="h-[500px] w-full" />;
+    }
+
+    if (!syllabusData) {
+        return (
+            <Card className="flex flex-col items-center justify-center text-center p-8 bg-destructive/10 border-destructive">
+                <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+                <h3 className="text-lg font-semibold text-destructive-foreground">Syllabus Data Not Found</h3>
+                <p className="text-destructive-foreground/80">
+                    Cannot load PYQ tracker because syllabus data is missing from the database.
+                </p>
+            </Card>
+        )
+    }
 
     return (
         <Card>

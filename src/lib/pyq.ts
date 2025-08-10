@@ -2,7 +2,6 @@
 import { db } from './firebase';
 import { collection, doc, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
 import type { PyqProgress } from './types';
-import { syllabusData } from './data';
 
 type ExamType = 'jeeMain' | 'jeeAdvanced';
 
@@ -62,23 +61,16 @@ export const getPyqProgress = async (examType: ExamType): Promise<PyqProgress[]>
 
 /**
  * Calculates the number of completed PYQ chapters and the total number of chapters.
+ * @param {number} totalTopics - The total number of topics from the syllabus data.
  * @returns {Promise<{ completed: number, total: number }>} An object with completed and total counts.
  */
-export const getPyqProgressStats = async (): Promise<{ completed: number, total: number }> => {
+export const getPyqProgressStats = async (totalTopics: number): Promise<{ completed: number, total: number }> => {
     try {
         // This function now might need to be adapted or called for a specific exam type
         // For now, let's assume it checks JEE Main by default for the dashboard
         const progressData = await getPyqProgress('jeeMain');
         const completedCount = progressData.filter(p => p.completed).length;
-
-        let totalChapters = 0;
-        Object.values(syllabusData).forEach(subject => {
-            subject.chapters.forEach(chapter => {
-                totalChapters += chapter.topics.length;
-            });
-        });
-
-        return { completed: completedCount, total: totalChapters };
+        return { completed: completedCount, total: totalTopics };
     } catch (error) {
         console.error("Error fetching PYQ progress stats:", error);
         return { completed: 0, total: 0 };

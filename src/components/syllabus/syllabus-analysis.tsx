@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -15,9 +15,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { syllabusData } from '@/lib/data';
-import type { Subject, SyllabusChapter } from '@/lib/types';
-import { Send, Pencil, Edit } from 'lucide-react';
+import type { Subject, SyllabusChapter, Syllabus } from '@/lib/types';
+import { getSyllabusData } from '@/lib/syllabus';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Send, Pencil, Edit, AlertTriangle } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { PriorityLegend } from './priority-legend';
 import { PriorityDot } from './priority-dot';
@@ -168,6 +169,41 @@ const SuggestChangeDialog = ({ topic, children }: { topic: TopicWithUnit, childr
 }
 
 export default function SyllabusAnalysis() {
+  const [syllabusData, setSyllabusData] = useState<Syllabus | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      const data = await getSyllabusData();
+      setSyllabusData(data);
+      setIsLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+      return (
+          <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-48 w-full" />
+              <Skeleton className="h-48 w-full" />
+          </div>
+      )
+  }
+
+  if (!syllabusData) {
+       return (
+            <Card className="flex flex-col items-center justify-center text-center p-8 bg-destructive/10 border-destructive">
+                <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
+                <h3 className="text-lg font-semibold text-destructive-foreground">Syllabus Data Not Found</h3>
+                <p className="text-destructive-foreground/80">
+                    The syllabus data could not be loaded from the database. Please run the population script.
+                </p>
+            </Card>
+        )
+  }
+
   return (
     <Card>
       <CardContent className="p-0 sm:p-4">
