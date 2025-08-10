@@ -18,7 +18,7 @@ export default function SettingsPage() {
                 <CardHeader>
                     <CardTitle>Motivation Corner</CardTitle>
                     <CardDescription>
-                        Choose the style of motivational messages you'd like to receive on the home page.
+                        Choose the style of motivational messages you'd like to receive on the home page. Your choice is saved on this device.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -52,6 +52,9 @@ export default function SettingsPage() {
                                 <User className="h-6 w-6 text-accent" />
                                 <div>
                                     <p className="font-semibold">Personal</p>
+                                     <span className="text-sm font-normal text-muted-foreground">
+                                        Receive only the pre-written, personal messages.
+                                    </span>
                                 </div>
                             </div>
                         </Label>
@@ -65,6 +68,9 @@ export default function SettingsPage() {
                                 <Bot className="h-6 w-6 text-destructive" />
                                 <div>
                                     <p className="font-semibold">AI Powered</p>
+                                     <span className="text-sm font-normal text-muted-foreground">
+                                        Receive only AI-generated messages from 'Saurabh'.
+                                    </span>
                                 </div>
                             </div>
                         </Label>
