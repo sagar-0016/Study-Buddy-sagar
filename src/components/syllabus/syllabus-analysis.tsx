@@ -19,7 +19,8 @@ import { syllabusData } from '@/lib/data';
 import type { Subject, SyllabusChapter } from '@/lib/types';
 import { Send, Pencil, Edit } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { WeightageDots } from './weightage-dots';
+import { PriorityLegend } from './priority-legend';
+import { PriorityDot } from './priority-dot';
 
 type ExamType = 'jeeMain' | 'jeeAdvanced';
 
@@ -64,18 +65,18 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
   return (
     <div className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <Select value={filter} onValueChange={setFilter}>
                     <SelectTrigger className="w-full sm:w-[200px]">
-                        <SelectValue placeholder="Filter by Weightage" />
+                        <SelectValue placeholder="Filter by Priority" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Levels</SelectItem>
-                        <SelectItem value="1">Level 1</SelectItem>
-                        <SelectItem value="2">Level 2</SelectItem>
-                        <SelectItem value="3">Level 3</SelectItem>
-                        <SelectItem value="4">Level 4</SelectItem>
-                        <SelectItem value="5">Level 5</SelectItem>
+                        <SelectItem value="all">All Priorities</SelectItem>
+                        <SelectItem value="1">Priority 1</SelectItem>
+                        <SelectItem value="2">Priority 2</SelectItem>
+                        <SelectItem value="3">Priority 3</SelectItem>
+                        <SelectItem value="4">Priority 4</SelectItem>
+                        <SelectItem value="5">Priority 5</SelectItem>
                     </SelectContent>
                 </Select>
                 <Select value={sort} onValueChange={setSort}>
@@ -83,18 +84,22 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
                         <SelectValue placeholder="Sort by" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="weightage-desc">Weightage: High to Low</SelectItem>
-                        <SelectItem value="weightage-asc">Weightage: Low to High</SelectItem>
+                        <SelectItem value="weightage-desc">Priority: High to Low</SelectItem>
+                        <SelectItem value="weightage-asc">Priority: Low to High</SelectItem>
                         <SelectItem value="alphabetical">Alphabetical</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
-            <Tabs value={examType} onValueChange={(value) => setExamType(value as ExamType)} className="w-full sm:w-auto">
+             <Tabs value={examType} onValueChange={(value) => setExamType(value as ExamType)} className="w-full sm:w-auto">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="jeeMain">JEE Main</TabsTrigger>
                     <TabsTrigger value="jeeAdvanced">JEE Advanced</TabsTrigger>
                 </TabsList>
             </Tabs>
+        </div>
+        
+        <div className="flex justify-start">
+            <PriorityLegend />
         </div>
 
         <div className="space-y-3">
@@ -105,7 +110,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
                         <p className="text-sm text-muted-foreground">{topic.unit}</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <WeightageDots weightage={topic[weightageKey]} />
+                        <PriorityDot priority={topic[weightageKey]} />
                          {isSuggestMode && (
                             <SuggestChangeDialog topic={topic}>
                                 <Button variant="ghost" size="icon">
@@ -140,9 +145,9 @@ const SuggestChangeDialog = ({ topic, children }: { topic: TopicWithUnit, childr
             </DialogTrigger>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Suggest Weightage Change</DialogTitle>
+                    <DialogTitle>Suggest Priority Change</DialogTitle>
                     <DialogDescription>
-                        Your feedback on the weightage for "{topic.name}" helps improve the app. This will be reviewed.
+                        Your feedback on the priority for "{topic.name}" helps improve the app. This will be reviewed.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-2">
@@ -151,7 +156,7 @@ const SuggestChangeDialog = ({ topic, children }: { topic: TopicWithUnit, childr
                         id="suggestion"
                         value={suggestion}
                         onChange={(e) => setSuggestion(e.target.value)}
-                        placeholder="e.g., 'I think this chapter should be Level 4 because it has appeared frequently in recent years...'"
+                        placeholder="e.g., 'I think this chapter should be Priority 1 because it has appeared frequently in recent years...'"
                     />
                 </div>
                 <DialogFooter>
