@@ -12,23 +12,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { syllabusData } from '@/lib/data';
 import type { Subject, SyllabusChapter } from '@/lib/types';
-import { cn } from '@/lib/utils';
 import { Send, Pencil, Edit } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-
-const weightageLevels: Record<number, { label: string; description: string; color: string }> = {
-    1: { label: 'Level 1', description: 'Comes almost every year with more than 2 questions on average', color: 'bg-red-500 hover:bg-red-600 border-red-500' },
-    2: { label: 'Level 2', description: 'Comes every year but with variable occurrence (>1 question on average)', color: 'bg-orange-500 hover:bg-orange-600 border-orange-500' },
-    3: { label: 'Level 3', description: 'Almost always 1 question each year', color: 'bg-yellow-500 hover:bg-yellow-600 border-yellow-500' },
-    4: { label: 'Level 4', description: 'Rarely appears, but sometimes has 2 or more questions in a year', color: 'bg-green-500 hover:bg-green-600 border-green-500' },
-    5: { label: 'Level 5', description: 'Quite rare to even have one question', color: 'bg-blue-500 hover:bg-blue-600 border-blue-500' },
-};
+import { WeightageDots } from './weightage-dots';
 
 type ExamType = 'jeeMain' | 'jeeAdvanced';
 
@@ -80,9 +71,11 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="all">All Levels</SelectItem>
-                        {Object.entries(weightageLevels).map(([level, { label }]) => (
-                            <SelectItem key={level} value={level}>{label}</SelectItem>
-                        ))}
+                        <SelectItem value="1">Level 1</SelectItem>
+                        <SelectItem value="2">Level 2</SelectItem>
+                        <SelectItem value="3">Level 3</SelectItem>
+                        <SelectItem value="4">Level 4</SelectItem>
+                        <SelectItem value="5">Level 5</SelectItem>
                     </SelectContent>
                 </Select>
                 <Select value={sort} onValueChange={setSort}>
@@ -112,9 +105,7 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
                         <p className="text-sm text-muted-foreground">{topic.unit}</p>
                     </div>
                     <div className="flex items-center gap-4">
-                        <Badge className={cn("text-white font-bold", weightageLevels[topic[weightageKey]].color)}>
-                            {weightageLevels[topic[weightageKey]].label}
-                        </Badge>
+                        <WeightageDots weightage={topic[weightageKey]} />
                          {isSuggestMode && (
                             <SuggestChangeDialog topic={topic}>
                                 <Button variant="ghost" size="icon">
