@@ -26,7 +26,7 @@ const TaskItem = ({ task, isActive, isUpcoming = false }: { task: ScheduleTask, 
                 <Clock className="h-5 w-5 mr-2" />
                 <p>{task.time}</p>
             </div>
-            <h3 className={`text-lg font-bold mt-2 ${!isActive && 'text-foreground/80'}`}>{task.task}</h3>
+            <h3 className={`text-lg font-bold mt-2 whitespace-pre-wrap ${!isActive && 'text-foreground/80'}`}>{task.task}</h3>
         </div>
     )
 }
