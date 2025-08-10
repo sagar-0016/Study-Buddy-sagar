@@ -5,14 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { Bot, User, Blend, Edit } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Bot, User, Blend } from "lucide-react";
 
 export type MotivationMode = "ai" | "personal" | "mixed";
 
 export default function SettingsPage() {
     const [motivationMode, setMotivationMode] = useLocalStorage<MotivationMode>('motivation-mode', 'mixed');
-    const [directEdit, setDirectEdit] = useLocalStorage<boolean>('direct-edit-mode', false);
 
     return (
         <div className="space-y-6">
@@ -71,33 +69,6 @@ export default function SettingsPage() {
                             </div>
                         </Label>
                     </RadioGroup>
-                </CardContent>
-            </Card>
-
-            <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
-                <CardHeader>
-                    <CardTitle>Planner Settings</CardTitle>
-                    <CardDescription>
-                       Configure how you interact with your study schedules.
-                    </CardDescription>
-                </CardHeader>
-                 <CardContent>
-                    <div className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                            <Label htmlFor="direct-edit-mode" className="text-base flex items-center gap-2">
-                                <Edit className="h-4 w-4" />
-                                Direct Edit Mode
-                            </Label>
-                            <p className="text-sm text-muted-foreground">
-                                Bypass the reflection step when editing schedules. Recommended for quick adjustments only.
-                            </p>
-                        </div>
-                        <Switch
-                            id="direct-edit-mode"
-                            checked={directEdit}
-                            onCheckedChange={setDirectEdit}
-                        />
-                    </div>
                 </CardContent>
             </Card>
         </div>

@@ -21,8 +21,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { ScheduleTask, DayType } from "@/lib/types";
-import { Pencil, Loader2, PlusCircle, Lock, Unlock, MessageSquareHeart, Edit } from "lucide-react";
-import { getDisciplineMessages, isDirectEditModeEnabled } from "@/lib/schedule";
+import { Pencil, Loader2, PlusCircle, Lock, Unlock, MessageSquareHeart } from "lucide-react";
+import { getDisciplineMessages } from "@/lib/schedule";
 import { Separator } from "@/components/ui/separator";
 
 type ScheduleDocument = {
@@ -46,7 +46,6 @@ const ScheduleList = ({
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isDisciplineDialogOpen, setIsDisciplineDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [directEdit, setDirectEdit] = useState(false);
   
   // Data State
   const [selectedTask, setSelectedTask] = useState<{ index: number; value: string; originalTime: string } | null>(null);
@@ -57,14 +56,6 @@ const ScheduleList = ({
   const [disciplineMessages, setDisciplineMessages] = useState<string[]>([]);
   const { toast } = useToast();
   
-  useEffect(() => {
-    const fetchSettings = async () => {
-      const isDirect = await isDirectEditModeEnabled();
-      setDirectEdit(isDirect);
-    };
-    fetchSettings();
-  }, []);
-
   if (!schedule) {
     return (
       <div className="space-y-4">
@@ -76,13 +67,9 @@ const ScheduleList = ({
   }
 
   const handleEnableEditing = async () => {
-    if (directEdit) {
-      setIsEditMode(true);
-    } else {
-      const messages = await getDisciplineMessages();
-      setDisciplineMessages(messages);
-      setIsDisciplineDialogOpen(true);
-    }
+    const messages = await getDisciplineMessages();
+    setDisciplineMessages(messages);
+    setIsDisciplineDialogOpen(true);
   };
 
   const handleEnterEditMode = () => {
@@ -213,8 +200,8 @@ const ScheduleList = ({
               </>
           ) : (
               <Button onClick={handleEnableEditing}>
-                  {directEdit ? <Edit className="mr-2 h-4 w-4" /> : <Unlock className="mr-2 h-4 w-4" />}
-                  {directEdit ? "Edit Schedule" : "Enable Editing"}
+                  <Unlock className="mr-2 h-4 w-4" />
+                  Enable Editing
               </Button>
           )}
       </div>

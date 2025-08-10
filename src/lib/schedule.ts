@@ -124,22 +124,3 @@ export const getDisciplineMessages = async (): Promise<string[]> => {
         return ["There was an error fetching reflection questions. Please proceed with intention."];
     }
 };
-
-/**
- * Checks if the developer has enabled direct edit mode.
- * @returns {Promise<boolean>} True if direct editing is enabled, false otherwise.
- */
-export const isDirectEditModeEnabled = async (): Promise<boolean> => {
-    try {
-        const settingDocRef = doc(db, 'settings', 'edit_mode');
-        const docSnap = await getDoc(settingDocRef);
-        if (docSnap.exists() && docSnap.data().directEditEnabled === true) {
-            return true;
-        }
-        return false; 
-    } catch (error) {
-        console.error("Error fetching direct edit mode setting:", error);
-        // Default to safer option (showing dialog) if there's an error.
-        return false;
-    }
-};
