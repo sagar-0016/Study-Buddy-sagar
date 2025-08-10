@@ -2,7 +2,6 @@
 "use client";
 
 import Image from "next/image";
-import OneLinerMotivation from "./one-liner-motivation";
 
 export default function WelcomeBanner() {
   return (
@@ -10,7 +9,9 @@ export default function WelcomeBanner() {
       <div className="grid md:grid-cols-2 items-center">
         <div className="p-8 md:p-12 z-10">
           <h2 className="text-3xl lg:text-4xl font-bold text-primary">Conquer JEE, Pranjal!</h2>
-          <OneLinerMotivation />
+          <p className="text-muted-foreground mt-4 text-lg">
+            Your journey to IIT Delhi starts now. Seize the day!
+          </p>
         </div>
         <div className="relative h-60 md:h-80 group">
            <Image
