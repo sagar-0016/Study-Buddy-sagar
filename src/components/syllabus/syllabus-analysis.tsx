@@ -98,10 +98,6 @@ function SubjectAnalysis({ subject }: { subject: Subject }) {
             </Tabs>
         </div>
         
-        <div className="flex justify-start">
-            <PriorityLegend />
-        </div>
-
         <div className="space-y-3">
             {filteredAndSortedTopics.map(topic => (
                 <Card key={topic.name} className="flex items-center justify-between p-4">
