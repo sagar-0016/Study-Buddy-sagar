@@ -3,6 +3,7 @@
 
 import { useState, useRef } from 'react';
 import Image from "next/image";
+import OneLinerMotivation from './one-liner-motivation';
 
 export default function WelcomeBanner() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -40,9 +41,7 @@ export default function WelcomeBanner() {
       <div className="grid md:grid-cols-2 items-center">
         <div className="p-8 md:p-12 z-10">
           <h2 className="text-3xl lg:text-4xl font-bold text-primary">Conquer JEE, Pranjal!</h2>
-          <p className="text-muted-foreground mt-4 text-lg">
-            Your journey to IIT Delhi starts now. Seize the day!
-          </p>
+          <OneLinerMotivation />
         </div>
         <div 
           ref={containerRef}
