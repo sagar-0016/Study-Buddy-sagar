@@ -1,7 +1,3 @@
-
-
-
-
 import { DocumentData, Timestamp } from 'firebase/firestore';
 
 export type NavLink = {
@@ -12,7 +8,8 @@ export type NavLink = {
 
 export type SyllabusChapter = {
     name: string;
-    weightage: number;
+    jeeMainWeightage: number;
+    jeeAdvancedWeightage: number;
 }
 
 export type Chapter = {

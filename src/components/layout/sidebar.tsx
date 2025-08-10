@@ -31,6 +31,7 @@ import type { NavLink } from '@/lib/types';
 export const navLinks: NavLink[] = [
   { href: "/", label: "Home", icon: Home },
   { href: "/syllabus", label: "Syllabus", icon: BookCheck },
+  { href: "/pyq", label: "PYQ Tracker", icon: ClipboardList },
   { href: "/planner", label: "Planner", icon: CalendarClock },
   { href: "/questions", label: "Questions", icon: ClipboardList },
   { href: "/flashcards", label: "Flashcards", icon: Notebook },
