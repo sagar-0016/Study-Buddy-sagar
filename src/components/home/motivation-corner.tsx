@@ -9,7 +9,8 @@ import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { MotivationMode } from "@/components/settings/settings-page";
-import { getRandomMotivationByMood } from "@/lib/motivation";
+import { getRandomMotivationByMood, getTinkeringMessage, getThreateningMessage } from "@/lib/motivation";
+import { useToast } from "@/hooks/use-toast";
 
 const moods = [
   { emoji: "✨", label: "Motivated" },
@@ -17,28 +18,63 @@ const moods = [
   { emoji: "🥀", label: "Worried" },
 ];
 
+const TINKERING_THRESHOLD = 4;
+const THREATENING_THRESHOLD = 7;
+const TIME_WINDOW = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 export default function MotivationCorner() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [motivation, setMotivation] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isAiGenerated, setIsAiGenerated] = useState(false);
+  const [warningLevel, setWarningLevel] = useState<null | 'orange' | 'red'>(null);
   const [motivationMode] = useLocalStorage<MotivationMode>('motivation-mode', 'mixed');
-
+  const [timestamps, setTimestamps] = useLocalStorage<number[]>('motivation-timestamps', []);
+  const { toast } = useToast();
+  
   const handleMoodSelect = async (moodLabel: string) => {
+    const accessLevel = localStorage.getItem('study-buddy-access-level');
+    const now = Date.now();
+    
+    // --- Guest User Logic ---
+    if (accessLevel !== 'full') {
+      if (timestamps.length > 0) {
+        toast({
+          title: "Feature Usage Capped",
+          description: "This feature has limited uses for guest access.",
+        });
+        return;
+      }
+      setTimestamps([now]); // Allow one-time use for guests
+    }
+
     setSelectedMood(moodLabel);
     setIsLoading(true);
     setMotivation("");
     setIsAiGenerated(false);
+    setWarningLevel(null);
 
-    try {
-        let useAi = false;
-        if (motivationMode === 'ai') {
-            useAi = true;
-        } else if (motivationMode === 'mixed') {
-            useAi = Math.random() < 0.5;
-        }
+    let currentTimestamps: number[] = [];
+    if (accessLevel === 'full') {
+        const updatedTimestamps = [...timestamps, now].filter(ts => now - ts < TIME_WINDOW);
+        setTimestamps(updatedTimestamps);
+        currentTimestamps = updatedTimestamps;
+    }
+    
+    const attemptsInWindow = currentTimestamps.length;
+    let newWarningLevel: 'orange' | 'red' | null = null;
+    let messagePromise: Promise<string>;
 
+    if (accessLevel === 'full' && attemptsInWindow >= THREATENING_THRESHOLD) {
+        newWarningLevel = 'red';
+        messagePromise = getThreateningMessage();
+    } else if (accessLevel === 'full' && attemptsInWindow >= TINKERING_THRESHOLD) {
+        newWarningLevel = 'orange';
+        messagePromise = getTinkeringMessage();
+    } else {
+        const useAi = motivationMode === 'ai' || (motivationMode === 'mixed' && Math.random() < 0.5);
         if (useAi) {
+            setIsAiGenerated(true);
             const result = await getMotivationAction({
                 senderName: "Saurabh",
                 recipientName: "Pranjal",
@@ -46,18 +82,22 @@ export default function MotivationCorner() {
                 quizScore: 75,
                 currentMood: moodLabel,
             });
-            setMotivation(result.motivation);
-            setIsAiGenerated(true);
+            messagePromise = Promise.resolve(result.motivation);
         } else {
-            const personalQuote = await getRandomMotivationByMood(moodLabel);
-            setMotivation(personalQuote);
             setIsAiGenerated(false);
+            messagePromise = getRandomMotivationByMood(moodLabel);
         }
+    }
+
+    try {
+      const message = await messagePromise;
+      setMotivation(message);
+      setWarningLevel(newWarningLevel);
     } catch (error) {
-        console.error("Failed to get motivation:", error);
-        setMotivation("Oops! Something went wrong. But you've got this, keep going!");
+      console.error("Failed to get motivation:", error);
+      setMotivation("Oops! Something went wrong. But you've got this, keep going!");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -91,9 +131,21 @@ export default function MotivationCorner() {
         )}
 
         {motivation && !isLoading && (
-          <div className="p-4 bg-accent/10 rounded-lg text-foreground border-l-4 border-accent max-w-2xl mx-auto animate-in fade-in-50 duration-500">
+          <div className={cn("p-4 rounded-lg text-foreground border-l-4 max-w-2xl mx-auto animate-in fade-in-50 duration-500",
+            {
+                'bg-accent/10 border-accent': !warningLevel,
+                'bg-orange-500/10 border-orange-500': warningLevel === 'orange',
+                'bg-red-500/10 border-red-500': warningLevel === 'red',
+            }
+          )}>
             <div className="flex items-start">
-              <Sparkles className="h-5 w-5 mr-3 mt-1 text-accent flex-shrink-0" />
+              <Sparkles className={cn("h-5 w-5 mr-3 mt-1 flex-shrink-0",
+               {
+                'text-accent': !warningLevel,
+                'text-orange-500': warningLevel === 'orange',
+                'text-red-500': warningLevel === 'red',
+               }
+              )} />
               <p className="italic">"{motivation}"</p>
             </div>
             {isAiGenerated && (
