@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import SyllabusAnalysis from '@/components/syllabus/syllabus-analysis';
 import Link from 'next/link';
@@ -19,7 +20,7 @@ export default function SyllabusAnalysisPage() {
             Analyze chapter weightage to prioritize your studies effectively.
             </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-end gap-4">
             <Button variant="outline" asChild>
                 <Link href="/syllabus">
                     <ArrowLeft className="mr-2 h-4 w-4" />
