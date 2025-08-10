@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { getMotivationAction } from "@/lib/actions";
 import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocalStorage } from "@/hooks/use-local-storage";
+import type { MotivationMode } from "@/components/settings/settings-page";
+import { getRandomMotivationByMood } from "@/lib/motivation";
 
 const moods = [
   { emoji: "✨", label: "Motivated" },
@@ -18,25 +21,43 @@ export default function MotivationCorner() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [motivation, setMotivation] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAiGenerated, setIsAiGenerated] = useState(false);
+  const [motivationMode] = useLocalStorage<MotivationMode>('motivation-mode', 'mixed');
 
   const handleMoodSelect = async (moodLabel: string) => {
     setSelectedMood(moodLabel);
     setIsLoading(true);
     setMotivation("");
+    setIsAiGenerated(false);
+
     try {
-      const result = await getMotivationAction({
-        senderName: "Saurabh",
-        recipientName: "Pranjal",
-        topic: "JEE Prep",
-        quizScore: 75,
-        currentMood: moodLabel,
-      });
-      setMotivation(result.motivation);
+        let useAi = false;
+        if (motivationMode === 'ai') {
+            useAi = true;
+        } else if (motivationMode === 'mixed') {
+            useAi = Math.random() < 0.5;
+        }
+
+        if (useAi) {
+            const result = await getMotivationAction({
+                senderName: "Saurabh",
+                recipientName: "Pranjal",
+                topic: "JEE Prep",
+                quizScore: 75,
+                currentMood: moodLabel,
+            });
+            setMotivation(result.motivation);
+            setIsAiGenerated(true);
+        } else {
+            const personalQuote = await getRandomMotivationByMood(moodLabel);
+            setMotivation(personalQuote);
+            setIsAiGenerated(false);
+        }
     } catch (error) {
-      console.error("Failed to get motivation:", error);
-      setMotivation("Oops! Saurabh is busy studying... maybe try again later?");
+        console.error("Failed to get motivation:", error);
+        setMotivation("Oops! Something went wrong. But you've got this, keep going!");
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
   };
 
@@ -50,15 +71,15 @@ export default function MotivationCorner() {
               key={mood.label}
               variant={selectedMood === mood.label ? "default" : "outline"}
               className={cn(
-                "flex flex-col h-20 text-base hover:bg-muted px-10",
+                "flex flex-col h-20 text-base hover:bg-muted px-2 sm:px-10",
                 {
-                  "border-0": selectedMood !== mood.label,
+                  "border-primary bg-primary/10 text-primary": selectedMood === mood.label,
                 }
               )}
               onClick={() => handleMoodSelect(mood.label)}
             >
               <span className="text-3xl">{mood.emoji}</span>
-              <span className="mt-1">{mood.label}</span>
+              <span className="mt-1 text-xs sm:text-sm">{mood.label}</span>
             </Button>
           ))}
         </div>
@@ -70,12 +91,16 @@ export default function MotivationCorner() {
         )}
 
         {motivation && !isLoading && (
-          <div className="p-4 bg-accent/10 rounded-lg text-accent-foreground border-l-4 border-accent max-w-2xl mx-auto animate-in fade-in-50 duration-500">
+          <div className="p-4 bg-accent/10 rounded-lg text-foreground border-l-4 border-accent max-w-2xl mx-auto animate-in fade-in-50 duration-500">
             <div className="flex items-start">
               <Sparkles className="h-5 w-5 mr-3 mt-1 text-accent flex-shrink-0" />
               <p className="italic">"{motivation}"</p>
             </div>
-            <p className="text-right font-semibold mt-2">- Saurabh</p>
+            {isAiGenerated && (
+                <div className="flex justify-end mt-2">
+                    <span className="text-xs font-semibold bg-muted text-muted-foreground px-2 py-1 rounded-full">AI</span>
+                </div>
+            )}
           </div>
         )}
       </CardContent>

@@ -8,6 +8,7 @@ import {
   GraduationCap,
   User,
   LogOut,
+  Settings,
 } from "lucide-react";
 import {
   Sheet,
@@ -117,6 +118,12 @@ export default function Header() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+             <DropdownMenuItem asChild>
+                <Link href="/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={logout}>
                 <LogOut className="mr-2 h-4 w-4" />Logout
             </DropdownMenuItem>
