@@ -172,7 +172,7 @@ export default function ProgressOverTimeChart() {
                         />
                         <Legend />
                         <Line type="monotone" dataKey="topics" name="Topics Completed" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                        <Line type="monotone" dataKey="pyqs" name="PYQs Completed" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                        <Line type="monotone" dataKey="pyqs" name="PYQs Completed" stroke="hsl(var(--chart-1))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                     </LineChart>
                 </ResponsiveContainer>
             </CardContent>
