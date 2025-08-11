@@ -35,7 +35,7 @@
     --radius: 0.5rem;
 
     --chart-1: 120 70% 50%;
-    --chart-2: 0 75% 60%; /* Red for PYQs */
+    --chart-2: 90 70% 45%; /* Lime Green for PYQs */
     --chart-3: 43 74% 66%;
     --chart-4: 27 87% 67%;
     --chart-5: 350 87% 67%;
@@ -71,7 +71,7 @@
     --ring: 120 55% 55%;
     
     --chart-1: 120 70% 60%;
-    --chart-2: 0 75% 70%; /* Red for PYQs */
+    --chart-2: 90 70% 55%; /* Lime Green for PYQs */
     --chart-3: 43 74% 56%;
     --chart-4: 27 87% 57%;
     --chart-5: 350 87% 57%;
