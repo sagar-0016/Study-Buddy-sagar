@@ -1,14 +1,29 @@
 
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from "next/image";
 import OneLinerMotivation from './one-liner-motivation';
+import { getBannerImageUrl } from '@/lib/home';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WelcomeBanner() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState('');
   const [shadow, setShadow] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchImage = async () => {
+        setIsLoading(true);
+        const url = await getBannerImageUrl();
+        setImageUrl(url);
+        setIsLoading(false);
+    }
+    fetchImage();
+  }, []);
+
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -49,36 +64,23 @@ export default function WelcomeBanner() {
           onMouseLeave={handleMouseLeave}
           className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group"
         >
-           <Image
-              src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
-              alt="IIT Delhi Emblem in a serene landscape"
-              data-ai-hint="logo university"
-              fill
-              className="object-cover rounded-lg"
-              style={{ 
-                transform: transform, 
-                boxShadow: shadow,
-                transition: 'transform 0.25s ease-out, box-shadow 0.25s ease-out' 
-              }}
-            />
+           {isLoading && <Skeleton className="w-full h-full rounded-lg" />}
+           {imageUrl && (
+            <Image
+                src={imageUrl}
+                alt="IIT Delhi Emblem in a serene landscape"
+                data-ai-hint="logo university"
+                fill
+                className="object-cover rounded-lg"
+                style={{ 
+                    transform: transform, 
+                    boxShadow: shadow,
+                    transition: 'transform 0.25s ease-out, box-shadow 0.25s ease-out' 
+                }}
+                priority
+              />
+           )}
         </div>
-        {/* <div className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group">
-           <Image
-              src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png"
-              alt="IIT Delhi Emblem in a serene landscape"
-              data-ai-hint="logo university"
-              fill
-              className="w-full h-full object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105 group-hover:-translate-y-1"
-            />
-        </div> */}
-
-        {/* <div className="relative min-h-[15rem] h-60 md:h-full group"> 
-            <Image 
-            src="https://raw.githubusercontent.com/sagar-0016/Pranjal-Study-Buddy/refs/heads/main/IIT%20Delhi%20Emblem%20in%20Serene%20Landscape.png" 
-            alt="IIT Delhi Emblem in a serene landscape" 
-            data-ai-hint="logo university" 
-            fill className="object-cover rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-105 group-hover:-translate-y-1" /> 
-          </div> */}
       </div>
     </div>
   );
