@@ -2,7 +2,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Ban, History } from 'lucide-react';
+import { Ban, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
@@ -21,11 +21,11 @@ export default function NotForYouPage() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Wanna try history? We can add a history page from here.
+            This flashcard deck is not available for you. Let's go back and pick another one.
           </p>
           <Button variant="outline" className="mt-6" asChild>
-            <Link href="/flashcards/history">
-              <History className="mr-2 h-4 w-4" /> Explore History
+            <Link href="/flashcards">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Go Back to Decks
             </Link>
           </Button>
         </CardContent>
