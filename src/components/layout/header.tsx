@@ -3,10 +3,10 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   PanelLeft,
   GraduationCap,
-  User,
   LogOut,
   Settings,
 } from "lucide-react";
@@ -112,7 +112,13 @@ export default function Header() {
               size="icon"
               className="overflow-hidden rounded-full"
             >
-              <User className="h-5 w-5"/>
+              <Image
+                src="https://firebasestorage.googleapis.com/v0/b/sturdy-sandbox-303019.appspot.com/o/14a27321-7291-450f-a037-c1d4d3f58a36.png?alt=media&token=87532321-e0e6-4254-93e1-255d491c33f7"
+                width={36}
+                height={36}
+                alt="Avatar"
+                className="overflow-hidden rounded-full"
+              />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
