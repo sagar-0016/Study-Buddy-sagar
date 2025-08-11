@@ -1,29 +1,14 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import Image from "next/image";
 import OneLinerMotivation from './one-liner-motivation';
-import { getBannerImageUrl } from '@/lib/home';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export default function WelcomeBanner() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState('');
   const [shadow, setShadow] = useState('');
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchImage = async () => {
-        setIsLoading(true);
-        const url = await getBannerImageUrl();
-        setImageUrl(url);
-        setIsLoading(false);
-    }
-    fetchImage();
-  }, []);
-
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
@@ -64,22 +49,19 @@ export default function WelcomeBanner() {
           onMouseLeave={handleMouseLeave}
           className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group"
         >
-           {isLoading && <Skeleton className="w-full h-full rounded-lg" />}
-           {imageUrl && (
-            <Image
-                src={imageUrl}
-                alt="IIT Delhi Emblem in a serene landscape"
-                data-ai-hint="logo university"
-                fill
-                className="object-cover rounded-lg"
-                style={{ 
-                    transform: transform, 
-                    boxShadow: shadow,
-                    transition: 'transform 0.25s ease-out, box-shadow 0.25s ease-out' 
-                }}
-                priority
-              />
-           )}
+           <Image
+              src="/welcome-banner.png"
+              alt="IIT Delhi Emblem in a serene landscape"
+              data-ai-hint="logo university"
+              fill
+              className="object-cover rounded-lg"
+              style={{ 
+                  transform: transform, 
+                  boxShadow: shadow,
+                  transition: 'transform 0.25s ease-out, box-shadow 0.25s ease-out' 
+              }}
+              priority
+            />
         </div>
       </div>
     </div>
