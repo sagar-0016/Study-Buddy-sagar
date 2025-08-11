@@ -52,9 +52,6 @@ export default function SettingsPage() {
                                 <User className="h-6 w-6 text-accent" />
                                 <div>
                                     <p className="font-semibold">Personal</p>
-                                     <span className="text-sm font-normal text-muted-foreground">
-                                        Receive only the pre-written, personal messages.
-                                    </span>
                                 </div>
                             </div>
                         </Label>
@@ -68,9 +65,6 @@ export default function SettingsPage() {
                                 <Bot className="h-6 w-6 text-destructive" />
                                 <div>
                                     <p className="font-semibold">AI Powered</p>
-                                     <span className="text-sm font-normal text-muted-foreground">
-                                        Receive only AI-generated messages from 'Saurabh'.
-                                    </span>
                                 </div>
                             </div>
                         </Label>
