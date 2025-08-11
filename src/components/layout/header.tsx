@@ -113,7 +113,7 @@ export default function Header() {
               className="overflow-hidden rounded-full"
             >
               <Image
-                src="https://firebasestorage.googleapis.com/v0/b/sturdy-sandbox-303019.appspot.com/o/14a27321-7291-450f-a037-c1d4d3f58a36.png?alt=media&token=87532321-e0e6-4254-93e1-255d491c33f7"
+                src="/avatar.png"
                 width={36}
                 height={36}
                 alt="Avatar"
