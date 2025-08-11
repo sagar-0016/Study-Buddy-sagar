@@ -1,7 +1,7 @@
 
 import { db } from './firebase';
 import { collection, doc, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
-import type { SyllabusTopic, Syllabus } from './types';
+import type { SyllabusTopic, Syllabus, SyllabusTopicWithTimestamp } from './types';
 
 /**
  * Updates the completion status for a specific syllabus topic in Firestore.
@@ -51,6 +51,37 @@ export const getSyllabusProgress = async (): Promise<SyllabusTopic[]> => {
     return [];
   }
 };
+
+
+/**
+ * Fetches all syllabus progress data along with their lastUpdated timestamps.
+ * @returns {Promise<SyllabusTopicWithTimestamp[]>} An array of progress data with timestamps.
+ */
+export const getSyllabusProgressWithTimestamps = async (): Promise<SyllabusTopicWithTimestamp[]> => {
+  try {
+    const progressCollectionRef = collection(db, 'syllabus-progress');
+    const querySnapshot = await getDocs(progressCollectionRef);
+
+    if (querySnapshot.empty) {
+      return [];
+    }
+    
+    // Use filter to ensure that items without a lastUpdated field are excluded
+    return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            completed: data.completed,
+            lastUpdated: data.lastUpdated,
+        }
+    }).filter(item => item.lastUpdated); // This ensures only items with a timestamp are returned
+
+  } catch (error) {
+    console.error("Error fetching syllabus progress data with timestamps:", error);
+    return [];
+  }
+};
+
 
 /**
  * Fetches the entire syllabus structure from Firestore.

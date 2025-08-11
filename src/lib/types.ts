@@ -94,6 +94,11 @@ export type SyllabusTopic = {
   completed: boolean;
 };
 
+export type SyllabusTopicWithTimestamp = SyllabusTopic & {
+  lastUpdated: Timestamp;
+};
+
+
 export interface RevisionTopic extends DocumentData {
   id: string;
   subject: string;
@@ -109,6 +114,10 @@ export interface RevisionTopic extends DocumentData {
 export type PyqProgress = {
   id: string;
   completed: boolean;
+};
+
+export type PyqProgressWithTimestamp = PyqProgress & {
+    lastUpdated: Timestamp;
 };
 
 export interface Lecture extends DocumentData {

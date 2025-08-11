@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import DashboardOverview from '@/components/dashboard/dashboard-overview';
+import ProgressOverTimeChart from '@/components/dashboard/progress-over-time-chart';
+import { Separator } from '@/components/ui/separator';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -15,6 +17,8 @@ export default function DashboardPage() {
         </p>
       </div>
       <DashboardOverview />
+      <Separator />
+      <ProgressOverTimeChart />
     </div>
   );
 }

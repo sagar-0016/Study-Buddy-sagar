@@ -1,7 +1,7 @@
 
 import { db } from './firebase';
 import { collection, doc, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
-import type { PyqProgress } from './types';
+import type { PyqProgress, PyqProgressWithTimestamp } from './types';
 
 type ExamType = 'jeeMain' | 'jeeAdvanced';
 
@@ -106,4 +106,34 @@ export const getTotalPyqCompleted = async (): Promise<number> => {
         console.error("Error fetching total PYQ completed count:", error);
         return 0;
     }
+};
+
+/**
+ * Fetches all PYQ progress data along with timestamps.
+ * @param examType - The exam type to fetch progress for.
+ * @returns {Promise<PyqProgressWithTimestamp[]>} An array of progress data with timestamps.
+ */
+export const getPyqProgressWithTimestamps = async (examType: ExamType): Promise<PyqProgressWithTimestamp[]> => {
+  try {
+    const collectionName = `pyq-progress-${examType}`;
+    const progressCollectionRef = collection(db, collectionName);
+    const querySnapshot = await getDocs(progressCollectionRef);
+
+    if (querySnapshot.empty) {
+      return [];
+    }
+    
+    return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            completed: data.completed,
+            lastUpdated: data.lastUpdated,
+        }
+    }).filter(item => item.lastUpdated); // Filter out items without a timestamp
+
+  } catch (error) {
+    console.error(`Error fetching PYQ progress data with timestamps for ${examType}:`, error);
+    return [];
+  }
 };
