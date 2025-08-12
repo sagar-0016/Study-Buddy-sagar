@@ -34,6 +34,20 @@ export default function MotivationCorner() {
   const { toast } = useToast();
   
   const handleMoodSelect = async (moodLabel: string) => {
+    setSelectedMood(moodLabel);
+    setIsLoading(true);
+    setMotivation("");
+    setIsAiGenerated(false);
+    setWarningLevel(null);
+
+    // Log the mood to Firestore immediately
+    try {
+      await logMood(moodLabel);
+    } catch (error) {
+      console.error("Failed to log mood:", error);
+      // We don't need to show a toast for a background task failure
+    }
+    
     const accessLevel = localStorage.getItem('study-buddy-access-level');
     const now = Date.now();
     
@@ -44,23 +58,10 @@ export default function MotivationCorner() {
           title: "Feature Usage Capped",
           description: "This feature has limited uses for guest access.",
         });
+        setIsLoading(false); // Stop loading as we are returning early
         return;
       }
       setTimestamps([now]); // Allow one-time use for guests
-    }
-
-    setSelectedMood(moodLabel);
-    setIsLoading(true);
-    setMotivation("");
-    setIsAiGenerated(false);
-    setWarningLevel(null);
-
-    // Log the mood to Firestore
-    try {
-      await logMood(moodLabel);
-    } catch (error) {
-      console.error("Failed to log mood:", error);
-      // We don't need to show a toast for a background task failure
     }
 
     let currentTimestamps: number[] = [];
