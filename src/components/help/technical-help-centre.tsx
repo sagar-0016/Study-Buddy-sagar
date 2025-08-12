@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle2, AlertCircle, HelpCircle, Send } from 'lucide-react';
+import { Plus, Loader2, MessageSquare, Image as ImageIcon, CheckCircle2, AlertCircle, HelpCircle, Send, MessageSquareText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { Separator } from '../ui/separator';
 
 const AddHelpRequestDialog = ({ onHelpRequestAdded, children }: { onHelpRequestAdded: () => void, children: React.ReactNode }) => {
     const [text, setText] = useState('');
@@ -131,7 +132,7 @@ const HelpRequestCard = ({ request, onCleared }: { request: TechnicalHelp, onCle
                     </div>
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
                 <p className="whitespace-pre-wrap">{request.text}</p>
                 {request.imageUrl && (
                     <Dialog>
@@ -147,6 +148,19 @@ const HelpRequestCard = ({ request, onCleared }: { request: TechnicalHelp, onCle
                              <Image src={request.imageUrl} alt="Help request image" width={800} height={600} className="rounded-lg object-contain" />
                         </DialogContent>
                     </Dialog>
+                )}
+
+                {request.responseText && (
+                    <>
+                        <Separator />
+                        <div className="p-4 bg-accent/20 rounded-lg border-l-4 border-accent">
+                             <div className="flex items-center gap-2 mb-2">
+                                <MessageSquareText className="h-5 w-5 text-accent-foreground" />
+                                <h4 className="font-semibold text-accent-foreground">Response</h4>
+                            </div>
+                            <p className="whitespace-pre-wrap text-muted-foreground">{request.responseText}</p>
+                        </div>
+                    </>
                 )}
             </CardContent>
             {request.isAddressed && !request.isCleared && (

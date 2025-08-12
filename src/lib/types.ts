@@ -139,6 +139,7 @@ export interface Doubt extends DocumentData {
     isAddressed: boolean;
     isCleared: boolean;
     createdAt: Timestamp;
+    responseText?: string;
 }
 
 export interface TechnicalHelp extends DocumentData {
@@ -149,6 +150,7 @@ export interface TechnicalHelp extends DocumentData {
     isAddressed: boolean;
     isCleared: boolean;
     createdAt: Timestamp;
+    responseText?: string;
 }
 
 export interface BrainstormingTopic extends DocumentData {
