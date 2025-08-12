@@ -172,3 +172,9 @@ export interface Message extends DocumentData {
     isRead: boolean;
     createdAt: Timestamp;
 }
+
+export interface MoodLog extends DocumentData {
+    id: string;
+    mood: string;
+    createdAt: Timestamp;
+}

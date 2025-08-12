@@ -11,6 +11,7 @@ import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { MotivationMode } from "@/components/settings/settings-page";
 import { getRandomMotivationByMood, getTinkeringMessage, getThreateningMessage } from "@/lib/motivation";
 import { useToast } from "@/hooks/use-toast";
+import { logMood } from "@/lib/mood-tracker";
 
 const moods = [
   { emoji: "✨", label: "Motivated" },
@@ -53,6 +54,14 @@ export default function MotivationCorner() {
     setMotivation("");
     setIsAiGenerated(false);
     setWarningLevel(null);
+
+    // Log the mood to Firestore
+    try {
+      await logMood(moodLabel);
+    } catch (error) {
+      console.error("Failed to log mood:", error);
+      // We don't need to show a toast for a background task failure
+    }
 
     let currentTimestamps: number[] = [];
     if (accessLevel === 'full') {
