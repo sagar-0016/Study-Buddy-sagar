@@ -152,7 +152,7 @@ const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (id: string)
                     </Dialog>
                 )}
 
-                {doubt.responseText && (
+                {doubt.adressedText && (
                     <>
                         <Separator />
                         <div className="p-4 bg-accent/20 rounded-lg border-l-4 border-accent">
@@ -160,7 +160,7 @@ const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (id: string)
                                 <MessageSquareText className="h-5 w-5 text-accent-foreground" />
                                 <h4 className="font-semibold text-accent-foreground">Response</h4>
                             </div>
-                            <p className="whitespace-pre-wrap text-muted-foreground">{doubt.responseText}</p>
+                            <p className="whitespace-pre-wrap text-muted-foreground">{doubt.adressedText}</p>
                         </div>
                     </>
                 )}

@@ -49,11 +49,11 @@ Provide interfaces to review and act upon user submissions.
 - **Doubt Centre:**
   - View a list of all submitted doubts, sorted by date.
   - See the question, subject, and any attached image.
-  - **Provide a text area to write a `responseText`.**
+  - **Provide a text area to write a `adressedText`.**
   - A button to **"Mark as Addressed"**, which sets the `isAddressed` boolean to `true` in Firestore. This signals to the user in the main app that their doubt has been seen.
 - **Technical Help Desk:**
   - Similar to the Doubt Centre, view all technical help requests.
-  - **Provide a text area to write a `responseText`.**
+  - **Provide a text area to write a `adressedText`.**
   - A button to **"Mark as Addressed"** to update the `isAddressed` flag.
 - **Brainstorming Submissions:**
   - View all submissions from the `brainstorming-submissions` collection.
@@ -108,8 +108,8 @@ This section details the Firestore collections the admin panel will need to inte
 - **`doubts`**, **`technical-help`**:
   - **Documents:** Auto-ID documents for each user submission.
   - **Purpose:** Stores user-submitted issues.
-  - **Fields:** `text`, `subject`/`category`, `imageUrl`, `createdAt`, `isAddressed` (boolean), `isCleared` (boolean), `responseText` (string, optional).
-  - **Admin Action:** Read-only for content, but can **update** the `isAddressed` field from `false` to `true` and **add/edit** the `responseText` field.
+  - **Fields:** `text`, `subject`/`category`, `imageUrl`, `createdAt`, `isAddressed` (boolean), `isCleared` (boolean), `adressedText` (string, optional).
+  - **Admin Action:** Read-only for content, but can **update** the `isAddressed` field from `false` to `true` and **add/edit** the `adressedText` field.
 
 - **`brainstorming-submissions`**:
   - **Documents:** Auto-ID documents.
