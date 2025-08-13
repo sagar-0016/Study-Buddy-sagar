@@ -35,6 +35,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
     const [hints, setHints] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
 
     const canSubmit = useMemo(() => {
@@ -49,7 +50,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
         setImageFile(null);
     }
 
-    const handleSubmit = async (closeDialog: () => void) => {
+    const handleSubmit = async () => {
         if (!canSubmit) return;
 
         setIsSaving(true);
@@ -63,7 +64,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
             });
             toast({ title: "Success!", description: "New revision topic has been added." });
             onTopicAdded();
-            closeDialog();
+            setIsOpen(false); // Close dialog programmatically
             resetForm();
         } catch (error) {
              toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
@@ -73,7 +74,8 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
     }
 
     return (
-        <Dialog onOpenChange={(open) => {
+        <Dialog open={isOpen} onOpenChange={(open) => {
+            setIsOpen(open);
             if (!open) resetForm();
         }}>
             <DialogTrigger asChild>
@@ -118,15 +120,11 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
                     </div>
                 </div>
                 <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <DialogClose asChild>
-                        <Button onClick={() => handleSubmit(() => {})} disabled={isSaving || !canSubmit}>
-                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Save Topic
-                        </Button>
-                    </DialogClose>
+                    <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSubmit} disabled={isSaving || !canSubmit}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Save Topic
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
