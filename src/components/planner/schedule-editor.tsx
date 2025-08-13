@@ -14,7 +14,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,7 +54,6 @@ const ScheduleList = ({
   const [isEditMode, setIsEditMode] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isDisciplineDialogOpen, setIsDisciplineDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
   // Data State
@@ -66,13 +64,9 @@ const ScheduleList = ({
   const [newTask, setNewTask] = useState("");
 
   // Discipline Challenge State
-  const [disciplineChallenge, setDisciplineChallenge] = useState<{
-    requiredSteps: number;
-    currentStep: number;
-    messages: string[];
-    isConfirming: boolean;
-    yesCount: number;
-  } | null>(null);
+  const [disciplineStepsLeft, setDisciplineStepsLeft] = useState<number | null>(null);
+  const [disciplineMessages, setDisciplineMessages] = useState<string[]>([]);
+  const [isDisciplineDialogOpen, setIsDisciplineDialogOpen] = useState(false);
 
   const { toast } = useToast();
   
@@ -86,54 +80,40 @@ const ScheduleList = ({
     );
   }
 
-  const handleEnableEditing = async () => {
-    if (!disciplineChallenge) {
-      const allMessages = await getDisciplineMessages();
-      const shuffledMessages = shuffleArray(allMessages);
-      const steps = Math.floor(Math.random() * 3) + 3; // Random number between 3 and 5
-
-      setDisciplineChallenge({
-        requiredSteps: steps,
-        currentStep: 0,
-        messages: shuffledMessages.slice(0, steps),
-        isConfirming: false,
-        yesCount: 1,
-      });
-    }
-    setIsDisciplineDialogOpen(true);
-  };
-  
-  const handleDisciplineNext = () => {
-      if (!disciplineChallenge) return;
-
-      if (disciplineChallenge.currentStep < disciplineChallenge.requiredSteps - 1) {
-          setDisciplineChallenge(prev => prev ? {...prev, currentStep: prev.currentStep + 1} : null);
-      } else {
-          setDisciplineChallenge(prev => prev ? {...prev, isConfirming: true} : null);
-      }
-  }
-
-  const handleDisciplineReset = () => {
-    setIsDisciplineDialogOpen(false);
-    setTimeout(() => { // Timeout to allow dialog to close before resetting state
-        setDisciplineChallenge(null);
-    }, 200)
-  }
-
-  const handleDisciplineConfirm = () => {
-      if(!disciplineChallenge) return;
-
-      if (disciplineChallenge.yesCount >= 2) {
-        setIsDisciplineDialogOpen(false);
+  const startDisciplineChallenge = async () => {
+    if (disciplineStepsLeft === null) {
+        const steps = Math.floor(Math.random() * 3) + 3; // Random number 3-5
+        const allMessages = await getDisciplineMessages();
+        setDisciplineMessages(shuffleArray(allMessages));
+        setDisciplineStepsLeft(steps - 1); // Subtract 1 because we're showing the first one now
+        setIsDisciplineDialogOpen(true);
+    } else if (disciplineStepsLeft > 0) {
+        setDisciplineStepsLeft(prev => (prev !== null ? prev - 1 : null));
+        setIsDisciplineDialogOpen(true);
+    } else {
+        // This case is for when steps are 0, meaning we enable editing
         setIsEditMode(true);
-        setDisciplineChallenge(null);
-      } else {
-        setDisciplineChallenge(prev => prev ? {...prev, yesCount: prev.yesCount + 1} : null);
+    }
+  };
+
+  const handleDisciplineYes = () => {
+      setIsDisciplineDialogOpen(false);
+      // If that was the last step, enable editing.
+      if (disciplineStepsLeft === 0) {
+          setIsEditMode(true);
       }
   }
 
-  const handleDisableEditing = () => {
+  const handleDisciplineNo = () => {
+      setIsDisciplineDialogOpen(false);
+      setDisciplineStepsLeft(null); // Reset the entire process
+      setDisciplineMessages([]);
+  }
+
+  const handleFinishEditing = () => {
     setIsEditMode(false);
+    setDisciplineStepsLeft(null); // Reset for next time
+    setDisciplineMessages([]);
   };
 
   const handleEditClick = (index: number) => {
@@ -225,6 +205,8 @@ const ScheduleList = ({
         setIsSaving(false);
     }
   }
+
+  const currentMessage = disciplineMessages[disciplineMessages.length - (disciplineStepsLeft || 0) - 1];
   
   return (
     <div>
@@ -249,12 +231,12 @@ const ScheduleList = ({
                   <Button onClick={handleAddClick} variant="outline">
                       <PlusCircle className="mr-2 h-4 w-4" /> Add New Task
                   </Button>
-                  <Button onClick={handleDisableEditing}>
+                  <Button onClick={handleFinishEditing}>
                       <Lock className="mr-2 h-4 w-4" /> Finish Editing
                   </Button>
               </>
           ) : (
-              <Button onClick={handleEnableEditing}>
+              <Button onClick={startDisciplineChallenge}>
                   <Unlock className="mr-2 h-4 w-4" />
                   Enable Editing
               </Button>
@@ -269,37 +251,18 @@ const ScheduleList = ({
             <DialogTitle className="flex items-center gap-2">
               <MessageSquareHeart className="text-primary"/> A Moment of Reflection
             </DialogTitle>
-            <DialogDescription>
-             {disciplineChallenge?.isConfirming 
-                ? "Are you absolutely sure you want to proceed?" 
-                : "Before changing your schedule, consider this point. True progress comes from discipline."
-             }
+             <DialogDescription>
+                Before changing your schedule, consider this point. True progress comes from discipline.
             </DialogDescription>
           </DialogHeader>
-          <Separator />
-          <div className="space-y-4 py-4 text-sm text-muted-foreground min-h-[80px] flex items-center justify-center text-center">
-            {disciplineChallenge && (
-                <p>
-                    {disciplineChallenge.isConfirming 
-                        ? "This action should be taken with clear intention."
-                        : disciplineChallenge.messages[disciplineChallenge.currentStep]
-                    }
-                </p>
-            )}
+          <div className="space-y-4 py-4 text-sm text-muted-foreground min-h-[80px] flex flex-col items-center justify-center text-center">
+            <p className="italic">"{currentMessage}"</p>
+            <Separator />
+            <p className="font-semibold text-foreground">Are you sure you want to proceed?</p>
           </div>
-          <DialogFooter>
-             {disciplineChallenge && !disciplineChallenge.isConfirming ? (
-                 <Button onClick={handleDisciplineNext} className="w-full">
-                    {`Continue (${disciplineChallenge.currentStep + 1}/${disciplineChallenge.requiredSteps})`}
-                 </Button>
-            ) : disciplineChallenge && disciplineChallenge.isConfirming ? (
-                <div className="w-full grid grid-cols-2 gap-4">
-                    <Button onClick={handleDisciplineReset} variant="outline">No</Button>
-                    <Button onClick={handleDisciplineConfirm}>
-                        Yes {disciplineChallenge.yesCount > 1 && `x${disciplineChallenge.yesCount}`}
-                    </Button>
-                </div>
-            ) : null}
+          <DialogFooter className="grid grid-cols-2 gap-4">
+             <Button onClick={handleDisciplineNo} variant="outline">No</Button>
+             <Button onClick={handleDisciplineYes}>Yes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -322,7 +285,7 @@ const ScheduleList = ({
             </div>
           </div>
           <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+            <Button type="button" variant="secondary" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleSaveChanges} disabled={isSaving}>
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save changes
             </Button>
@@ -348,7 +311,7 @@ const ScheduleList = ({
             </div>
           </div>
           <DialogFooter>
-            <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+            <Button type="button" variant="secondary" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleAddNewTask} disabled={isSaving}>
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Add Task
             </Button>
@@ -450,3 +413,5 @@ export default function ScheduleEditor() {
     </Card>
   );
 }
+
+    
