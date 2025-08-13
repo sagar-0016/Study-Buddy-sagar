@@ -31,6 +31,17 @@ type ScheduleDocument = {
   formalTasks: string[];
 };
 
+// Helper to shuffle an array
+const shuffleArray = (array: any[]) => {
+  let currentIndex = array.length, randomIndex;
+  while (currentIndex !== 0) {
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+  return array;
+};
+
 const ScheduleList = ({
   schedule,
   type,
@@ -53,7 +64,16 @@ const ScheduleList = ({
   const [editedTask, setEditedTask] = useState("");
   const [newTime, setNewTime] = useState("");
   const [newTask, setNewTask] = useState("");
-  const [disciplineMessages, setDisciplineMessages] = useState<string[]>([]);
+
+  // Discipline Challenge State
+  const [disciplineChallenge, setDisciplineChallenge] = useState<{
+    requiredSteps: number;
+    currentStep: number;
+    messages: string[];
+    isConfirming: boolean;
+    yesCount: number;
+  } | null>(null);
+
   const { toast } = useToast();
   
   if (!schedule) {
@@ -67,15 +87,50 @@ const ScheduleList = ({
   }
 
   const handleEnableEditing = async () => {
-    const messages = await getDisciplineMessages();
-    setDisciplineMessages(messages);
+    if (!disciplineChallenge) {
+      const allMessages = await getDisciplineMessages();
+      const shuffledMessages = shuffleArray(allMessages);
+      const steps = Math.floor(Math.random() * 3) + 3; // Random number between 3 and 5
+
+      setDisciplineChallenge({
+        requiredSteps: steps,
+        currentStep: 0,
+        messages: shuffledMessages.slice(0, steps),
+        isConfirming: false,
+        yesCount: 1,
+      });
+    }
     setIsDisciplineDialogOpen(true);
   };
+  
+  const handleDisciplineNext = () => {
+      if (!disciplineChallenge) return;
 
-  const handleEnterEditMode = () => {
+      if (disciplineChallenge.currentStep < disciplineChallenge.requiredSteps - 1) {
+          setDisciplineChallenge(prev => prev ? {...prev, currentStep: prev.currentStep + 1} : null);
+      } else {
+          setDisciplineChallenge(prev => prev ? {...prev, isConfirming: true} : null);
+      }
+  }
+
+  const handleDisciplineReset = () => {
     setIsDisciplineDialogOpen(false);
-    setIsEditMode(true);
-  };
+    setTimeout(() => { // Timeout to allow dialog to close before resetting state
+        setDisciplineChallenge(null);
+    }, 200)
+  }
+
+  const handleDisciplineConfirm = () => {
+      if(!disciplineChallenge) return;
+
+      if (disciplineChallenge.yesCount >= 2) {
+        setIsDisciplineDialogOpen(false);
+        setIsEditMode(true);
+        setDisciplineChallenge(null);
+      } else {
+        setDisciplineChallenge(prev => prev ? {...prev, yesCount: prev.yesCount + 1} : null);
+      }
+  }
 
   const handleDisableEditing = () => {
     setIsEditMode(false);
@@ -215,17 +270,36 @@ const ScheduleList = ({
               <MessageSquareHeart className="text-primary"/> A Moment of Reflection
             </DialogTitle>
             <DialogDescription>
-              Before changing your schedule, consider these points. True progress comes from discipline, not just rearrangement.
+             {disciplineChallenge?.isConfirming 
+                ? "Are you absolutely sure you want to proceed?" 
+                : "Before changing your schedule, consider this point. True progress comes from discipline."
+             }
             </DialogDescription>
           </DialogHeader>
           <Separator />
-          <div className="space-y-4 py-4 text-sm text-muted-foreground">
-            {disciplineMessages.map((msg, idx) => (
-                <p key={idx}>&bull; {msg}</p>
-            ))}
+          <div className="space-y-4 py-4 text-sm text-muted-foreground min-h-[80px] flex items-center justify-center text-center">
+            {disciplineChallenge && (
+                <p>
+                    {disciplineChallenge.isConfirming 
+                        ? "This action should be taken with clear intention."
+                        : disciplineChallenge.messages[disciplineChallenge.currentStep]
+                    }
+                </p>
+            )}
           </div>
           <DialogFooter>
-            <Button onClick={handleEnterEditMode} className="w-full">I've Reflected, Proceed to Edit</Button>
+             {disciplineChallenge && !disciplineChallenge.isConfirming ? (
+                 <Button onClick={handleDisciplineNext} className="w-full">
+                    {`Continue (${disciplineChallenge.currentStep + 1}/${disciplineChallenge.requiredSteps})`}
+                 </Button>
+            ) : disciplineChallenge && disciplineChallenge.isConfirming ? (
+                <div className="w-full grid grid-cols-2 gap-4">
+                    <Button onClick={handleDisciplineReset} variant="outline">No</Button>
+                    <Button onClick={handleDisciplineConfirm}>
+                        Yes {disciplineChallenge.yesCount > 1 && `x${disciplineChallenge.yesCount}`}
+                    </Button>
+                </div>
+            ) : null}
           </DialogFooter>
         </DialogContent>
       </Dialog>
