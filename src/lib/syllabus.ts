@@ -1,6 +1,6 @@
 
 import { db } from './firebase';
-import { collection, doc, getDocs, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc, serverTimestamp, onSnapshot, Unsubscribe } from 'firebase/firestore';
 import type { SyllabusTopic, Syllabus, SyllabusTopicWithTimestamp } from './types';
 
 /**
@@ -30,6 +30,7 @@ export const updateSyllabusTopicStatus = async (
 
 /**
  * Fetches all syllabus progress data from the 'syllabus-progress' collection.
+ * This is a one-time fetch.
  * @returns {Promise<SyllabusTopic[]>} An array of progress data for all topics.
  */
 export const getSyllabusProgress = async (): Promise<SyllabusTopic[]> => {
@@ -51,6 +52,31 @@ export const getSyllabusProgress = async (): Promise<SyllabusTopic[]> => {
     return [];
   }
 };
+
+
+/**
+ * Sets up a real-time listener for syllabus progress.
+ * @param callback - A function to be called with the progress data whenever it changes.
+ * @returns {Unsubscribe} A function to unsubscribe from the listener.
+ */
+export const listenToSyllabusProgress = (callback: (progress: SyllabusTopic[]) => void): Unsubscribe => {
+    const progressCollectionRef = collection(db, 'syllabus-progress');
+    
+    const unsubscribe = onSnapshot(progressCollectionRef, (querySnapshot) => {
+        const progressData: SyllabusTopic[] = [];
+        querySnapshot.forEach((doc) => {
+            progressData.push({
+                id: doc.id,
+                completed: doc.data().completed,
+            });
+        });
+        callback(progressData);
+    }, (error) => {
+        console.error("Error listening to syllabus progress:", error);
+    });
+
+    return unsubscribe;
+}
 
 
 /**

@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import type { Subject, Chapter, SyllabusChapter, Syllabus } from '@/lib/types';
-import { getSyllabusProgress, updateSyllabusTopicStatus, getSyllabusData } from '@/lib/syllabus';
+import { listenToSyllabusProgress, updateSyllabusTopicStatus, getSyllabusData } from '@/lib/syllabus';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ClipboardCheck, AreaChart, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,24 +25,25 @@ function SubjectSyllabus({ subject }: { subject: Subject }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProgress = async () => {
-        setIsLoading(true);
-        const progressData = await getSyllabusProgress();
+    setIsLoading(true);
+    const unsubscribe = listenToSyllabusProgress((progressData) => {
         const initialState: Record<string, boolean> = {};
         progressData.forEach(item => {
             initialState[item.id] = item.completed;
         });
         setCheckedState(initialState);
         setIsLoading(false);
-    };
-    fetchProgress();
+    });
+
+    // Cleanup subscription on component unmount
+    return () => unsubscribe();
   }, [subject]);
 
   const handleCheckboxChange = async (topicKey: string, checked: boolean) => {
-    // Optimistically update UI
+    // Optimistically update UI to feel instant
     setCheckedState(prevState => ({ ...prevState, [topicKey]: checked }));
     
-    // Update Firestore
+    // Update Firestore in the background
     await updateSyllabusTopicStatus(topicKey, checked);
   };
 
