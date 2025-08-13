@@ -52,7 +52,7 @@ export const getRevisionTopics = async (): Promise<RevisionTopic[]> => {
 /**
  * Adds a new revision topic to Firestore.
  * @param {Omit<RevisionTopic, 'id' | 'lastReviewed' | 'recallSuccess' | 'recallFails'>} topicData - The data for the new topic.
- * @returns {Promise<string | null>} The ID of the newly created document, or null on failure.
+ * @returns {Promise<string>} The ID of the newly created document.
  */
 export const addRevisionTopic = async (topicData: {
   subject: string;
@@ -60,7 +60,7 @@ export const addRevisionTopic = async (topicData: {
   topicName: string;
   hints: string;
   imageFile?: File;
-}): Promise<string | null> => {
+}): Promise<string> => {
   try {
     let hintsImageURL: string | undefined = undefined;
     if (topicData.imageFile) {
@@ -81,7 +81,7 @@ export const addRevisionTopic = async (topicData: {
     return newDocRef.id;
   } catch (error) {
     console.error('Error adding revision topic:', error);
-    return null;
+    throw error;
   }
 };
 

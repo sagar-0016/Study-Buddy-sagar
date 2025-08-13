@@ -67,7 +67,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
             setIsOpen(false); // Close dialog programmatically
             resetForm();
         } catch (error) {
-             toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
+             toast({ title: "Error adding topic", description: "Could not save the new topic. Please check the console for details.", variant: "destructive" });
         } finally {
             setIsSaving(false);
         }
