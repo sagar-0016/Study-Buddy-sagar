@@ -35,7 +35,6 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
     const [hints, setHints] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
 
     const canSubmit = useMemo(() => {
@@ -50,7 +49,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
         setImageFile(null);
     }
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (closeDialog: () => void) => {
         if (!canSubmit) return;
 
         setIsSaving(true);
@@ -64,7 +63,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
             });
             toast({ title: "Success!", description: "New revision topic has been added." });
             onTopicAdded();
-            setIsOpen(false);
+            closeDialog();
             resetForm();
         } catch (error) {
              toast({ title: "Error", description: "An unexpected error occurred.", variant: "destructive" });
@@ -74,8 +73,7 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
     }
 
     return (
-        <Dialog open={isOpen} onOpenChange={(open) => {
-            setIsOpen(open);
+        <Dialog onOpenChange={(open) => {
             if (!open) resetForm();
         }}>
             <DialogTrigger asChild>
@@ -120,11 +118,15 @@ const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () =
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                     <Button onClick={handleSubmit} disabled={isSaving || !canSubmit}>
-                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save Topic
-                    </Button>
+                    <DialogClose asChild>
+                        <Button type="button" variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <DialogClose asChild>
+                        <Button onClick={() => handleSubmit(() => {})} disabled={isSaving || !canSubmit}>
+                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save Topic
+                        </Button>
+                    </DialogClose>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -223,41 +225,25 @@ const MasteryDot = ({ success, fails }: { success: number, fails: number }) => {
     const total = success + fails;
     
     const getMasteryStyle = () => {
-        if (total === 0) {
-            // Neutral/unattempted: gray color, no pulse
-            return {
-                backgroundColor: 'hsl(220, 8%, 75%)',
-                '--mastery-color-rgb': '188, 196, 209'
-            };
+        if (total < 3) {
+             return { backgroundColor: 'hsl(220, 8%, 75%)', '--mastery-color-rgb': '188, 196, 209' };
         }
+        
+        const successRate = success / total;
 
-        const score = success / total; // Score from 0 (all fails) to 1 (all success)
-        
-        // HSL color interpolation: Red (0) -> Yellow (60) -> Green (120)
-        const hue = score * 120; // Maps score 0-1 to hue 0-120
-        
-        // RGB values for the animation shadow
-        let r, g, b;
-        const c = 1;
-        const x = c * (1 - Math.abs((hue / 60) % 2 - 1));
-        if (hue < 60) {
-            [r,g,b] = [c,x,0];
+        if (successRate < 0.4) {
+             return { backgroundColor: 'hsl(0, 72%, 51%)', '--mastery-color-rgb': '220, 38, 38' }; // red
+        } else if (successRate < 0.75) {
+            return { backgroundColor: 'hsl(48, 96%, 50%)', '--mastery-color-rgb': '234, 179, 8' }; // yellow
         } else {
-            [r,g,b] = [x,c,0];
+            return { backgroundColor: 'hsl(142, 71%, 45%)', '--mastery-color-rgb': '34, 197, 94' }; // green
         }
-        
-        const masteryColorRGB = `${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}`;
-
-        return {
-            backgroundColor: `hsl(${hue}, 80%, 50%)`,
-            '--mastery-color-rgb': masteryColorRGB
-        } as React.CSSProperties;
     };
     
     return (
         <div 
             className="w-3 h-3 rounded-full animate-mastery-pulse"
-            style={getMasteryStyle()}
+            style={getMasteryStyle() as React.CSSProperties}
         ></div>
     );
 };
