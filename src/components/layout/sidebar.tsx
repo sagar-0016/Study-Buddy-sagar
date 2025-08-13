@@ -46,7 +46,6 @@ const secondaryNavLinks: NavLink[] = [
     { href: "/tricky-topics", label: "Ticky & Brainstormers", icon: Flame },
     { href: "/doubts", label: "Doubt Centre", icon: MessageSquareQuote },
     { href: "/help", label: "Technical Help", icon: LifeBuoy },
-    { href: "/settings", label: "Settings", icon: Settings },
 ]
 
 function SidebarNav({ links, isCollapsed }: { links: NavLink[]; isCollapsed: boolean }) {

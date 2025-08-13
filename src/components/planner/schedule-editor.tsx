@@ -67,6 +67,8 @@ const ScheduleList = ({
   const [disciplineStepsLeft, setDisciplineStepsLeft] = useState<number | null>(null);
   const [disciplineMessages, setDisciplineMessages] = useState<string[]>([]);
   const [isDisciplineDialogOpen, setIsDisciplineDialogOpen] = useState(false);
+  const [disciplineConfirmationCount, setDisciplineConfirmationCount] = useState(1);
+
 
   const { toast } = useToast();
   
@@ -80,40 +82,42 @@ const ScheduleList = ({
     );
   }
 
-  const startDisciplineChallenge = async () => {
+  const handleEnableEditingClick = async () => {
     if (disciplineStepsLeft === null) {
-        const steps = Math.floor(Math.random() * 3) + 3; // Random number 3-5
-        const allMessages = await getDisciplineMessages();
-        setDisciplineMessages(shuffleArray(allMessages));
-        setDisciplineStepsLeft(steps - 1); // Subtract 1 because we're showing the first one now
-        setIsDisciplineDialogOpen(true);
+      // Starting the process for the first time
+      const steps = Math.floor(Math.random() * 3) + 3; // 3 to 5 steps
+      const allMessages = await getDisciplineMessages();
+      setDisciplineMessages(shuffleArray(allMessages));
+      setDisciplineStepsLeft(steps);
+      setDisciplineConfirmationCount(1);
+      setIsDisciplineDialogOpen(true);
     } else if (disciplineStepsLeft > 0) {
-        setDisciplineStepsLeft(prev => (prev !== null ? prev - 1 : null));
-        setIsDisciplineDialogOpen(true);
-    } else {
-        // This case is for when steps are 0, meaning we enable editing
-        setIsEditMode(true);
+      // Continuing the process
+      setIsDisciplineDialogOpen(true);
     }
   };
 
   const handleDisciplineYes = () => {
-      setIsDisciplineDialogOpen(false);
-      // If that was the last step, enable editing.
-      if (disciplineStepsLeft === 0) {
-          setIsEditMode(true);
-      }
-  }
+    const newStepsLeft = (disciplineStepsLeft ?? 1) - 1;
+    setDisciplineStepsLeft(newStepsLeft);
+    setDisciplineConfirmationCount(prev => prev + 1);
+    setIsDisciplineDialogOpen(false);
+    
+    if (newStepsLeft <= 0) {
+      setIsEditMode(true);
+    }
+  };
 
-  const handleDisciplineNo = () => {
-      setIsDisciplineDialogOpen(false);
-      setDisciplineStepsLeft(null); // Reset the entire process
-      setDisciplineMessages([]);
-  }
+  const resetDisciplineChallenge = () => {
+    setIsDisciplineDialogOpen(false);
+    setDisciplineStepsLeft(null);
+    setDisciplineMessages([]);
+    setDisciplineConfirmationCount(1);
+  };
 
   const handleFinishEditing = () => {
     setIsEditMode(false);
-    setDisciplineStepsLeft(null); // Reset for next time
-    setDisciplineMessages([]);
+    resetDisciplineChallenge();
   };
 
   const handleEditClick = (index: number) => {
@@ -206,7 +210,7 @@ const ScheduleList = ({
     }
   }
 
-  const currentMessage = disciplineMessages[disciplineMessages.length - (disciplineStepsLeft || 0) - 1];
+  const currentMessage = disciplineMessages[0] || "Are you sure this change aligns with your long-term goals?";
   
   return (
     <div>
@@ -236,7 +240,7 @@ const ScheduleList = ({
                   </Button>
               </>
           ) : (
-              <Button onClick={startDisciplineChallenge}>
+              <Button onClick={handleEnableEditingClick}>
                   <Unlock className="mr-2 h-4 w-4" />
                   Enable Editing
               </Button>
@@ -261,8 +265,10 @@ const ScheduleList = ({
             <p className="font-semibold text-foreground">Are you sure you want to proceed?</p>
           </div>
           <DialogFooter className="grid grid-cols-2 gap-4">
-             <Button onClick={handleDisciplineNo} variant="outline">No</Button>
-             <Button onClick={handleDisciplineYes}>Yes</Button>
+             <Button onClick={resetDisciplineChallenge} variant="outline">No</Button>
+             <Button onClick={handleDisciplineYes}>
+                Yes {disciplineConfirmationCount > 1 ? `x${disciplineConfirmationCount}` : ''}
+             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
