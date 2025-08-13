@@ -62,22 +62,22 @@ export const addRevisionTopic = async (topicData: {
   imageFile?: File;
 }): Promise<string> => {
   try {
-    let hintsImageURL: string | undefined = undefined;
-    if (topicData.imageFile) {
-        hintsImageURL = await uploadImageHint(topicData.imageFile);
-    }
-
-    const revisionsRef = collection(db, 'revisions');
-    const newDocRef = await addDoc(revisionsRef, {
+    const newTopic: any = {
       subject: topicData.subject,
       chapterName: topicData.chapterName,
       topicName: topicData.topicName,
       hints: topicData.hints,
-      hintsImageURL,
       recallSuccess: 0,
       recallFails: 0,
       lastReviewed: serverTimestamp(),
-    });
+    };
+
+    if (topicData.imageFile) {
+        newTopic.hintsImageURL = await uploadImageHint(topicData.imageFile);
+    }
+
+    const revisionsRef = collection(db, 'revisions');
+    const newDocRef = await addDoc(revisionsRef, newTopic);
     return newDocRef.id;
   } catch (error) {
     console.error('Error adding revision topic:', error);
