@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Confetti from 'react-confetti';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MasteryLegend } from './mastery-legend';
 
 
 const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () => void, children: React.ReactNode }) => {
@@ -394,15 +395,18 @@ const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onT
 
     return (
         <div className="space-y-6">
-            <div className="space-y-2">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input 
-                        placeholder="Search topics, chapters, or hints..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 w-full"
-                    />
+            <div className="space-y-4">
+                 <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+                    <div className="relative flex-grow w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search topics, chapters, or hints..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 w-full"
+                        />
+                    </div>
+                    <MasteryLegend />
                 </div>
                 <div className="flex flex-wrap gap-2">
                     {filters.map(f => (
@@ -410,6 +414,7 @@ const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onT
                             key={f}
                             variant={filter === f ? 'default' : 'outline'}
                             onClick={() => setFilter(f)}
+                            size="sm"
                         >
                             {f}
                         </Button>
