@@ -38,6 +38,12 @@ function SubjectSyllabus({ subject }: { subject: Subject }) {
     // Cleanup subscription on component unmount
     return () => unsubscribe();
   }, [subject]);
+  
+  const generateTopicKey = (subjectLabel: string, chapterTitle: string, topicName: string) => {
+    // This regex removes Roman numerals (like I, II) and trims whitespace.
+    const cleanChapterTitle = chapterTitle.replace(/\s(I|II|III|IV|V)$/, '').trim();
+    return `${subjectLabel}-${cleanChapterTitle}-${topicName}`;
+  };
 
   const handleCheckboxChange = async (topicKey: string, checked: boolean) => {
     // Optimistically update UI to feel instant
@@ -53,7 +59,7 @@ function SubjectSyllabus({ subject }: { subject: Subject }) {
     subject.chapters.forEach(chapter => {
       chapter.topics.forEach(topic => {
         total++;
-        const key = `${subject.label}-${chapter.title}-${topic.name}`;
+        const key = generateTopicKey(subject.label, chapter.title, topic.name);
         if (checkedState[key]) {
           completed++;
         }
@@ -95,7 +101,7 @@ function SubjectSyllabus({ subject }: { subject: Subject }) {
             <AccordionContent>
               <div className="space-y-3">
                 {chapter.topics.map(topic => {
-                  const topicKey = `${subject.label}-${chapter.title}-${topic.name}`;
+                  const topicKey = generateTopicKey(subject.label, chapter.title, topic.name);
                   return (
                     <div key={topic.name} className="flex items-center space-x-3 rounded-md p-2 hover:bg-muted/50 transition-colors">
                       <Checkbox
