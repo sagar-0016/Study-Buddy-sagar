@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
-  <circle cx="50" cy="50" r="50" fill="#90EE90"/>
-  <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" font-size="60" font-family="sans-serif" fill="#2F4F4F">P</text>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="100" height="100" rx="20" fill="#D5FADD"/>
+<path d="M50 25L25 43.75V81.25H75V43.75L50 25Z" stroke="#4CAF50" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M50 81.25V62.5" stroke="#4CAF50" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
