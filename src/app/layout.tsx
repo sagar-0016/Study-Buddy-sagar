@@ -1,77 +1,15 @@
-
-"use client";
-
-import { useEffect } from 'react';
+import type { Metadata } from 'next';
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import Sidebar from "@/components/layout/sidebar";
-import Header from "@/components/layout/header";
-import { db } from '@/lib/firebase';
-import { collection, addDoc } from 'firebase/firestore';
-import { AuthProvider, useAuth } from '@/context/auth-context';
-import LoginFlow from '@/components/auth/login-flow';
-import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
-import { useToast } from '@/hooks/use-toast';
-import { MessageSquareWarning } from 'lucide-react';
+import AppShell from './app-shell';
 
-function AppContent({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const logAppOpenAndCheckMessages = async () => {
-      try {
-        if (isAuthenticated) {
-            // Log the app open event
-            await addDoc(collection(db, "opened"), {
-              time: new Date(),
-            });
-            console.log("App open event logged to Firestore.");
-
-            // Check for unread messages if user has full access
-            const accessLevel = localStorage.getItem('study-buddy-access-level');
-            if (accessLevel === 'full') {
-                const messages = await getUnreadMessages();
-                messages.forEach(async (msg) => {
-                    toast({
-                        title: (
-                            <div className="flex items-center gap-2">
-                                <MessageSquareWarning className="h-5 w-5 text-primary" />
-                                <span>New Message</span>
-                            </div>
-                        ),
-                        description: msg.text,
-                        duration: 10000,
-                    });
-                    await markMessageAsRead(msg.id);
-                });
-            }
-        }
-      } catch (error) {
-        console.error("Error during app startup tasks: ", error);
-      }
-    };
-
-    logAppOpenAndCheckMessages();
-  }, [isAuthenticated, toast]);
-
-  if (!isAuthenticated) {
-    return <LoginFlow />;
-  }
-
-  return (
-    <div className="relative flex min-h-screen w-full">
-      <Sidebar />
-      <div className="flex flex-1 flex-col md:pl-[220px] lg:pl-[280px]">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
-}
-
+export const metadata: Metadata = {
+  title: "Pranjal's Study Buddy",
+  description: "Your personalized companion for JEE preparation.",
+  icons: {
+    icon: '/icon.svg',
+  },
+};
 
 export default function RootLayout({
   children,
@@ -81,9 +19,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <title>Pranjal's Study Buddy</title>
-        <meta name="description" content="Your personalized companion for JEE preparation." />
-        <link rel="icon" href="/icon.svg" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -96,10 +31,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
-            <AppContent>{children}</AppContent>
-            <Toaster />
-        </AuthProvider>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
