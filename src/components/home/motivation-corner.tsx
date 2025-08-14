@@ -118,7 +118,7 @@ export default function MotivationCorner() {
           {moods.map((mood) => (
             <Button
               key={mood.label}
-              variant={selectedMood === mood.label ? "default" : "outline"}
+              variant={selectedMood === mood.label ? "outline" : "outline"}
               className={cn(
                 "flex flex-col h-20 text-base hover:bg-muted px-2 sm:px-10",
                 {
