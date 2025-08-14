@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Pranjal's Study Buddy",
   description: "Your personalized companion for JEE preparation.",
   icons: {
-    icon: '/icon.svg',
+    icon: '/avatar.png',
   },
 };
 
