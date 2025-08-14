@@ -1,3 +1,1 @@
 # Study Buddy
-
-second commit
