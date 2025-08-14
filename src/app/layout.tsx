@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-import AppShell from './app-shell';
+import Providers from './providers';
 
 export const metadata: Metadata = {
   title: "Pranjal's Study Buddy",
@@ -31,7 +30,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <AppShell>{children}</AppShell>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

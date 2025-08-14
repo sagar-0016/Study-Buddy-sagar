@@ -1,8 +1,6 @@
-
 "use client";
 
 import { useEffect } from 'react';
-import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
@@ -72,16 +70,11 @@ function AppContent({ children }: { children: React.ReactNode }) {
   );
 }
 
-
-export default function AppShell({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-        <AppContent>{children}</AppContent>
-        <Toaster />
+      <AppContent>{children}</AppContent>
+      <Toaster />
     </AuthProvider>
   );
 }
