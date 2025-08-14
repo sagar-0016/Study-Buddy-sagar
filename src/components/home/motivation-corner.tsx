@@ -56,7 +56,6 @@ export default function MotivationCorner() {
       if (timestamps.length > 0) {
         toast({
           title: "Feature Usage Capped",
-          description: "This feature has limited uses for guest access.",
         });
         setIsLoading(false); // Stop loading as we are returning early
         return;

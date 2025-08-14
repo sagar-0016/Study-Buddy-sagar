@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getDayType, setDayType, getSchedule, getLateNightMessage } from '@/lib/schedule';
 import type { Schedule, ScheduleTask, DayType } from '@/lib/types';
 
+// TaskItem for the informal schedule
 const TaskItem = ({ task, isActive, isUpcoming = false }: { task: ScheduleTask, isActive: boolean, isUpcoming?: boolean }) => {
     const getVariantClasses = () => {
         if (isActive) return 'bg-primary/10 ring-2 ring-primary';
@@ -27,6 +28,33 @@ const TaskItem = ({ task, isActive, isUpcoming = false }: { task: ScheduleTask, 
                 <p>{task.time}</p>
             </div>
             <h3 className={`text-lg font-bold mt-2 whitespace-pre-wrap ${!isActive && 'text-foreground/80'}`}>{task.task}</h3>
+        </div>
+    )
+}
+
+// FormalTaskItem for the limited user schedule
+const FormalTaskItem = ({ task, isActive, isUpcoming = false }: { task: string, isActive: boolean, isUpcoming?: boolean }) => {
+    const getVariantClasses = () => {
+        if (isActive) return 'bg-primary/10 ring-2 ring-primary';
+        if (isUpcoming) return 'bg-accent/10 ring-2 ring-accent';
+        return 'bg-muted/50';
+    }
+    const getTextClasses = () => {
+        if (isActive) return 'text-primary';
+        if (isUpcoming) return 'text-accent';
+        return 'text-muted-foreground';
+    }
+
+    const [time, ...taskParts] = task.split(': ');
+    const taskDescription = taskParts.join(': ');
+
+    return (
+        <div className={`p-4 rounded-lg transition-all duration-300 ${getVariantClasses()}`}>
+            <div className={`flex items-center font-semibold ${getTextClasses()}`}>
+                <Clock className="h-5 w-5 mr-2" />
+                <p>{time}</p>
+            </div>
+            <h3 className={`text-lg font-bold mt-2 whitespace-pre-wrap ${!isActive && 'text-foreground/80'}`}>{taskDescription}</h3>
         </div>
     )
 }
@@ -50,6 +78,12 @@ export default function CurrentTask() {
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [lateNightMessage, setLateNightMessage] = useState<string | null>(null);
+  const [accessLevel, setAccessLevel] = useState<string | null>(null);
+
+  useEffect(() => {
+    const level = localStorage.getItem('study-buddy-access-level');
+    setAccessLevel(level);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute
@@ -107,15 +141,17 @@ export default function CurrentTask() {
     }
   }
 
-  const getActiveTaskIndex = () => {
-    if (!schedule) return -1;
+  const getActiveTaskIndex = (tasks: (ScheduleTask | string)[]) => {
+    if (!tasks || tasks.length === 0) return -1;
     const now = currentTime;
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
     
     let activeIndex = -1;
     // Find the last task that has started
-    for (let i = schedule.tasks.length - 1; i >= 0; i--) {
-      const taskTime = schedule.tasks[i].time.split(':');
+    for (let i = tasks.length - 1; i >= 0; i--) {
+      const taskItem = tasks[i];
+      const timeString = typeof taskItem === 'string' ? taskItem.substring(0, 5) : taskItem.time;
+      const taskTime = timeString.split(':');
       const taskMinutes = parseInt(taskTime[0]) * 60 + parseInt(taskTime[1]);
       if (currentMinutes >= taskMinutes) {
         activeIndex = i;
@@ -123,7 +159,7 @@ export default function CurrentTask() {
       }
     }
      // If no task has started yet, default to the first task.
-    if (activeIndex === -1 && schedule.tasks.length > 0) {
+    if (activeIndex === -1 && tasks.length > 0) {
         return 0;
     }
 
@@ -145,13 +181,17 @@ export default function CurrentTask() {
     if (!dayType) {
         return <DayTypeSelector onSelect={handleDayTypeSelect} />;
     }
-    if (!schedule || schedule.tasks.length === 0) {
+    
+    const isLimited = accessLevel === 'limited';
+    const tasks = isLimited ? schedule?.formalTasks : schedule?.tasks;
+
+    if (!tasks || tasks.length === 0) {
         return <p className="text-muted-foreground text-center">No tasks found for a {dayType} schedule.</p>;
     }
     
     if (lateNightMessage) {
-        const firstTask = schedule.tasks.length > 0 ? schedule.tasks[0] : null;
-        const secondTask = schedule.tasks.length > 1 ? schedule.tasks[1] : null;
+        const firstTask = tasks.length > 0 ? tasks[0] : null;
+        const secondTask = tasks.length > 1 ? tasks[1] : null;
         return (
             <div className="space-y-6">
                 <div className="p-4 bg-accent/10 rounded-lg text-foreground border-l-4 border-accent">
@@ -164,38 +204,38 @@ export default function CurrentTask() {
                 {firstTask && (
                      <div>
                         <h4 className="text-sm font-semibold text-accent mb-2">Upcoming...</h4>
-                        <TaskItem task={firstTask} isActive={false} isUpcoming={true} />
+                        {isLimited ? <FormalTaskItem task={firstTask as string} isActive={false} isUpcoming={true} /> : <TaskItem task={firstTask as ScheduleTask} isActive={false} isUpcoming={true} />}
                     </div>
                 )}
                 {secondTask && (
                      <div>
                         <h4 className="text-sm font-semibold text-muted-foreground mb-2">Later upcoming...</h4>
-                        <TaskItem task={secondTask} isActive={false} isUpcoming={false} />
+                        {isLimited ? <FormalTaskItem task={secondTask as string} isActive={false} isUpcoming={false} /> : <TaskItem task={secondTask as ScheduleTask} isActive={false} isUpcoming={false} />}
                     </div>
                 )}
             </div>
         )
     }
     
-    const activeTaskIndex = getActiveTaskIndex();
+    const activeTaskIndex = getActiveTaskIndex(tasks);
     if(activeTaskIndex === -1){
         return <p className="text-muted-foreground text-center">No tasks scheduled for today.</p>;
     }
 
-    const currentTask = schedule.tasks[activeTaskIndex];
-    const nextTask = activeTaskIndex + 1 < schedule.tasks.length ? schedule.tasks[activeTaskIndex + 1] : null;
+    const currentTask = tasks[activeTaskIndex];
+    const nextTask = activeTaskIndex + 1 < tasks.length ? tasks[activeTaskIndex + 1] : null;
 
     return (
         <div className="space-y-6">
             <div>
                 <h4 className="text-sm font-semibold text-primary mb-2">Current Task</h4>
-                <TaskItem task={currentTask} isActive={true} />
+                {isLimited ? <FormalTaskItem task={currentTask as string} isActive={true} /> : <TaskItem task={currentTask as ScheduleTask} isActive={true} />}
             </div>
 
             {nextTask && (
                  <div>
                     <h4 className="text-sm font-semibold text-accent mb-2">Upcoming...</h4>
-                    <TaskItem task={nextTask} isActive={false} isUpcoming={true} />
+                    {isLimited ? <FormalTaskItem task={nextTask as string} isActive={false} isUpcoming={true} /> : <TaskItem task={nextTask as ScheduleTask} isActive={false} isUpcoming={true} />}
                 </div>
             )}
             

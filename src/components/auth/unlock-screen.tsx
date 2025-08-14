@@ -31,7 +31,6 @@ export default function UnlockScreen({ onUnlock }: { onUnlock: (accessLevel: 'fu
         } else if (keyInput === LIMITED_ACCESS_KEY) {
             toast({
               title: `Welcome back, User`,
-              description: "Limited access granted.",
             });
             onUnlock('limited');
         }
