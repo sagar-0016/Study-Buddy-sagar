@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -23,6 +24,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
             // Log the app open event
             await addDoc(collection(db, "opened"), {
               time: new Date(),
+              device: navigator.userAgent,
             });
             console.log("App open event logged to Firestore.");
 
