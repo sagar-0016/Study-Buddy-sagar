@@ -3,13 +3,28 @@ import { db } from './firebase';
 import { collection, getDocs, query, limit } from 'firebase/firestore';
 
 /**
- * Fetches a random motivational message from a specified collection.
+ * Fetches a random motivational message from a specified collection based on mood and access level.
  * @param mood - The mood to fetch a message for (e.g., 'motivated', 'focused', 'worried').
+ * @param accessLevel - The user's access level, which determines the message collection.
  * @returns A random message string from the collection.
  */
-export const getRandomMotivationByMood = async (mood: string): Promise<string> => {
-    const collectionName = `motivation-${mood.toLowerCase()}`;
-    return getRandomMessageFromCollection(collectionName, "You've got this, one step at a time!");
+export const getRandomMotivationByMood = async (
+  mood: string,
+  accessLevel: 'full' | 'limited' = 'full'
+): Promise<string> => {
+    const moodLower = mood.toLowerCase();
+    const suffix = accessLevel === 'limited' ? '-formal' : '';
+    const collectionName = `motivation-${moodLower}${suffix}`;
+    
+    const defaultMessages = {
+        motivated: "You've got this, one step at a time!",
+        focused: "Keep up the great work.",
+        worried: "It's okay to feel this way. Take a deep breath."
+    };
+    
+    const fallback = defaultMessages[moodLower as keyof typeof defaultMessages] || "Keep pushing forward.";
+
+    return getRandomMessageFromCollection(collectionName, fallback);
 };
 
 /**

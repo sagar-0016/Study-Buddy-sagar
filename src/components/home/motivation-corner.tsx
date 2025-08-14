@@ -48,7 +48,7 @@ export default function MotivationCorner() {
       // We don't need to show a toast for a background task failure
     }
     
-    const accessLevel = localStorage.getItem('study-buddy-access-level');
+    const accessLevel = localStorage.getItem('study-buddy-access-level') as 'full' | 'limited' | null;
     const now = Date.now();
     
     // --- Guest User Logic ---
@@ -82,7 +82,7 @@ export default function MotivationCorner() {
         messagePromise = getTinkeringMessage();
     } else {
         const useAi = motivationMode === 'ai' || (motivationMode === 'mixed' && Math.random() < 0.5);
-        if (useAi) {
+        if (useAi && accessLevel === 'full') {
             setIsAiGenerated(true);
             const result = await getMotivationAction({
                 senderName: "Saurabh",
@@ -94,7 +94,7 @@ export default function MotivationCorner() {
             messagePromise = Promise.resolve(result.motivation);
         } else {
             setIsAiGenerated(false);
-            messagePromise = getRandomMotivationByMood(moodLabel);
+            messagePromise = getRandomMotivationByMood(moodLabel, accessLevel || 'limited');
         }
     }
 
