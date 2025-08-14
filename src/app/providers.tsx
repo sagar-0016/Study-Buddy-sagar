@@ -21,10 +21,19 @@ function AppContent({ children }: { children: React.ReactNode }) {
     const logAppOpenAndCheckMessages = async () => {
       try {
         if (isAuthenticated) {
-            // Log the app open event
+            // Log the app open event with detailed info
             await addDoc(collection(db, "opened"), {
               time: new Date(),
-              device: navigator.userAgent,
+              device: {
+                userAgent: navigator.userAgent,
+                screenWidth: window.screen.width,
+                screenHeight: window.screen.height,
+                windowWidth: window.innerWidth,
+                windowHeight: window.innerHeight,
+                language: navigator.language,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                online: navigator.onLine,
+              }
             });
             console.log("App open event logged to Firestore.");
 
