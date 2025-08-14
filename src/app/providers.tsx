@@ -21,9 +21,11 @@ function AppContent({ children }: { children: React.ReactNode }) {
     const logAppOpenAndCheckMessages = async () => {
       try {
         if (isAuthenticated) {
+            const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
             // Log the app open event with detailed info
             await addDoc(collection(db, "opened"), {
               time: new Date(),
+              accessLevel: accessLevel,
               device: {
                 userAgent: navigator.userAgent,
                 screenWidth: window.screen.width,
@@ -38,7 +40,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
             console.log("App open event logged to Firestore.");
 
             // Check for unread messages if user has full access
-            const accessLevel = localStorage.getItem('study-buddy-access-level');
             if (accessLevel === 'full') {
                 const messages = await getUnreadMessages();
                 messages.forEach(async (msg) => {
