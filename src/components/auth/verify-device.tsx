@@ -56,7 +56,7 @@ export default function VerifyDeviceScreen({ onVerified }: { onVerified: () => v
                                 id="username" 
                                 value={username} 
                                 onChange={(e) => setUsername(e.target.value)} 
-                                placeholder="e.g., pranjal"
+                                placeholder="username"
                                 className="pl-9"
                                 required 
                                 />
