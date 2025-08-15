@@ -8,12 +8,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { GraduationCap, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { AccessLevel } from '@/context/auth-context';
 
 const LIMITED_ACCESS_KEY = 'p';
 const FULL_ACCESS_KEY = '_';
 const SETUP_USERNAME = 'pranjal';
 
-export default function UnlockScreen({ onUnlock }: { onUnlock: (accessLevel: 'full' | 'limited') => void }) {
+interface UnlockScreenProps {
+  onUnlock: (accessLevel: AccessLevel) => void;
+  isRelocking?: boolean;
+}
+
+export default function UnlockScreen({ onUnlock, isRelocking = false }: UnlockScreenProps) {
     const [keyInput, setKeyInput] = useState('');
     const [error, setError] = useState('');
     const { toast } = useToast();
@@ -22,20 +28,33 @@ export default function UnlockScreen({ onUnlock }: { onUnlock: (accessLevel: 'fu
         e.preventDefault();
         setError('');
 
-        if (keyInput === FULL_ACCESS_KEY) {
-            toast({
-              title: `Welcome back, ${SETUP_USERNAME}!`,
-              description: "Full access granted.",
-            });
-            onUnlock('full');
-        } else if (keyInput === LIMITED_ACCESS_KEY) {
-            toast({
-              title: `Welcome back, User`,
-            });
-            onUnlock('limited');
-        }
-        else {
-            setError('The key is incorrect. Try again.');
+        const storedAccessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | null;
+
+        if (isRelocking) {
+            const correctKey = storedAccessLevel === 'full' ? FULL_ACCESS_KEY : LIMITED_ACCESS_KEY;
+            if (keyInput === correctKey) {
+                // The onUnlock function will just be the `unlockApp` function from context
+                onUnlock(storedAccessLevel || 'limited'); 
+            } else {
+                 setError('The key is incorrect. Try again.');
+            }
+        } else {
+            // This is the initial login flow
+            if (keyInput === FULL_ACCESS_KEY) {
+                toast({
+                  title: `Welcome back, ${SETUP_USERNAME}!`,
+                  description: "Full access granted.",
+                });
+                onUnlock('full');
+            } else if (keyInput === LIMITED_ACCESS_KEY) {
+                toast({
+                  title: `Welcome back, User`,
+                });
+                onUnlock('limited');
+            }
+            else {
+                setError('The key is incorrect. Try again.');
+            }
         }
     };
 

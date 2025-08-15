@@ -1,5 +1,6 @@
 
 import { DocumentData, Timestamp } from 'firebase/firestore';
+import type { AccessLevel } from '@/context/auth-context';
 
 export type NavLink = {
   href: string;
@@ -46,6 +47,7 @@ export type ScheduleTask = {
 export type Schedule = {
   type: 'holiday' | 'coaching';
   tasks: ScheduleTask[];
+  formalTasks: string[];
 };
 
 export type DayType = 'holiday' | 'coaching';

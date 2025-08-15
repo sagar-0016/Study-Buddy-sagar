@@ -5,18 +5,22 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
-type AccessLevel = 'full' | 'limited';
+export type AccessLevel = 'full' | 'limited';
 
 type AuthContextType = {
   isAuthenticated: boolean;
+  isLocked: boolean;
   login: (accessLevel: AccessLevel) => void;
   logout: () => void;
+  lockApp: () => void;
+  unlockApp: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -41,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("Session/Local storage not available.");
     }
     setIsAuthenticated(true);
+    setIsLocked(false);
   };
 
   const logout = () => {
@@ -56,7 +61,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("Session/Local storage not available.");
     }
     setIsAuthenticated(false);
+    setIsLocked(false);
   };
+
+  const lockApp = () => {
+    if (isAuthenticated) {
+        setIsLocked(true);
+    }
+  }
+
+  const unlockApp = () => {
+    setIsLocked(false);
+  }
 
   if (isLoading) {
     return (
@@ -67,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLocked, login, logout, lockApp, unlockApp }}>
       {children}
     </AuthContext.Provider>
   );

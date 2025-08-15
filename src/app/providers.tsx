@@ -12,17 +12,31 @@ import LoginFlow from '@/components/auth/login-flow';
 import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
 import { useToast } from '@/hooks/use-toast';
 import { MessageSquareWarning } from 'lucide-react';
+import UnlockScreen from '@/components/auth/unlock-screen';
 
 function AppContent({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLocked, lockApp, unlockApp } = useAuth();
   const { toast } = useToast();
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isAuthenticated && !isLocked) {
+        lockApp();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthenticated, isLocked, lockApp]);
 
   useEffect(() => {
     const logAppOpenAndCheckMessages = async () => {
       try {
         if (isAuthenticated) {
             const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
-            // Log the app open event with detailed info
             await addDoc(collection(db, "opened"), {
               time: new Date(),
               accessLevel: accessLevel,
@@ -39,7 +53,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
             });
             console.log("App open event logged to Firestore.");
 
-            // Check for unread messages if user has full access
             if (accessLevel === 'full') {
                 const messages = await getUnreadMessages();
                 messages.forEach(async (msg) => {
@@ -67,6 +80,14 @@ function AppContent({ children }: { children: React.ReactNode }) {
 
   if (!isAuthenticated) {
     return <LoginFlow />;
+  }
+  
+  if (isLocked) {
+    return (
+       <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
+        <UnlockScreen onUnlock={unlockApp} isRelocking={true} />
+      </div>
+    );
   }
 
   return (
