@@ -15,7 +15,7 @@ const FULL_ACCESS_KEY = '_';
 const SETUP_USERNAME = 'pranjal';
 
 interface UnlockScreenProps {
-  onUnlock: (accessLevel: AccessLevel) => void;
+  onUnlock: (accessLevel?: AccessLevel) => void;
   isRelocking?: boolean;
 }
 
@@ -28,18 +28,21 @@ export default function UnlockScreen({ onUnlock, isRelocking = false }: UnlockSc
         e.preventDefault();
         setError('');
 
-        const storedAccessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | null;
+        const storedAccessLevel = typeof window !== 'undefined' 
+            ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null 
+            : null;
 
         if (isRelocking) {
+            // Re-locking just checks if the key matches the currently stored access level
             const correctKey = storedAccessLevel === 'full' ? FULL_ACCESS_KEY : LIMITED_ACCESS_KEY;
             if (keyInput === correctKey) {
-                // The onUnlock function will just be the `unlockApp` function from context
-                onUnlock(storedAccessLevel || 'limited'); 
+                // onUnlock here is the `unlockApp` function from context, which doesn't need an arg
+                onUnlock(); 
             } else {
                  setError('The key is incorrect. Try again.');
             }
         } else {
-            // This is the initial login flow
+            // This is the initial login flow. It determines the access level.
             if (keyInput === FULL_ACCESS_KEY) {
                 toast({
                   title: `Welcome back, ${SETUP_USERNAME}!`,
