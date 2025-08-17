@@ -20,15 +20,25 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && isAuthenticated && !isLocked) {
+    const lock = () => {
+      if (isAuthenticated && !isLocked) {
         lockApp();
       }
+    }
+    
+    // For tab/window switching
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        lock();
+      }
     };
-
+    
+    // For app/desktop switching
+    window.addEventListener('blur', lock);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      window.removeEventListener('blur', lock);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isAuthenticated, isLocked, lockApp]);
