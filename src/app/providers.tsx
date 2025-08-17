@@ -19,16 +19,16 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && isAuthenticated && !isLocked) {
+    const handleFocusLoss = () => {
+      if (isAuthenticated && !isLocked) {
         lockApp();
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleFocusLoss);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleFocusLoss);
     };
   }, [isAuthenticated, isLocked, lockApp]);
 
