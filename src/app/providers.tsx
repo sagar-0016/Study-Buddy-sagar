@@ -19,16 +19,26 @@ function AppContent({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    const handleFocusLoss = () => {
+    const lock = () => {
       if (isAuthenticated && !isLocked) {
         lockApp();
       }
     };
 
-    window.addEventListener('blur', handleFocusLoss);
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        lock();
+      }
+    };
+
+    // For app/desktop/window switching
+    window.addEventListener('blur', lock);
+    // For tab switching
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('blur', handleFocusLoss);
+      window.removeEventListener('blur', lock);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isAuthenticated, isLocked, lockApp]);
 
