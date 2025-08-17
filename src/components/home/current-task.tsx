@@ -10,7 +10,7 @@ import { getDayType, setDayType, getSchedule, getLateNightMessage } from '@/lib/
 import type { Schedule, ScheduleTask, DayType } from '@/lib/types';
 import type { AccessLevel } from '@/context/auth-context';
 
-const TaskItem = ({ task, isActive, isUpcoming = false, accessLevel }: { task: ScheduleTask, isActive: boolean, isUpcoming?: boolean, accessLevel: AccessLevel }) => {
+const TaskItem = ({ task, isActive, isUpcoming = false, accessLevel }: { task: ScheduleTask, isActive: boolean, isUpcoming?: boolean, accessLevel: AccessLevel | null }) => {
     const getVariantClasses = () => {
         if (isActive) return 'bg-primary/10 ring-2 ring-primary';
         if (isUpcoming) return 'bg-accent/10 ring-2 ring-accent';
