@@ -23,6 +23,7 @@ import type { ScheduleTask, DayType } from "@/lib/types";
 import { Pencil, Loader2, PlusCircle, Lock, Unlock, MessageSquareHeart } from "lucide-react";
 import { getDisciplineMessages } from "@/lib/schedule";
 import { Separator } from "@/components/ui/separator";
+import { isDirectEditEnabled } from "@/lib/settings";
 
 type ScheduleDocument = {
   type: DayType;
@@ -83,6 +84,16 @@ const ScheduleList = ({
   }
 
   const handleEnableEditingClick = async () => {
+    const directEdit = await isDirectEditEnabled();
+    if (directEdit) {
+      setIsEditMode(true);
+      toast({
+        title: "Direct Edit Enabled",
+        description: "You have bypassed the discipline challenge.",
+      });
+      return;
+    }
+
     if (disciplineStepsLeft === null) {
       // Starting the process for the first time
       const steps = Math.floor(Math.random() * 3) + 3; // 3 to 5 steps
@@ -122,7 +133,7 @@ const ScheduleList = ({
 
   const handleEditClick = (index: number) => {
     const taskString = schedule.formalTasks[index];
-    const timeMatch = taskString.match(/^(\d{2}:\d{2}):\s/);
+    const timeMatch = taskString.match(/^(\\d{2}:\\d{2}):\\s/);
     const time = timeMatch ? timeMatch[1] : "";
     const task = timeMatch ? taskString.replace(timeMatch[0], "") : taskString;
 
@@ -419,5 +430,3 @@ export default function ScheduleEditor() {
     </Card>
   );
 }
-
-    
