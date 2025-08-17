@@ -331,7 +331,12 @@ const ScheduleList = ({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="new-time" className="text-right">Time</Label>
-              <Input id="new-time" value={newTime} onChange={(e) => setNewTime(e.target.value)} className="col-span-3" type="time"/>
+              <div className="col-span-3">
+                <Input id="new-time" value={newTime} onChange={(e) => setNewTime(e.target.value)} className="w-full" type="time"/>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  Use 24-hour format: <code className="bg-muted px-1 py-0.5 rounded">17:00</code> for 5:00 PM
+                </p>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="new-task" className="text-right">Task</Label>
