@@ -1,7 +1,7 @@
 
 import { db } from './firebase';
 import { collection, doc, getDoc, setDoc, query, where, getDocs, Timestamp, orderBy, limit } from 'firebase/firestore';
-import type { DayType, Schedule } from './types';
+import type { DayType, Schedule, ScheduleTask } from './types';
 
 // Helper to get the start of the current day as a string 'YYYY-MM-DD'
 const getTodayString = () => {
@@ -64,21 +64,37 @@ export const setDayType = async (type: DayType): Promise<void> => {
 }
 
 /**
- * Fetches the schedule for a given day type.
+ * Fetches the schedule for a given day type and transforms it into a sorted array.
  * @param {DayType} type - The type of schedule to fetch.
- * @returns {Promise<Schedule | null>} The schedule object or null if not found.
+ * @returns {Promise<Schedule | null>} The schedule object with a sorted tasks array, or null if not found.
  */
 export const getSchedule = async (type: DayType): Promise<Schedule | null> => {
     const scheduleDocRef = doc(db, 'schedules', type);
     const scheduleDocSnap = await getDoc(scheduleDocRef);
 
     if (scheduleDocSnap.exists()) {
-        return scheduleDocSnap.data() as Schedule;
+        const data = scheduleDocSnap.data();
+        const tasksMap = data.tasks as Record<string, { informal: string, formal: string }>;
+        
+        // Transform map into a sorted array
+        const sortedTasks: ScheduleTask[] = Object.entries(tasksMap)
+            .map(([time, taskData]) => ({
+                time,
+                informal: taskData.informal,
+                formal: taskData.formal,
+            }))
+            .sort((a, b) => a.time.localeCompare(b.time));
+
+        return {
+            type,
+            tasks: sortedTasks,
+        };
     } else {
         console.warn(`Schedule for type "${type}" not found in Firestore.`);
         return null;
     }
 }
+
 
 /**
  * Fetches a random message from one of the late-night message collections.

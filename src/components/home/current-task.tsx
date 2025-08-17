@@ -8,9 +8,9 @@ import { Clock, HelpCircle, Moon } from "lucide-react";
 import { Skeleton } from '@/components/ui/skeleton';
 import { getDayType, setDayType, getSchedule, getLateNightMessage } from '@/lib/schedule';
 import type { Schedule, ScheduleTask, DayType } from '@/lib/types';
+import type { AccessLevel } from '@/context/auth-context';
 
-// TaskItem for the informal schedule
-const TaskItem = ({ task, isActive, isUpcoming = false }: { task: ScheduleTask, isActive: boolean, isUpcoming?: boolean }) => {
+const TaskItem = ({ task, isActive, isUpcoming = false, accessLevel }: { task: ScheduleTask, isActive: boolean, isUpcoming?: boolean, accessLevel: AccessLevel }) => {
     const getVariantClasses = () => {
         if (isActive) return 'bg-primary/10 ring-2 ring-primary';
         if (isUpcoming) return 'bg-accent/10 ring-2 ring-accent';
@@ -21,38 +21,14 @@ const TaskItem = ({ task, isActive, isUpcoming = false }: { task: ScheduleTask, 
         if (isUpcoming) return 'text-accent';
         return 'text-muted-foreground';
     }
+    
+    const taskDescription = accessLevel === 'limited' ? task.formal : task.informal;
+
     return (
         <div className={`p-4 rounded-lg transition-all duration-300 ${getVariantClasses()}`}>
             <div className={`flex items-center font-semibold ${getTextClasses()}`}>
                 <Clock className="h-5 w-5 mr-2" />
                 <p>{task.time}</p>
-            </div>
-            <h3 className={`text-lg font-bold mt-2 whitespace-pre-wrap ${!isActive && 'text-foreground/80'}`}>{task.task}</h3>
-        </div>
-    )
-}
-
-// FormalTaskItem for the limited user schedule
-const FormalTaskItem = ({ task, isActive, isUpcoming = false }: { task: string, isActive: boolean, isUpcoming?: boolean }) => {
-    const getVariantClasses = () => {
-        if (isActive) return 'bg-primary/10 ring-2 ring-primary';
-        if (isUpcoming) return 'bg-accent/10 ring-2 ring-accent';
-        return 'bg-muted/50';
-    }
-    const getTextClasses = () => {
-        if (isActive) return 'text-primary';
-        if (isUpcoming) return 'text-accent';
-        return 'text-muted-foreground';
-    }
-
-    const [time, ...taskParts] = task.split(': ');
-    const taskDescription = taskParts.join(': ');
-
-    return (
-        <div className={`p-4 rounded-lg transition-all duration-300 ${getVariantClasses()}`}>
-            <div className={`flex items-center font-semibold ${getTextClasses()}`}>
-                <Clock className="h-5 w-5 mr-2" />
-                <p>{time}</p>
             </div>
             <h3 className={`text-lg font-bold mt-2 whitespace-pre-wrap ${!isActive && 'text-foreground/80'}`}>{taskDescription}</h3>
         </div>
@@ -78,10 +54,10 @@ export default function CurrentTask() {
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [lateNightMessage, setLateNightMessage] = useState<string | null>(null);
-  const [accessLevel, setAccessLevel] = useState<string | null>(null);
+  const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(null);
 
   useEffect(() => {
-    const level = localStorage.getItem('study-buddy-access-level');
+    const level = localStorage.getItem('study-buddy-access-level') as AccessLevel | null;
     setAccessLevel(level);
   }, []);
 
@@ -141,7 +117,7 @@ export default function CurrentTask() {
     }
   }
 
-  const getActiveTaskIndex = (tasks: (ScheduleTask | string)[]) => {
+  const getActiveTaskIndex = (tasks: ScheduleTask[]) => {
     if (!tasks || tasks.length === 0) return -1;
     const now = currentTime;
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
@@ -149,9 +125,7 @@ export default function CurrentTask() {
     let activeIndex = -1;
     // Find the last task that has started
     for (let i = tasks.length - 1; i >= 0; i--) {
-      const taskItem = tasks[i];
-      const timeString = typeof taskItem === 'string' ? taskItem.substring(0, 5) : taskItem.time;
-      const taskTime = timeString.split(':');
+      const taskTime = tasks[i].time.split(':');
       const taskMinutes = parseInt(taskTime[0]) * 60 + parseInt(taskTime[1]);
       if (currentMinutes >= taskMinutes) {
         activeIndex = i;
@@ -167,7 +141,7 @@ export default function CurrentTask() {
   }
 
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading || !accessLevel) {
         return (
             <div className="space-y-4">
                 <Skeleton className="h-24 w-full" />
@@ -182,8 +156,7 @@ export default function CurrentTask() {
         return <DayTypeSelector onSelect={handleDayTypeSelect} />;
     }
     
-    const isLimited = accessLevel === 'limited';
-    const tasks = isLimited ? schedule?.formalTasks : schedule?.tasks;
+    const tasks = schedule?.tasks;
 
     if (!tasks || tasks.length === 0) {
         return <p className="text-muted-foreground text-center">No tasks found for a {dayType} schedule.</p>;
@@ -204,13 +177,13 @@ export default function CurrentTask() {
                 {firstTask && (
                      <div>
                         <h4 className="text-sm font-semibold text-accent mb-2">Upcoming...</h4>
-                        {isLimited ? <FormalTaskItem task={firstTask as string} isActive={false} isUpcoming={true} /> : <TaskItem task={firstTask as ScheduleTask} isActive={false} isUpcoming={true} />}
+                        <TaskItem task={firstTask} isActive={false} isUpcoming={true} accessLevel={accessLevel} />
                     </div>
                 )}
                 {secondTask && (
                      <div>
                         <h4 className="text-sm font-semibold text-muted-foreground mb-2">Later upcoming...</h4>
-                        {isLimited ? <FormalTaskItem task={secondTask as string} isActive={false} isUpcoming={false} /> : <TaskItem task={secondTask as ScheduleTask} isActive={false} isUpcoming={false} />}
+                        <TaskItem task={secondTask} isActive={false} isUpcoming={false} accessLevel={accessLevel} />
                     </div>
                 )}
             </div>
@@ -229,13 +202,13 @@ export default function CurrentTask() {
         <div className="space-y-6">
             <div>
                 <h4 className="text-sm font-semibold text-primary mb-2">Current Task</h4>
-                {isLimited ? <FormalTaskItem task={currentTask as string} isActive={true} /> : <TaskItem task={currentTask as ScheduleTask} isActive={true} />}
+                <TaskItem task={currentTask} isActive={true} accessLevel={accessLevel} />
             </div>
 
             {nextTask && (
                  <div>
                     <h4 className="text-sm font-semibold text-accent mb-2">Upcoming...</h4>
-                    {isLimited ? <FormalTaskItem task={nextTask as string} isActive={false} isUpcoming={true} /> : <TaskItem task={nextTask as ScheduleTask} isActive={false} isUpcoming={true} />}
+                    <TaskItem task={nextTask} isActive={false} isUpcoming={true} accessLevel={accessLevel} />
                 </div>
             )}
             

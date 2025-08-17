@@ -41,13 +41,13 @@ export type BarChartData = {
 
 export type ScheduleTask = {
   time: string;
-  task: string;
+  informal: string;
+  formal: string;
 };
 
 export type Schedule = {
   type: 'holiday' | 'coaching';
-  tasks: ScheduleTask[];
-  formalTasks: string[];
+  tasks: ScheduleTask[]; // This will be the transformed, sorted array for the UI
 };
 
 export type DayType = 'holiday' | 'coaching';
