@@ -28,39 +28,29 @@ export default function UnlockScreen({ onUnlock, isRelocking = false }: UnlockSc
         e.preventDefault();
         setError('');
 
-        if (isRelocking) {
-            // App is re-locking, so we know the access level.
-            // We just need to verify the password for that level.
-            const storedAccessLevel = typeof window !== 'undefined' 
-                ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null 
-                : null;
-                
-            const correctKey = storedAccessLevel === 'full' ? FULL_ACCESS_KEY : LIMITED_ACCESS_KEY;
-            
-            if (keyInput === correctKey) {
-                // The `onUnlock` prop in this case is the `unlockApp` function from context,
-                // which doesn't require an argument.
-                onUnlock('full'); // Passing a dummy value, it won't be used by unlockApp.
+        if (keyInput === FULL_ACCESS_KEY) {
+            if (isRelocking) {
+                // If re-locking, onUnlock is the `unlockApp` function,
+                // but we call the full login flow to handle potential access level change.
+                onUnlock('full');
             } else {
-                 setError('The key is incorrect. Try again.');
-            }
-        } else {
-            // This is the initial login on a verified device.
-            // We need to determine the access level from the key provided.
-            if (keyInput === FULL_ACCESS_KEY) {
                 toast({
                   title: `Welcome back, ${SETUP_USERNAME}!`,
                   description: "Full access granted.",
                 });
                 onUnlock('full');
-            } else if (keyInput === LIMITED_ACCESS_KEY) {
+            }
+        } else if (keyInput === LIMITED_ACCESS_KEY) {
+             if (isRelocking) {
+                onUnlock('limited');
+            } else {
                 toast({
                   title: `Welcome back, User`,
                 });
                 onUnlock('limited');
-            } else {
-                setError('The key is incorrect. Try again.');
             }
+        } else {
+            setError('The key is incorrect. Try again.');
         }
     };
 

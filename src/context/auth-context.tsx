@@ -13,7 +13,7 @@ type AuthContextType = {
   login: (accessLevel: AccessLevel) => void;
   logout: () => void;
   lockApp: () => void;
-  unlockApp: () => void;
+  unlockApp: (accessLevel: AccessLevel) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,8 +39,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (accessLevel: AccessLevel) => {
     try {
+        const currentAccessLevel = localStorage.getItem('study-buddy-access-level');
+        const hasAccessChanged = currentAccessLevel && currentAccessLevel !== accessLevel;
+
         sessionStorage.setItem('study-buddy-session-active', 'true');
         localStorage.setItem('study-buddy-access-level', accessLevel);
+
+        if (hasAccessChanged) {
+            // Force a reload to ensure the entire app re-renders with the correct state
+            window.location.reload();
+        }
     } catch (e) {
         console.error("Session/Local storage not available.");
     }
@@ -70,8 +78,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const unlockApp = () => {
-    setIsLocked(false);
+  const unlockApp = (accessLevel: AccessLevel) => {
+    // Reroute the unlock action to the main login function
+    // to handle access level changes correctly.
+    login(accessLevel);
   }
 
   if (isLoading) {
