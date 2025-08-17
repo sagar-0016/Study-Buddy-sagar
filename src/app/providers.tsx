@@ -11,11 +11,11 @@ import { AuthProvider, useAuth } from '@/context/auth-context';
 import LoginFlow from '@/components/auth/login-flow';
 import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
 import { useToast } from '@/hooks/use-toast';
-import { MessageSquareWarning } from 'lucide-react';
+import { MessageSquareWarning, Loader2 } from 'lucide-react';
 import UnlockScreen from '@/components/auth/unlock-screen';
 
 function AppContent({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLocked, lockApp, unlockApp } = useAuth();
+  const { isAuthenticated, isLocked, lockApp, unlockApp, isReloading } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -77,6 +77,17 @@ function AppContent({ children }: { children: React.ReactNode }) {
 
     logAppOpenAndCheckMessages();
   }, [isAuthenticated, toast]);
+
+  if (isReloading) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <p>Switching modes...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <LoginFlow />;

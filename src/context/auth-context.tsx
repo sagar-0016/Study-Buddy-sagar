@@ -10,6 +10,7 @@ export type AccessLevel = 'full' | 'limited';
 type AuthContextType = {
   isAuthenticated: boolean;
   isLocked: boolean;
+  isReloading: boolean;
   login: (accessLevel: AccessLevel) => void;
   logout: () => void;
   lockApp: () => void;
@@ -22,6 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReloading, setIsReloading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,13 +44,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const currentAccessLevel = localStorage.getItem('study-buddy-access-level');
         const hasAccessChanged = currentAccessLevel && currentAccessLevel !== accessLevel;
 
+        if (hasAccessChanged) {
+            setIsReloading(true); // Set reloading state before reload
+            localStorage.setItem('study-buddy-access-level', accessLevel);
+            window.location.reload();
+            return;
+        }
+        
         sessionStorage.setItem('study-buddy-session-active', 'true');
         localStorage.setItem('study-buddy-access-level', accessLevel);
 
-        if (hasAccessChanged) {
-            // Force a reload to ensure the entire app re-renders with the correct state
-            window.location.reload();
-        }
     } catch (e) {
         console.error("Session/Local storage not available.");
     }
@@ -70,6 +75,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     setIsAuthenticated(false);
     setIsLocked(false);
+     // Reload to ensure all states are cleared properly
+    window.location.reload();
   };
 
   const lockApp = () => {
@@ -79,8 +86,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   const unlockApp = (accessLevel: AccessLevel) => {
-    // Reroute the unlock action to the main login function
-    // to handle access level changes correctly.
     login(accessLevel);
   }
 
@@ -93,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLocked, login, logout, lockApp, unlockApp }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLocked, isReloading, login, logout, lockApp, unlockApp }}>
       {children}
     </AuthContext.Provider>
   );
