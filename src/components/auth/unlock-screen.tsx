@@ -15,7 +15,7 @@ const FULL_ACCESS_KEY = '_';
 const SETUP_USERNAME = 'pranjal';
 
 interface UnlockScreenProps {
-  onUnlock: (accessLevel?: AccessLevel) => void;
+  onUnlock: (accessLevel: AccessLevel) => void;
   isRelocking?: boolean;
 }
 
@@ -28,21 +28,25 @@ export default function UnlockScreen({ onUnlock, isRelocking = false }: UnlockSc
         e.preventDefault();
         setError('');
 
-        const storedAccessLevel = typeof window !== 'undefined' 
-            ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null 
-            : null;
-
         if (isRelocking) {
-            // Re-locking just checks if the key matches the currently stored access level
+            // App is re-locking, so we know the access level.
+            // We just need to verify the password for that level.
+            const storedAccessLevel = typeof window !== 'undefined' 
+                ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null 
+                : null;
+                
             const correctKey = storedAccessLevel === 'full' ? FULL_ACCESS_KEY : LIMITED_ACCESS_KEY;
+            
             if (keyInput === correctKey) {
-                // onUnlock here is the `unlockApp` function from context, which doesn't need an arg
-                onUnlock(); 
+                // The `onUnlock` prop in this case is the `unlockApp` function from context,
+                // which doesn't require an argument.
+                onUnlock('full'); // Passing a dummy value, it won't be used by unlockApp.
             } else {
                  setError('The key is incorrect. Try again.');
             }
         } else {
-            // This is the initial login flow. It determines the access level.
+            // This is the initial login on a verified device.
+            // We need to determine the access level from the key provided.
             if (keyInput === FULL_ACCESS_KEY) {
                 toast({
                   title: `Welcome back, ${SETUP_USERNAME}!`,
@@ -54,8 +58,7 @@ export default function UnlockScreen({ onUnlock, isRelocking = false }: UnlockSc
                   title: `Welcome back, User`,
                 });
                 onUnlock('limited');
-            }
-            else {
+            } else {
                 setError('The key is incorrect. Try again.');
             }
         }
