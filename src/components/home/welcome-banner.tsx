@@ -5,8 +5,6 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import OneLinerMotivation from './one-liner-motivation';
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
-
 export default function WelcomeBanner() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState('');
@@ -52,7 +50,7 @@ export default function WelcomeBanner() {
           className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group"
         >
            <Image
-              src={`${basePath}/welcome-banner.png`}
+              src="/welcome-banner.png"
               alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
               fill
@@ -63,6 +61,7 @@ export default function WelcomeBanner() {
                   transition: 'transform 0.25s ease-out, box-shadow 0.25s ease-out' 
               }}
               priority
+              key="/welcome-banner.png"
             />
         </div>
       </div>

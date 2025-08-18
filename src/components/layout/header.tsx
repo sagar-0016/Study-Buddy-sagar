@@ -37,8 +37,6 @@ import { navLinks } from './sidebar';
 import { ThemeToggle } from "./theme-toggle";
 import { useAuth } from "@/context/auth-context";
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
-
 export default function Header() {
   const pathname = usePathname();
   const { logout } = useAuth();
@@ -115,12 +113,13 @@ export default function Header() {
               className="overflow-hidden rounded-full"
             >
               <Image
-                src={`${basePath}/avatar.png`}
+                src="/avatar.png"
                 width={36}
                 height={36}
                 alt="Avatar"
                 className="overflow-hidden rounded-full"
                 priority
+                key="/avatar.png"
               />
             </Button>
           </DropdownMenuTrigger>
