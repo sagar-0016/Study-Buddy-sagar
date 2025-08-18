@@ -29,11 +29,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     try {
       const sessionActive = sessionStorage.getItem('study-buddy-session-active') === 'true';
+      const appLocked = localStorage.getItem('study-buddy-app-locked') === 'true';
+
       if (sessionActive) {
         setIsAuthenticated(true);
+        if (appLocked) {
+          setIsLocked(true);
+        }
       }
     } catch (e) {
-        console.error("Session storage not available.");
+        console.error("Session/Local storage not available.");
     } finally {
         setIsLoading(false);
     }
@@ -53,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         sessionStorage.setItem('study-buddy-session-active', 'true');
         localStorage.setItem('study-buddy-access-level', accessLevel);
+        localStorage.setItem('study-buddy-app-locked', 'false'); // Unlock the app
 
     } catch (e) {
         console.error("Session/Local storage not available.");
@@ -66,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         sessionStorage.removeItem('study-buddy-session-active');
         localStorage.removeItem('study-buddy-access-level');
         localStorage.removeItem('study-buddy-device-verified');
+        localStorage.removeItem('study-buddy-app-locked'); // Clear lock on logout
         toast({
             title: "Logged Out",
             description: "You have been successfully logged out."
@@ -81,6 +88,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const lockApp = () => {
     if (isAuthenticated) {
+        try {
+            localStorage.setItem('study-buddy-app-locked', 'true');
+        } catch (e) {
+             console.error("Local storage not available.");
+        }
         setIsLocked(true);
     }
   }
