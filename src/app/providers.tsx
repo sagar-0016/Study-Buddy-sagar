@@ -46,23 +46,27 @@ function AppContent({ children }: { children: React.ReactNode }) {
     const logAppOpenAndCheckMessages = async () => {
       try {
         if (isAuthenticated) {
-            const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
-            await addDoc(collection(db, "opened"), {
-              time: new Date(),
-              accessLevel: accessLevel,
-              device: {
-                userAgent: navigator.userAgent,
-                screenWidth: window.screen.width,
-                screenHeight: window.screen.height,
-                windowWidth: window.innerWidth,
-                windowHeight: window.innerHeight,
-                language: navigator.language,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                online: navigator.onLine,
-              }
-            });
-            console.log("App open event logged to Firestore.");
+            // Only log if we're on the production URL
+            if (window.location.href.includes("https://study-buddy-two-phi.vercel.app")) {
+                const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
+                await addDoc(collection(db, "opened"), {
+                  time: new Date(),
+                  accessLevel: accessLevel,
+                  device: {
+                    userAgent: navigator.userAgent,
+                    screenWidth: window.screen.width,
+                    screenHeight: window.screen.height,
+                    windowWidth: window.innerWidth,
+                    windowHeight: window.innerHeight,
+                    language: navigator.language,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    online: navigator.onLine,
+                  }
+                });
+                console.log("App open event logged to Firestore.");
+            }
 
+            const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
             if (accessLevel === 'full') {
                 const messages = await getUnreadMessages();
                 messages.forEach(async (msg) => {
