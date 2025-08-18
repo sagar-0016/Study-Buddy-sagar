@@ -50,7 +50,7 @@ export default function WelcomeBanner() {
           className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group"
         >
            <Image
-              src="https://study-buddy-two-phi.vercel.app/welcome-banner.png"
+              src="/welcome-banner.png"
               alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
               fill
