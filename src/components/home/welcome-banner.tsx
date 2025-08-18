@@ -61,7 +61,6 @@ export default function WelcomeBanner() {
                   transition: 'transform 0.25s ease-out, box-shadow 0.25s ease-out' 
               }}
               priority
-              key="/welcome-banner.png"
             />
         </div>
       </div>
