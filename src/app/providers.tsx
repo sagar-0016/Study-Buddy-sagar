@@ -46,8 +46,10 @@ function AppContent({ children }: { children: React.ReactNode }) {
     const logAppOpenAndCheckMessages = async () => {
       try {
         if (isAuthenticated) {
-            // Only log if we're on the production URL
-            if (window.location.href.includes("https://study-buddy-two-phi.vercel.app")) {
+            const isOwnerDevice = localStorage.getItem('is-owner-device') === 'true';
+
+            // Only log if we're on the production URL AND it's not the owner's device
+            if (!isOwnerDevice && window.location.href.includes("https://study-buddy-two-phi.vercel.app")) {
                 const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
                 await addDoc(collection(db, "opened"), {
                   time: new Date(),
