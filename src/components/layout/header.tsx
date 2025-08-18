@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   PanelLeft,
   GraduationCap,
@@ -111,12 +112,13 @@ export default function Header() {
               size="icon"
               className="overflow-hidden rounded-full"
             >
-              <img
+              <Image
                 src="/avatar.png"
                 width={36}
                 height={36}
                 alt="Avatar"
                 className="overflow-hidden rounded-full"
+                priority
               />
             </Button>
           </DropdownMenuTrigger>

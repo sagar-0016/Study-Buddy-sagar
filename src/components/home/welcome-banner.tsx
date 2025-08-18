@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import OneLinerMotivation from './one-liner-motivation';
 
 export default function WelcomeBanner() {
@@ -48,16 +49,18 @@ export default function WelcomeBanner() {
           onMouseLeave={handleMouseLeave}
           className="relative h-80 md:h-[calc(100vh-200px)] max-h-[90vh] group"
         >
-           <img
+           <Image
               src="/welcome-banner.png"
               alt="IIT Delhi Emblem in a serene landscape"
               data-ai-hint="logo university"
+              fill
               className="absolute inset-0 w-full h-full object-cover rounded-lg"
               style={{ 
                   transform: transform, 
                   boxShadow: shadow,
                   transition: 'transform 0.25s ease-out, box-shadow 0.25s ease-out' 
               }}
+              priority
             />
         </div>
       </div>
