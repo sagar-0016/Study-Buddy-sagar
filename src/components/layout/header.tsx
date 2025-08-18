@@ -113,7 +113,7 @@ export default function Header() {
               className="overflow-hidden rounded-full"
             >
               <Image
-                src="/avatar.png"
+                src="https://study-buddy-two-phi.vercel.app/avatar.png"
                 width={36}
                 height={36}
                 alt="Avatar"
