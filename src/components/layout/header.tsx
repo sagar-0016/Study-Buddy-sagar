@@ -112,13 +112,12 @@ export default function Header() {
               size="icon"
               className="overflow-hidden rounded-full"
             >
-              <Image
+              <img
                 src="https://study-buddy-two-phi.vercel.app/avatar.png"
                 width={36}
                 height={36}
                 alt="Avatar"
                 className="overflow-hidden rounded-full"
-                priority
               />
             </Button>
           </DropdownMenuTrigger>
