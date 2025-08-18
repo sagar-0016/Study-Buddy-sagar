@@ -63,7 +63,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
                     online: navigator.onLine,
                   }
                 });
-                console.log("App open event logged to Firestore.");
             }
 
             const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
