@@ -35,12 +35,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'study-buddy-two-phi.vercel.app',
-        port: '',
-        pathname: '/**',
-      },
     ],
   },
 };
