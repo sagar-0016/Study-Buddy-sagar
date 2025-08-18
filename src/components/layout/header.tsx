@@ -119,6 +119,7 @@ export default function Header() {
                 alt="Avatar"
                 className="overflow-hidden rounded-full"
                 priority
+                unoptimized
               />
             </Button>
           </DropdownMenuTrigger>
