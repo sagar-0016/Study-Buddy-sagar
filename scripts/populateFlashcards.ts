@@ -4,7 +4,7 @@
 // 2. Run from the root of your project: tsx ./scripts/populateFlashcards.ts
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, writeBatch, doc, getDocs, query, where, deleteDoc } from 'firebase/firestore';
+import { getFirestore, collection, writeBatch, doc } from 'firebase/firestore';
 import { gocFlashcards } from '../src/lib/flashcards/goc';
 import { kinematicsFlashcards } from '../src/lib/flashcards/kinematics';
 import { forcesFlashcards } from '../src/lib/flashcards/forces';
@@ -64,30 +64,9 @@ const decksToPopulate = [
 
 const main = async () => {
     try {
-        const decksRef = collection(db, "flashcardDecks");
-        
-        // --- 1. Cleanup Phase ---
-        console.log("Starting cleanup of old 'available' sub-decks...");
-        const q = query(decksRef, where("status", "==", "available"));
-        const querySnapshot = await getDocs(q);
-        
-        const decksToDelete = querySnapshot.docs.filter(doc => doc.data().category !== 'main');
-
-        if (decksToDelete.length > 0) {
-            const deleteBatch = writeBatch(db);
-            decksToDelete.forEach(doc => {
-                console.log(` -> Marking deck for deletion: ${doc.id}`);
-                deleteBatch.delete(doc.ref);
-            });
-            await deleteBatch.commit();
-            console.log(`✅ Successfully deleted ${decksToDelete.length} old deck documents.`);
-        } else {
-            console.log("No old decks to clean up.");
-        }
-        
-        // --- 2. Repopulation Phase ---
         console.log("\nStarting to populate new flashcard decks...");
         const populateBatch = writeBatch(db);
+        const decksRef = collection(db, "flashcardDecks");
 
         decksToPopulate.forEach(deck => {
             const { id, data, ...deckData } = deck;
