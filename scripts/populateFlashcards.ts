@@ -87,14 +87,14 @@ const main = async () => {
         
         // --- 2. Repopulation Phase ---
         console.log("\nStarting to populate new flashcard decks...");
-        const writeBatch = writeBatch(db);
+        const populateBatch = writeBatch(db);
 
         decksToPopulate.forEach(deck => {
             const { id, data, ...deckData } = deck;
             const docRef = doc(decksRef, id);
             
             // Set the deck metadata (title, description, etc.)
-            writeBatch.set(docRef, deckData);
+            populateBatch.set(docRef, deckData);
             console.log(`-> Prepared deck metadata for '${id}'.`);
 
             // Populate the nested 'cards' sub-collection
@@ -102,13 +102,13 @@ const main = async () => {
             let cardIdCounter = 1;
             data.forEach(card => {
                 const cardDoc = doc(cardsRef, cardIdCounter.toString());
-                writeBatch.set(cardDoc, { question: card.question, answer: card.answer });
+                populateBatch.set(cardDoc, { question: card.question, answer: card.answer });
                 cardIdCounter++;
             });
             console.log(`-> Prepared ${data.length} cards for the '${id}' deck.`);
         });
 
-        await writeBatch.commit();
+        await populateBatch.commit();
 
         console.log(`\n✅ Successfully created/updated ${decksToPopulate.length} decks and populated their cards.`);
         console.log("\nYou can now close this script (Ctrl+C).");
