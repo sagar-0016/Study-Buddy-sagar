@@ -8,20 +8,6 @@ import { getFirestore, collection, writeBatch, doc } from 'firebase/firestore';
 import { gocFlashcards } from '../src/lib/flashcards/goc';
 import { kinematicsFlashcards } from '../src/lib/flashcards/kinematics';
 import { forcesFlashcards } from '../src/lib/flashcards/forces';
-import { thermodynamicsFlashcards } from '../src/lib/flashcards/thermodynamics';
-import { electricityMagnetismFlashcards } from '../src/lib/flashcards/electricity-magnetism';
-import { opticsFlashcards } from '../src/lib/flashcards/optics';
-import { modernPhysicsFlashcards } from '../src/lib/flashcards/modern-physics';
-import { physicalChemistryFlashcards } from '../src/lib/flashcards/physical-chemistry';
-import { inorganicChemistryFlashcards } from '../src/lib/flashcards/inorganic-chemistry';
-import { stoichiometryFlashcards } from '../src/lib/flashcards/stoichiometry';
-import { chemicalBondingFlashcards } from '../src/lib/flashcards/chemical-bonding';
-import { algebraFlashcards } from '../src/lib/flashcards/algebra';
-import { geometryFlashcards } from '../src/lib/flashcards/geometry';
-import { trigonometryFlashcards } from '../src/lib/flashcards/trigonometry';
-import { calculus1Flashcards } from '../src/lib/flashcards/calculus1';
-import { calculus2Flashcards } from '../src/lib/flashcards/calculus2';
-import { statsProbabilityFlashcards } from '../src/lib/flashcards/stats-probability';
 
 // IMPORTANT: Paste your Firebase config here
 const firebaseConfig = {
@@ -304,32 +290,14 @@ const main = async () => {
             console.log(`-> Prepared ${cards.length} cards for the '${deckId}' deck.`);
         };
 
-        // Physics Decks
+        // Populate ONLY the decks you provided data for
         populateDeck('kinematics', kinematicsFlashcards);
         populateDeck('forces', forcesFlashcards);
-        populateDeck('thermodynamics', thermodynamicsFlashcards);
-        populateDeck('electricity-magnetism', electricityMagnetismFlashcards);
-        populateDeck('optics', opticsFlashcards);
-        populateDeck('modern-physics', modernPhysicsFlashcards);
-
-        // Chemistry Decks
         populateDeck('goc', gocFlashcards);
-        populateDeck('physical-chemistry', physicalChemistryFlashcards);
-        populateDeck('inorganic-chemistry', inorganicChemistryFlashcards);
-        populateDeck('stoichiometry', stoichiometryFlashcards);
-        populateDeck('chemical-bonding', chemicalBondingFlashcards);
-
-        // Maths Decks
-        populateDeck('algebra', algebraFlashcards);
-        populateDeck('geometry', geometryFlashcards);
-        populateDeck('trigonometry', trigonometryFlashcards);
-        populateDeck('calculus1', calculus1Flashcards);
-        populateDeck('calculus2', calculus2Flashcards);
-        populateDeck('stats-probability', statsProbabilityFlashcards);
 
         await batch.commit();
 
-        console.log(`\n✅ Successfully populated 'flashcardDecks' collection with ${allDecks.length} decks and their nested cards in Firestore!`);
+        console.log(`\n✅ Successfully populated 'flashcardDecks' collection with main decks and the cards for Kinematics, Forces, and GOC.`);
         console.log("\nYou can now close this script (Ctrl+C).");
 
     } catch (error) {
