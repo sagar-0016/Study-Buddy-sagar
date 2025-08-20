@@ -68,7 +68,6 @@ const main = async () => {
         
         // --- 1. Cleanup Phase ---
         console.log("Starting cleanup of old 'available' sub-decks...");
-        // Query only by status, which is supported by default, then filter in code.
         const q = query(decksRef, where("status", "==", "available"));
         const querySnapshot = await getDocs(q);
         
