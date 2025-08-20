@@ -68,17 +68,20 @@ const main = async () => {
         
         // --- 1. Cleanup Phase ---
         console.log("Starting cleanup of old 'available' sub-decks...");
-        const q = query(decksRef, where("category", "!=", "main"), where("status", "==", "available"));
+        // Query only by status, which is supported by default, then filter in code.
+        const q = query(decksRef, where("status", "==", "available"));
         const querySnapshot = await getDocs(q);
         
-        if (!querySnapshot.empty) {
+        const decksToDelete = querySnapshot.docs.filter(doc => doc.data().category !== 'main');
+
+        if (decksToDelete.length > 0) {
             const deleteBatch = writeBatch(db);
-            querySnapshot.forEach(doc => {
+            decksToDelete.forEach(doc => {
                 console.log(` -> Marking deck for deletion: ${doc.id}`);
                 deleteBatch.delete(doc.ref);
             });
             await deleteBatch.commit();
-            console.log(`✅ Successfully deleted ${querySnapshot.size} old deck documents.`);
+            console.log(`✅ Successfully deleted ${decksToDelete.length} old deck documents.`);
         } else {
             console.log("No old decks to clean up.");
         }
