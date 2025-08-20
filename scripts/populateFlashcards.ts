@@ -76,13 +76,11 @@ const main = async () => {
             populateBatch.set(docRef, deckData);
             console.log(`-> Prepared deck metadata for '${id}'.`);
 
-            // Populate the nested 'cards' sub-collection
+            // Populate the nested 'cards' sub-collection with auto-generated IDs
             const cardsRef = collection(docRef, 'cards');
-            let cardIdCounter = 1;
             data.forEach(card => {
-                const cardDoc = doc(cardsRef, cardIdCounter.toString());
+                const cardDoc = doc(cardsRef); // Firestore generates the ID
                 populateBatch.set(cardDoc, { question: card.question, answer: card.answer });
-                cardIdCounter++;
             });
             console.log(`-> Prepared ${data.length} cards for the '${id}' deck.`);
         });

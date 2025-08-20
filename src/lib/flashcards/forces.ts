@@ -523,5 +523,3 @@ export const forcesFlashcards: Omit<Flashcard, 'id'>[] = [
         answer: "More mass increases normal force ⇒ higher limiting static friction ⇒ more resistance to slipping.",
     },
 ];
-
-    
