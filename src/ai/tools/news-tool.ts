@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -12,6 +13,7 @@ const newsApi = newsApiKey ? new NewsAPI(newsApiKey) : null;
 
 const NewsToolInputSchema = z.object({
     query: z.string().describe("The search query or category for the news, e.g., 'JEE exam', 'UPSC policy', 'Indian literature'."),
+    sortBy: z.enum(['latest', 'relevant']).describe('Sorting preference for live news. "latest" for published date, "relevant" for relevancy.'),
 });
 
 const ArticleSchema = z.object({
@@ -29,7 +31,7 @@ export const fetchNewsArticles = ai.defineTool(
         input: { schema: NewsToolInputSchema },
         output: { schema: z.array(ArticleSchema) },
     },
-    async ({ query }) => {
+    async ({ query, sortBy }) => {
         if (!newsApi) {
             console.error('NewsAPI key is missing. Returning an error message.');
             return [{
@@ -41,15 +43,18 @@ export const fetchNewsArticles = ai.defineTool(
         }
 
         try {
-            console.log(`Fetching live news for query: ${query}`);
-            const response = await newsApi.v2.everything({
-                q: query,
+            console.log(`Fetching live news for query: "${query}" with sortBy: "${sortBy}"`);
+            
+            const response = await newsApi.v2.topHeadlines({
+                q: query === 'General' ? '' : query, // Use q for specific categories
+                category: query === 'General' ? 'general' : query === 'Science' ? 'science' : undefined, // Use category for broad topics
                 language: 'en',
-                sortBy: 'relevancy',
-                pageSize: 10,
-                // Exclude sensationalist or inappropriate domains
-                excludeDomains: 'tmz.com, dailymail.co.uk, thesun.co.uk'
+                country: 'in', // Focus on India
+                sortBy: sortBy === 'latest' ? 'publishedAt' : 'relevancy',
+                pageSize: 20,
             });
+            
+            console.log('NewsAPI Response:', JSON.stringify(response, null, 2));
 
             if (response.status !== 'ok') {
                 if ((response as any).code === 'rateLimited') {
@@ -60,19 +65,21 @@ export const fetchNewsArticles = ai.defineTool(
                         source: 'Study Buddy System',
                     }];
                 }
-                throw new Error(`News API error: ${(response as any).code}`);
+                throw new Error(`News API error: ${(response as any).message || (response as any).code}`);
             }
             
             // Filter out articles with sensitive keywords in the title or description
-            const forbiddenKeywords = ['murder', 'rape', 'kidnap', 'assault', 'violence', 'crime', 'death', 'killed', 'shot'];
+            const forbiddenKeywords = ['murder', 'rape', 'kidnap', 'assault', 'violence', 'crime', 'death', 'killed', 'shot', 'terrorist'];
             const safeArticles = response.articles.filter(article => {
                 const titleLower = article.title?.toLowerCase() || '';
                 const descriptionLower = article.description?.toLowerCase() || '';
+                // Also filter out articles with no description or content, as they are not useful
+                if (!article.description || !article.title || article.title === '[Removed]') return false;
                 return !forbiddenKeywords.some(keyword => titleLower.includes(keyword) || descriptionLower.includes(keyword));
             });
 
             // Map to the schema, ensuring no null/undefined values are passed
-            return safeArticles.slice(0, 7).map(article => ({
+            return safeArticles.slice(0, 10).map(article => ({
                 headline: article.title || 'No Title',
                 summary: article.description || 'No summary available.',
                 fullContent: article.content || article.description || 'Full content not available.',
@@ -83,7 +90,7 @@ export const fetchNewsArticles = ai.defineTool(
         } catch (error: any) {
             console.error('Failed to fetch news from NewsAPI:', error);
             // Handle specific error codes if available from the newsapi client
-            if (error.code === 'rateLimited' || error.message.includes('rateLimited')) {
+            if (error.code === 'rateLimited' || (error.message && error.message.includes('rateLimited'))) {
                  return [{
                     headline: 'Daily Limit Reached',
                     summary: "The daily usage limit for fetching live news has been exhausted.",
@@ -94,7 +101,7 @@ export const fetchNewsArticles = ai.defineTool(
             return [{
                 headline: 'Error Fetching News',
                 summary: "Could not fetch live news at this moment.",
-                fullContent: "There was an issue connecting to the news service. Please check your internet connection or try again later. You can also switch to AI-generated news.",
+                fullContent: `There was an issue connecting to the news service. Please check your internet connection or try again later. You can also switch to AI-generated news. Error details: ${error.message}`,
                 source: 'Study Buddy System',
             }];
         }

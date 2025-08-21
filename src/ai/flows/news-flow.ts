@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -15,7 +16,8 @@ import { fetchNewsArticles } from '@/ai/tools/news-tool';
 
 const NewsInputSchema = z.object({
   category: z.string().describe('The category of news, e.g., "JEE", "Literature", "UPSC", "Science".'),
-  useAi: z.boolean().describe('Whether to use AI to generate news or a tool to fetch live news.')
+  useAi: z.boolean().describe('Whether to use AI to generate news or a tool to fetch live news.'),
+  sortBy: z.enum(['latest', 'relevant']).optional().describe('Sorting preference for live news. "latest" for published date, "relevant" for relevancy.'),
 });
 export type NewsInput = z.infer<typeof NewsInputSchema>;
 
@@ -25,7 +27,6 @@ const ArticleSchema = z.object({
   fullContent: z.string().describe('The full content of the article, if available.'),
   source: z.string().describe('The original source of the article, e.g., "The Hindu", "Reuters".'),
   imageUrl: z.string().optional().describe('A URL to a relevant image for the article.'),
-  imageKeywords: z.string().optional().describe('Keywords for a placeholder image if a real one is not available.'),
 });
 
 const NewsOutputSchema = z.object({
@@ -37,7 +38,10 @@ export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 export async function getNews(input: NewsInput): Promise<NewsOutput> {
   // If not using AI, directly call the tool and bypass the AI flow.
   if (!input.useAi) {
-    const liveArticles = await fetchNewsArticles({ query: input.category });
+    const liveArticles = await fetchNewsArticles({ 
+        query: input.category, 
+        sortBy: input.sortBy || 'latest'
+    });
     return { articles: liveArticles };
   }
   // If using AI, call the generative flow.
@@ -63,10 +67,10 @@ const newsGenPrompt = ai.definePrompt({
   - **Source Diversity:** Use a variety of credible sources like "The Hindu," "The Indian Express," "Livemint," "PIB India," etc.
 
   **CATEGORY-SPECIFIC INSTRUCTIONS:**
-  - **General News:** Focus on national news, science & technology, and economic developments.
-  - **JEE News:** Focus on exam dates, changes in patterns, counseling updates, and inspiring stories of toppers.
-  - **UPSC News:** Focus on policy changes, government schemes, Supreme Court rulings, and international relations relevant to the civil services exam.
-  - **UPSC Articles:** Generate summaries of longer, editorial-style articles on topics like socio-economic issues, environmental policy, or Indian history.
+  - **General:** Focus on national news, science & technology, and economic developments.
+  - **JEE:** Focus on exam dates, changes in patterns, counseling updates, and inspiring stories of toppers.
+  - **UPSC:** Focus on policy changes, government schemes, Supreme Court rulings, and international relations relevant to the civil services exam.
+  - **Science:** Focus on recent discoveries, technological advancements, and space exploration.
   - **Literature:** Provide summaries of classic book reviews, news about literary awards, or profiles of famous authors.
 
   Generate the response now based on the category: '{{category}}'.`,

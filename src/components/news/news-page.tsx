@@ -14,9 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Newspaper, AlertTriangle, X, Bot, Tv } from 'lucide-react';
+import { Newspaper, AlertTriangle, X, Bot, Tv, Zap, BarChart } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -29,12 +27,12 @@ type Article = {
   imageKeywords?: string;
 };
 
-type NewsCategory = 'General News' | 'JEE News' | 'UPSC News' | 'UPSC Articles' | 'Literature';
-const newsCategories: NewsCategory[] = ['General News', 'JEE News', 'UPSC News', 'UPSC Articles', 'Literature'];
+type NewsCategory = 'General' | 'JEE' | 'UPSC' | 'Science' | 'Literature';
+const newsCategories: NewsCategory[] = ['General', 'JEE', 'UPSC', 'Science', 'Literature'];
 type NewsMode = 'live' | 'ai';
+type SortMode = 'latest' | 'relevant';
 
 const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: () => void; }) => {
-  const isAiGenerated = !article.imageUrl;
 
   return (
     <motion.div
@@ -60,7 +58,7 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
           <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{article.summary}</p>
           <div className="flex justify-between items-center mt-4">
              <span className="text-sm font-semibold text-primary">Read More</span>
-             {isAiGenerated && <Bot className="h-4 w-4 text-muted-foreground" title="AI-Generated Content" />}
+             {!article.imageUrl && <Bot className="h-4 w-4 text-muted-foreground" title="AI-Generated Content" />}
           </div>
         </CardContent>
       </Card>
@@ -70,7 +68,6 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
 
 const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClose: () => void; }) => {
   if (!article) return null;
-  const isAiGenerated = !article.imageUrl;
   
   return (
     <motion.div
@@ -86,7 +83,7 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
           <CardContent className="p-6 md:p-8 overflow-y-auto">
              <div className="flex justify-between items-start mb-2">
                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{article.source}</p>
-                 {isAiGenerated && (
+                 {!article.imageUrl && (
                     <div className="flex items-center gap-1 text-xs font-semibold bg-muted text-muted-foreground px-2 py-1 rounded-full">
                         <Bot className="h-3 w-3" />
                         <span>AI-Generated</span>
@@ -112,8 +109,9 @@ export default function NewsPageClient() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState<NewsCategory>('General News');
+  const [category, setCategory] = useState<NewsCategory>('General');
   const [mode, setMode] = useState<NewsMode>('live');
+  const [sort, setSort] = useState<SortMode>('latest');
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
   useEffect(() => {
@@ -123,7 +121,11 @@ export default function NewsPageClient() {
       setArticles([]);
       
       try {
-        const result = await getNewsAction({ category, useAi: mode === 'ai' });
+        const result = await getNewsAction({ 
+            category, 
+            useAi: mode === 'ai',
+            sortBy: sort
+        });
         if (result.articles.length > 0 && ['Daily Limit Reached', 'API Key Missing', 'Error Fetching News'].includes(result.articles[0].headline)) {
             setError(result.articles[0].summary + " " + result.articles[0].fullContent);
         } else {
@@ -137,7 +139,7 @@ export default function NewsPageClient() {
       }
     };
     fetchNews();
-  }, [category, mode]);
+  }, [category, mode, sort]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -186,10 +188,10 @@ export default function NewsPageClient() {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-             <div className="w-full sm:w-auto sm:max-w-xs">
+        <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
+             <div className="w-full lg:w-auto">
                 <Select value={category} onValueChange={(value: NewsCategory) => setCategory(value)}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full lg:w-[200px]">
                     <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -203,7 +205,7 @@ export default function NewsPageClient() {
                  <Button 
                     variant={mode === 'live' ? 'secondary' : 'ghost'} 
                     onClick={() => setMode('live')}
-                    className="px-3 py-1 h-8 shadow-sm"
+                    className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
                 >
                     <Tv className="mr-2 h-4 w-4"/>
                     Live News
@@ -211,12 +213,32 @@ export default function NewsPageClient() {
                 <Button 
                     variant={mode === 'ai' ? 'secondary' : 'ghost'} 
                     onClick={() => setMode('ai')}
-                    className="px-3 py-1 h-8 shadow-sm"
+                    className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
                 >
                     <Bot className="mr-2 h-4 w-4"/>
                     AI Generated
                 </Button>
             </div>
+             {mode === 'live' && (
+                <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
+                    <Button 
+                        variant={sort === 'latest' ? 'secondary' : 'ghost'} 
+                        onClick={() => setSort('latest')}
+                        className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
+                    >
+                        <Zap className="mr-2 h-4 w-4"/>
+                        Latest
+                    </Button>
+                    <Button 
+                        variant={sort === 'relevant' ? 'secondary' : 'ghost'} 
+                        onClick={() => setSort('relevant')}
+                        className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
+                    >
+                        <BarChart className="mr-2 h-4 w-4"/>
+                        Relevant
+                    </Button>
+                </div>
+             )}
         </div>
         
         {renderContent()}
