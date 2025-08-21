@@ -47,7 +47,7 @@ export const fetchNewsArticles = ai.defineTool(
             
             const response = await newsApi.v2.topHeadlines({
                 q: ['General', 'Science', 'Literature'].includes(query) ? '' : query,
-                category: ['General', 'Science', 'Literature'].includes(query) ? query.toLowerCase() : undefined,
+                category: ['General', 'Science', 'Literature'].includes(query) ? query.toLowerCase() as any : undefined,
                 language: 'en',
                 country: 'in', // Focus on India
                 sortBy: sortBy === 'latest' ? 'publishedAt' : 'relevancy',
