@@ -1,10 +1,12 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { getNewsAction } from '@/lib/actions';
+import { sampleNewsData, LiveArticle } from '@/lib/news-data';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -12,9 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Newspaper, AlertTriangle } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Newspaper, AlertTriangle, X, Bot } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
-type Article = {
+type AiArticle = {
   headline: string;
   summary: string;
   source: string;
@@ -22,49 +27,101 @@ type Article = {
 };
 
 type NewsCategory = 'General News' | 'JEE News' | 'UPSC News' | 'UPSC Articles' | 'Literature';
-
 const newsCategories: NewsCategory[] = ['General News', 'JEE News', 'UPSC News', 'UPSC Articles', 'Literature'];
+type NewsMode = 'live' | 'ai';
 
-const ArticleCard = ({ article }: { article: Article }) => {
+const ArticleCard = ({ article, onReadMore }: { article: LiveArticle | AiArticle; onReadMore: () => void; }) => {
+  const isAi = !('fullContent' in article);
+  const summary = 'summary' in article ? article.summary : '';
+  const hasImage = 'imageKeywords' in article && article.imageKeywords;
+
   return (
-    <Card className="flex flex-col md:flex-row overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-0 h-full">
-      <div className="md:w-1/3 relative aspect-video md:aspect-square">
-        <Image
-          src={`https://placehold.co/400x400.png`}
-          data-ai-hint={article.imageKeywords}
-          alt={article.headline}
-          fill
-          className="object-cover"
-        />
-      </div>
-      <div className="md:w-2/3 flex flex-col">
-        <CardHeader>
-          <h3 className="text-lg font-bold leading-snug">{article.headline}</h3>
-        </CardHeader>
-        <CardContent className="flex-grow">
-          <p className="text-muted-foreground text-sm">{article.summary}</p>
+    <motion.div
+      layoutId={`card-${article.headline}`}
+      className="block group cursor-pointer"
+      onClick={onReadMore}
+    >
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col border-0">
+        {hasImage && (
+          <div className="relative aspect-video overflow-hidden">
+            <Image
+              src={`https://placehold.co/400x300.png`}
+              data-ai-hint={article.imageKeywords}
+              alt={article.headline}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          </div>
+        )}
+        <CardContent className="p-4 flex-grow flex flex-col">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{article.source}</p>
+          <h3 className="font-bold text-base leading-snug flex-grow">{article.headline}</h3>
+          <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{summary}</p>
+          <div className="flex justify-between items-center mt-4">
+             <span className="text-sm font-semibold text-primary">Read More</span>
+             {isAi && <Bot className="h-4 w-4 text-muted-foreground" />}
+          </div>
         </CardContent>
-        <CardFooter>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{article.source}</p>
-        </CardFooter>
-      </div>
-    </Card>
+      </Card>
+    </motion.div>
   );
 };
 
+const ExpandedArticle = ({ article, onClose }: { article: LiveArticle | AiArticle | null; onClose: () => void; }) => {
+  if (!article) return null;
+  
+  const content = 'fullContent' in article ? article.fullContent : article.summary;
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
+      
+      <motion.div layoutId={`card-${article.headline}`} className="relative z-10 w-full max-w-3xl">
+         <Card className="max-h-[85vh] flex flex-col">
+          <CardContent className="p-6 md:p-8 overflow-y-auto">
+            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">{article.source}</p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">{article.headline}</h2>
+            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
+              {content}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+       <button onClick={onClose} className="absolute top-4 right-4 z-20 text-foreground/70 hover:text-foreground">
+          <X className="h-6 w-6" />
+      </button>
+    </motion.div>
+  );
+};
+
+
 export default function NewsPageClient() {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<(LiveArticle | AiArticle)[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<NewsCategory>('General News');
+  const [mode, setMode] = useState<NewsMode>('live');
+  const [selectedArticle, setSelectedArticle] = useState<LiveArticle | AiArticle | null>(null);
 
   useEffect(() => {
     const fetchNews = async () => {
       setIsLoading(true);
       setError(null);
+      
       try {
-        const result = await getNewsAction({ category });
-        setArticles(result.articles);
+        if (mode === 'ai') {
+          const result = await getNewsAction({ category });
+          setArticles(result.articles);
+        } else {
+          // Simulate API call for live news with sample data
+          const filteredData = sampleNewsData.filter(a => a.category === category);
+          setArticles(filteredData);
+        }
       } catch (err) {
         console.error("Failed to get news:", err);
         setError("Could not load news at this time. Please try again later.");
@@ -73,20 +130,18 @@ export default function NewsPageClient() {
       }
     };
     fetchNews();
-  }, [category]);
+  }, [category, mode]);
 
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex flex-col md:flex-row gap-4">
-              <Skeleton className="h-48 w-full md:w-1/3" />
-              <div className="w-full md:w-2/3 space-y-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+             <div key={i} className="space-y-2">
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-4 w-1/4" />
                 <Skeleton className="h-6 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-16 w-full" />
-              </div>
+                <Skeleton className="h-12 w-3/4" />
             </div>
           ))}
         </div>
@@ -108,15 +163,15 @@ export default function NewsPageClient() {
         <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[40vh]">
           <Newspaper className="h-12 w-12 text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold">No Articles Found</h3>
-          <p className="text-muted-foreground">The AI couldn't find any articles for this category right now.</p>
+          <p className="text-muted-foreground">There are no articles for this category and mode right now.</p>
         </div>
       );
     }
     
     return (
-        <div className="space-y-6">
-            {articles.map((article, index) => (
-                <ArticleCard key={index} article={article} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {articles.map((article) => (
+                <ArticleCard key={article.headline} article={article} onReadMore={() => setSelectedArticle(article)} />
             ))}
         </div>
     )
@@ -124,19 +179,39 @@ export default function NewsPageClient() {
 
   return (
     <div className="space-y-6">
-      <div className="max-w-xs">
-        <Select value={category} onValueChange={(value: NewsCategory) => setCategory(value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a category" />
-          </SelectTrigger>
-          <SelectContent>
-            {newsCategories.map((cat) => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {renderContent()}
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+             <div className="w-full sm:w-auto sm:max-w-xs">
+                <Select value={category} onValueChange={(value: NewsCategory) => setCategory(value)}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                    {newsCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                </SelectContent>
+                </Select>
+            </div>
+            <div className="flex items-center space-x-2">
+                <Switch 
+                    id="ai-mode"
+                    checked={mode === 'ai'}
+                    onCheckedChange={(checked) => setMode(checked ? 'ai' : 'live')}
+                />
+                <Label htmlFor="ai-mode" className="flex items-center gap-2">
+                    <Bot className="h-5 w-5"/>
+                    AI Generated News
+                </Label>
+            </div>
+        </div>
+        
+        {renderContent()}
+
+        <AnimatePresence>
+            {selectedArticle && (
+                <ExpandedArticle article={selectedArticle} onClose={() => setSelectedArticle(null)} />
+            )}
+        </AnimatePresence>
     </div>
   );
 }

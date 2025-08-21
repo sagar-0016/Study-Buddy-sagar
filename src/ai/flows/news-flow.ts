@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -18,7 +19,7 @@ export type NewsInput = z.infer<typeof NewsInputSchema>;
 
 const ArticleSchema = z.object({
   headline: z.string().describe('A concise and engaging headline for the news article.'),
-  summary: z.string().describe('A brief, 2-3 sentence summary of the article.'),
+  summary: z.string().describe('A brief, 1-2 sentence summary of the article.'),
   source: z.string().describe('A plausible and well-known news source, e.g., "The Hindu", "The Indian Express", "PIB India".'),
   imageKeywords: z.string().describe('One or two keywords for a relevant placeholder image, e.g., "student examination", "indian parliament", "classic book".'),
 });
@@ -36,14 +37,14 @@ const newsPrompt = ai.definePrompt({
   name: 'newsPrompt',
   input: {schema: NewsInputSchema},
   output: {schema: NewsOutputSchema},
-  prompt: `You are an expert news curator for an intelligent study application.
+  prompt: `You are an expert news curator for a study application.
   Your task is to generate a list of 5-7 recent, relevant, and insightful news articles or summaries based on the user-selected category: '{{category}}'.
 
   **IMPORTANT CONTENT GUIDELINES:**
   - **ABSOLUTELY NO SENSATIONALISM:** Avoid clickbait headlines.
   - **STRICTLY FORBIDDEN TOPICS:** Do NOT generate any content related to rape, murder, kidnapping, violent crime, assault, abuse, gore, or any other form of graphic or disturbing events. The output must be safe-for-work and suitable for a study environment.
   - **Plausible and Factual Tone:** The articles should sound like they come from reputable news sources.
-  - **Source Diversity:** Use a variety of credible sources like "The Hindu," "The Indian Express," "Livemint," "PIB India," "The Economist," etc.
+  - **Source Diversity:** Use a variety of credible sources like "The Hindu," "The Indian Express," "Livemint," "PIB India," etc.
 
   **CATEGORY-SPECIFIC INSTRUCTIONS:**
   - **General News:** Focus on national news, science & technology, and economic developments.
