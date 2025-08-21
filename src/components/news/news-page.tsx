@@ -56,7 +56,7 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
           <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{article.summary}</p>
           <div className="flex justify-between items-center mt-4">
              <span className="text-sm font-semibold text-primary">Read More</span>
-             {article.source === 'AI News Desk' && <Bot className="h-4 w-4 text-muted-foreground" title="AI-Generated Content" />}
+             {article.source === 'Study Buddy System' && <Bot className="h-4 w-4 text-muted-foreground" title="AI-Generated Content" />}
           </div>
         </CardContent>
       </Card>
@@ -81,7 +81,7 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
           <CardContent className="p-6 md:p-8 overflow-y-auto">
              <div className="flex justify-between items-start mb-2">
                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{article.source}</p>
-                 {article.source === 'AI News Desk' && (
+                 {article.source === 'Study Buddy System' && (
                     <div className="flex items-center gap-1 text-xs font-semibold bg-muted text-muted-foreground px-2 py-1 rounded-full">
                         <Bot className="h-3 w-3" />
                         <span>AI-Generated</span>
@@ -126,9 +126,9 @@ export default function NewsPageClient() {
         });
 
         // Log the debug info to the browser console
-        console.log("--- News API Request Details ---");
+        console.log("--- News API Debug Info ---");
         console.log(result.debugInfo);
-        console.log("------------------------------");
+        console.log("---------------------------");
 
         if (result.articles.length > 0 && ['Daily Limit Reached', 'API Key Missing', 'Error Fetching News'].includes(result.articles[0].headline)) {
             setError(result.articles[0].summary + " " + result.articles[0].fullContent);
@@ -166,7 +166,7 @@ export default function NewsPageClient() {
              <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[40vh] bg-destructive/10 border-destructive">
                 <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
                 <h3 className="text-lg font-semibold text-destructive">An Error Occurred</h3>
-                <p className="text-destructive/80 max-w-prose dark:text-destructive-foreground/80">{error}</p>
+                <p className="text-destructive max-w-prose dark:text-destructive-foreground/80">{error}</p>
             </div>
         )
     }

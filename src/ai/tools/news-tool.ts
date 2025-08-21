@@ -11,7 +11,12 @@ const newsApiKey = process.env.NEWS_API_KEY || '';
 // Initialize the NewsAPI client if the key is available
 const newsApi = newsApiKey ? new NewsAPI(newsApiKey) : null;
 
-export type NewsAPIRequest = TopHeadlinesRequest;
+// Define a type for our debug information
+const NewsDebugInfoSchema = z.object({
+    requestUrl: z.string(),
+    params: z.custom<TopHeadlinesRequest>(),
+});
+export type NewsDebugInfo = z.infer<typeof NewsDebugInfoSchema>;
 
 const NewsToolInputSchema = z.object({
     query: z.string().describe("The search query or category for the news, e.g., 'JEE exam', 'UPSC policy', 'Indian literature'."),
@@ -28,7 +33,7 @@ const ArticleSchema = z.object({
 
 const ToolOutputSchema = z.object({
     articles: z.array(ArticleSchema),
-    requestParams: z.custom<NewsAPIRequest>(),
+    debugInfo: NewsDebugInfoSchema,
 });
 
 export const fetchNewsArticles = ai.defineTool(
@@ -39,7 +44,7 @@ export const fetchNewsArticles = ai.defineTool(
         output: { schema: ToolOutputSchema },
     },
     async ({ query, sortBy }) => {
-        const requestParams: NewsAPIRequest = {
+        const requestParams: TopHeadlinesRequest = {
             q: ['General', 'Science', 'Literature'].includes(query) ? undefined : query,
             category: ['General', 'Science', 'Literature'].includes(query) ? query.toLowerCase() as any : undefined,
             language: 'en',
@@ -47,11 +52,25 @@ export const fetchNewsArticles = ai.defineTool(
             sortBy: sortBy === 'latest' ? 'publishedAt' : 'relevancy',
             pageSize: 20,
         };
+
+        // Reconstruct the URL for debugging
+        const baseUrl = 'https://newsapi.org/v2/top-headlines';
+        const params = new URLSearchParams();
+        if (requestParams.q) params.append('q', requestParams.q);
+        if (requestParams.category) params.append('category', requestParams.category);
+        if (requestParams.language) params.append('language', requestParams.language);
+        if (requestParams.country) params.append('country', requestParams.country);
+        if (requestParams.sortBy) params.append('sortBy', requestParams.sortBy);
+        if (requestParams.pageSize) params.append('pageSize', String(requestParams.pageSize));
+        params.append('apiKey', newsApiKey); // Add the API key
+        const requestUrl = `${baseUrl}?${params.toString()}`;
+
+        const debugInfo = { requestUrl, params: requestParams };
         
         if (!newsApi) {
             console.error('NewsAPI key is missing.');
             return {
-                requestParams,
+                debugInfo,
                 articles: [{
                     headline: 'API Key Missing',
                     summary: "The NewsAPI key is not configured in the environment variables.",
@@ -67,7 +86,7 @@ export const fetchNewsArticles = ai.defineTool(
             if (response.status !== 'ok') {
                 if ((response as any).code === 'rateLimited') {
                      return {
-                        requestParams,
+                        debugInfo,
                         articles: [{
                             headline: 'Daily Limit Reached',
                             summary: "The daily usage limit for fetching live news has been exhausted.",
@@ -88,7 +107,7 @@ export const fetchNewsArticles = ai.defineTool(
             });
 
             return {
-                requestParams,
+                debugInfo,
                 articles: safeArticles.slice(0, 10).map(article => ({
                     headline: article.title || 'No Title',
                     summary: article.description || 'No summary available.',
@@ -102,7 +121,7 @@ export const fetchNewsArticles = ai.defineTool(
             console.error('Failed to fetch news from NewsAPI:', error);
             if (error.code === 'rateLimited' || (error.message && error.message.includes('rateLimited'))) {
                  return {
-                    requestParams,
+                    debugInfo,
                     articles: [{
                         headline: 'Daily Limit Reached',
                         summary: "The daily usage limit for fetching live news has been exhausted.",
@@ -112,7 +131,7 @@ export const fetchNewsArticles = ai.defineTool(
                 };
             }
             return {
-                requestParams,
+                debugInfo,
                 articles: [{
                     headline: 'Error Fetching News',
                     summary: "Could not fetch live news at this moment.",

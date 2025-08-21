@@ -12,7 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { fetchNewsArticles } from '@/ai/tools/news-tool';
-import type { NewsAPIRequest } from '@/ai/tools/news-tool'; // Import the type
+import type { NewsDebugInfo } from '@/ai/tools/news-tool';
 
 const NewsInputSchema = z.object({
   category: z.string().describe('The category of news, e.g., "JEE", "Literature", "UPSC", "Science".'),
@@ -31,7 +31,7 @@ const ArticleSchema = z.object({
 
 const NewsOutputSchema = z.object({
   articles: z.array(ArticleSchema).describe('A list of 5-7 news articles.'),
-  debugInfo: z.custom<NewsAPIRequest | { mode: string }>().optional(), // Add debug info to output
+  debugInfo: z.custom<NewsDebugInfo | { mode: string }>(),
 });
 export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 
@@ -39,11 +39,11 @@ export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 export async function getNews(input: NewsInput): Promise<NewsOutput> {
   // If not using AI, directly call the tool and bypass the AI flow.
   if (!input.useAi) {
-    const { articles, requestParams } = await fetchNewsArticles({ 
+    const { articles, debugInfo } = await fetchNewsArticles({ 
         query: input.category, 
         sortBy: input.sortBy || 'latest'
     });
-    return { articles, debugInfo: requestParams };
+    return { articles, debugInfo };
   }
   // If using AI, call the generative flow.
   const aiResult = await newsGenFlow(input);
