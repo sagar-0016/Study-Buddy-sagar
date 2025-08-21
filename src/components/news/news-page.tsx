@@ -26,8 +26,8 @@ type Article = {
   url: string;
 };
 
-type NewsCategory = 'General' | 'JEE' | 'UPSC' | 'Science' | 'Literature';
-const newsCategories: NewsCategory[] = ['General', 'JEE', 'UPSC', 'Science', 'Literature'];
+type NewsCategory = 'General' | 'JEE' | 'UPSC' | 'History' | 'Literature';
+const newsCategories: NewsCategory[] = ['General', 'JEE', 'UPSC', 'History', 'Literature'];
 type NewsMode = 'live' | 'ai';
 type SortMode = 'latest' | 'relevant';
 type ApiSource = 'auto' | 'gnews' | 'newsdata';
@@ -119,7 +119,7 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
             {article.url !== '#' && (
                  <Button asChild className="mt-6">
                     <a href={article.url} target="_blank" rel="noopener noreferrer">
-                        Read Full Article <ExternalLink className="ml-2 h-4 w-4" />
+                        Read Original Article <ExternalLink className="ml-2 h-4 w-4" />
                     </a>
                 </Button>
             )}
