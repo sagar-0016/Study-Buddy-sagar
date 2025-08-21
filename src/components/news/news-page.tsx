@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { getNewsAction } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -25,7 +26,7 @@ type Article = {
   fullContent: string;
   source: string;
   imageUrl?: string;
-  imageKeywords?: string; // This will now be ignored by the card, but kept for the flow
+  imageKeywords?: string;
 };
 
 type NewsCategory = 'General News' | 'JEE News' | 'UPSC News' | 'UPSC Articles' | 'Literature';
@@ -33,7 +34,7 @@ const newsCategories: NewsCategory[] = ['General News', 'JEE News', 'UPSC News',
 type NewsMode = 'live' | 'ai';
 
 const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: () => void; }) => {
-  const isAiGenerated = !article.imageUrl && article.imageKeywords; // A better check for AI generation source
+  const isAiGenerated = !article.imageUrl;
 
   return (
     <motion.div
@@ -49,7 +50,7 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
               alt={article.headline}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
-              unoptimized={true} // Don't optimize external news images as their domains are not configured
+              unoptimized={true} 
             />
           </div>
         )}
@@ -69,7 +70,7 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
 
 const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClose: () => void; }) => {
   if (!article) return null;
-  const isAiGenerated = !article.imageUrl && article.imageKeywords;
+  const isAiGenerated = !article.imageUrl;
   
   return (
     <motion.div
