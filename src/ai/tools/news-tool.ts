@@ -36,6 +36,7 @@ const filterArticle = (article: any): boolean => {
 const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Promise<any[]> => {
     if (!gnewsApiKey) throw new Error("GNews API key is missing.");
     const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&country=in&max=10&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
+    console.log(`[DEBUG] Fetching from GNews: ${url}`); // DEBUG LOG
     const response = await fetch(url);
     if (!response.ok) throw new Error(`GNews API error: ${response.statusText}`);
     const data = await response.json();
@@ -53,6 +54,7 @@ const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Pro
 const fetchFromNewsData = async (query: string): Promise<any[]> => {
     if (!newsdataApiKey) throw new Error("NewsData.io API key is missing.");
     const url = `https://newsdata.io/api/1/latest?apikey=${newsdataApiKey}&q=${encodeURIComponent(query)}&language=en&country=in`;
+    console.log(`[DEBUG] Fetching from NewsData.io: ${url}`); // DEBUG LOG
     const response = await fetch(url);
     if (!response.ok) throw new Error(`NewsData.io API error: ${response.statusText}`);
     const data = await response.json();
@@ -70,6 +72,7 @@ const fetchFromNewsData = async (query: string): Promise<any[]> => {
 const fetchFromTheNewsAPI = async (query: string): Promise<any[]> => {
     if (!thenewsapiToken) throw new Error("TheNewsAPI token is missing.");
     const url = `https://api.thenewsapi.com/v1/news/all?api_token=${thenewsapiToken}&search=${encodeURIComponent(query)}&language=en&locale=in&limit=5`;
+    console.log(`[DEBUG] Fetching from TheNewsAPI: ${url}`); // DEBUG LOG
     const response = await fetch(url);
     if (!response.ok) throw new Error(`TheNewsAPI error: ${response.statusText}`);
     const data = await response.json();
