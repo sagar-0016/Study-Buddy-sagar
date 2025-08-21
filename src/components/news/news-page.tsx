@@ -108,9 +108,10 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
                 )}
              </div>
             <h2 className="text-2xl md:text-3xl font-bold mb-4">{article.headline}</h2>
-            <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-              {article.fullContent}
-            </div>
+            <div 
+              className="prose prose-sm dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: article.fullContent || "<p>No content available.</p>" }}
+            />
             {article.url !== '#' && (
                  <Button asChild className="mt-6">
                     <a href={article.url} target="_blank" rel="noopener noreferrer">

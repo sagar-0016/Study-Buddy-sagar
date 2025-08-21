@@ -3,7 +3,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { gnewsApiKey, newsdataApiKey, thenewsapiToken } from '@/lib/api-keys';
-
+import { fetchFullArticleContent } from './article-parser-tool';
 
 const NewsToolInputSchema = z.object({
     query: z.string().describe("The search query or category for the news, e.g., 'JEE exam', 'UPSC policy', 'Indian literature'."),
@@ -36,9 +36,9 @@ const filterArticle = (article: any): boolean => {
 };
 
 // Helper to get the most complete, clean description available
-const getFullContent = (article: any): string => {
+const getSummaryContent = (article: any): string => {
     // Prioritize description/snippet over content to avoid API promotional text
-    return article.description || article.snippet || article.content || '';
+    return article.description || article.snippet || '';
 }
 
 // Fetcher for GNews
@@ -51,8 +51,7 @@ const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Pro
     return {
         articles: data.articles.filter(filterArticle).map((article: any) => ({
             headline: article.title,
-            summary: article.description,
-            fullContent: getFullContent(article),
+            summary: getSummaryContent(article),
             source: `GNews / ${article.source.name}`,
             imageUrl: article.image,
             url: article.url,
@@ -71,8 +70,7 @@ const fetchFromNewsData = async (query: string): Promise<{ articles: any[], url:
     return {
         articles: data.results.filter(filterArticle).map((article: any) => ({
             headline: article.title,
-            summary: article.description,
-            fullContent: getFullContent(article),
+            summary: getSummaryContent(article),
             source: `NewsData.io / ${article.source_id}`,
             imageUrl: article.image_url,
             url: article.link,
@@ -91,8 +89,7 @@ const fetchFromTheNewsAPI = async (query: string): Promise<{ articles: any[], ur
     return {
         articles: data.data.filter(filterArticle).map((article: any) => ({
             headline: article.title,
-            summary: article.snippet,
-            fullContent: getFullContent(article),
+            summary: getSummaryContent(article),
             source: `TheNewsAPI / ${article.source}`,
             imageUrl: article.image_url,
             url: article.url,
@@ -104,70 +101,78 @@ const fetchFromTheNewsAPI = async (query: string): Promise<{ articles: any[], ur
 export const fetchNewsArticles = ai.defineTool(
     {
         name: 'fetchNewsArticles',
-        description: 'Fetches live news articles from multiple trusted sources with a fallback mechanism, or from a specific source.',
+        description: 'Fetches live news articles, then uses a parser to extract the full content of each article.',
         input: { schema: NewsToolInputSchema },
         output: { schema: ToolOutputSchema },
     },
     async ({ query, sortBy, sourceApi }) => {
         const debugUrls: string[] = [];
+        let fetchedArticles: any[] = [];
+        let fetchedUrl = '';
 
         const services = {
             gnews: () => fetchFromGNews(query, sortBy),
             newsdata: () => fetchFromNewsData(query),
             thenewsapi: () => fetchFromTheNewsAPI(query),
         };
-
-        if (sourceApi && sourceApi !== 'auto') {
-            try {
-                const { articles, url } = await services[sourceApi]();
-                debugUrls.push(url);
-                if (articles.length > 0) return { articles: articles.slice(0, 10), debugUrls };
-                throw new Error(`No articles from ${sourceApi}`);
-            } catch (error) {
-                console.error(`${sourceApi} API failed:`, error);
-                const articles = [{
-                    headline: 'Selected News Source Failed',
-                    summary: `Could not fetch news from ${sourceApi} at this moment.`,
-                    fullContent: `There was an issue connecting to the selected service. Please try another source or switch to 'Auto' mode. Error: ${(error as Error).message}`,
-                    source: 'Study Buddy System',
-                    url: '#',
-                }];
-                return { articles, debugUrls };
-            }
-        }
         
-        // Auto fallback logic
+        const fetchFunction = sourceApi && sourceApi !== 'auto' ? services[sourceApi] : null;
+
         try {
-            const { articles, url } = await fetchFromGNews(query, sortBy);
-            debugUrls.push(url);
-            if (articles.length > 0) return { articles: articles.slice(0, 10), debugUrls };
-            throw new Error("No articles from GNews");
-        } catch (error) {
-            console.error('GNews API failed:', error);
-            try {
-                const { articles, url } = await fetchFromNewsData(query);
-                debugUrls.push(url);
-                if (articles.length > 0) return { articles: articles.slice(0, 10), debugUrls };
-                throw new Error("No articles from NewsData.io");
-            } catch (error2) {
-                console.error('NewsData.io API failed:', error2);
+            if (fetchFunction) {
+                const { articles, url } = await fetchFunction();
+                fetchedArticles = articles;
+                fetchedUrl = url;
+                debugUrls.push(fetchedUrl);
+            } else {
+                // Auto fallback logic
                 try {
-                    const { articles, url } = await fetchFromTheNewsAPI(query);
-                    debugUrls.push(url);
-                    if (articles.length > 0) return { articles: articles.slice(0, 10), debugUrls };
-                    throw new Error("No articles from TheNewsAPI");
-                } catch (error3) {
-                     console.error('TheNewsAPI failed:', error3);
-                     const articles = [{
-                        headline: 'All News Sources Failed',
-                        summary: "Could not fetch live news at this moment from any available source.",
-                        fullContent: `There was an issue connecting to all news services. Please check your internet connection or try again later. You can also switch to AI-generated news.`,
-                        source: 'Study Buddy System',
-                        url: '#',
-                    }];
-                    return { articles, debugUrls };
+                    const { articles, url } = await fetchFromGNews(query, sortBy);
+                    fetchedArticles = articles;
+                    fetchedUrl = url;
+                    debugUrls.push(fetchedUrl);
+                    if (articles.length === 0) throw new Error("No articles from GNews");
+                } catch (error) {
+                    console.error('GNews API failed, falling back to NewsData.io:', error);
+                    const { articles, url } = await fetchFromNewsData(query);
+                    fetchedArticles = articles;
+                    fetchedUrl = url;
+                    debugUrls.push(fetchedUrl);
+                    if (articles.length === 0) throw new Error("No articles from NewsData.io");
                 }
             }
+
+            if (fetchedArticles.length === 0) {
+                 return { articles: [], debugUrls };
+            }
+
+            // Step 2: Parse each article for full content
+            const enrichedArticles = await Promise.all(
+                fetchedArticles.slice(0, 7).map(async (article) => {
+                    if (!article.url) return { ...article, fullContent: article.summary };
+                    
+                    const parsed = await fetchFullArticleContent({ url: article.url });
+                    
+                    return {
+                        ...article,
+                        // Use parsed content if available, otherwise fall back to summary
+                        fullContent: parsed.content || article.summary,
+                    };
+                })
+            );
+
+            return { articles: enrichedArticles, debugUrls };
+
+        } catch (error) {
+            console.error('Failed to fetch or parse news:', error);
+            const articles = [{
+                headline: 'News Service Failed',
+                summary: `Could not fetch or parse news at this moment. Error: ${(error as Error).message}`,
+                fullContent: `There was an issue connecting to the news services or parsing the articles. Please check your internet connection or try again later. You can also switch to AI-generated news.`,
+                source: 'Study Buddy System',
+                url: '#',
+            }];
+            return { articles, debugUrls };
         }
     }
 );
