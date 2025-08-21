@@ -11,6 +11,7 @@ import {
 import {
   getNews as getNewsFlow,
   type NewsInput,
+  type NewsOutput,
 } from '@/ai/flows/news-flow';
 
 export async function getMotivationAction(input: MotivationInput) {
@@ -25,7 +26,7 @@ export async function getPersonalizedFeedbackAction(
   return result;
 }
 
-export async function getNewsAction(input: NewsInput) {
+export async function getNewsAction(input: NewsInput): Promise<NewsOutput> {
   const result = await getNewsFlow(input);
   return result;
 }

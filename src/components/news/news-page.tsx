@@ -61,12 +61,10 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
       onClick={onReadMore}
     >
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col border-0">
-        {article.imageUrl ? (
-          <div className="relative aspect-video overflow-hidden">
-            <ArticleImage article={article} />
-          </div>
-        ) : null}
-        <CardContent className={cn("p-4 flex-grow flex flex-col", !article.imageUrl && "pt-6")}>
+        <div className="relative aspect-video overflow-hidden">
+          <ArticleImage article={article} />
+        </div>
+        <CardContent className={cn("p-4 flex-grow flex flex-col")}>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{article.source}</p>
           <h3 className="font-bold text-base leading-snug flex-grow">{article.headline}</h3>
           <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{article.summary}</p>
@@ -154,6 +152,12 @@ export default function NewsPageClient() {
             sortBy: sort,
             sourceApi: apiSource,
         });
+
+        if (result.debugUrls && result.debugUrls.length > 0) {
+            console.log("--- DEBUG: API URLs Fetched ---");
+            result.debugUrls.forEach(url => console.log(url));
+            console.log("-------------------------------");
+        }
 
         if (result.articles.length > 0 && (result.articles[0].headline.includes('Failed') || result.articles[0].headline.includes('Error'))) {
             setError(result.articles[0].fullContent);

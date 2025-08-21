@@ -20,7 +20,10 @@ const ArticleSchema = z.object({
   url: z.string().url(),
 });
 
-const ToolOutputSchema = z.array(ArticleSchema);
+const ToolOutputSchema = z.object({
+    articles: z.array(ArticleSchema),
+    debugUrls: z.array(z.string().url()),
+});
 
 const forbiddenKeywords = ['murder', 'rape', 'kidnap', 'assault', 'violence', 'crime', 'death', 'killed', 'shot', 'terrorist', 'attack'];
 
@@ -33,57 +36,63 @@ const filterArticle = (article: any): boolean => {
 };
 
 // Fetcher for GNews
-const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Promise<any[]> => {
+const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Promise<{ articles: any[], url: string }> => {
     if (!gnewsApiKey) throw new Error("GNews API key is missing.");
     const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&country=in&max=10&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
-    console.log(`[DEBUG] Fetching from GNews: ${url}`); // DEBUG LOG
     const response = await fetch(url);
     if (!response.ok) throw new Error(`GNews API error: ${response.statusText}`);
     const data = await response.json();
-    return data.articles.filter(filterArticle).map((article: any) => ({
-        headline: article.title,
-        summary: article.description,
-        fullContent: article.content || article.description,
-        source: `GNews / ${article.source.name}`,
-        imageUrl: article.image,
-        url: article.url,
-    }));
+    return {
+        articles: data.articles.filter(filterArticle).map((article: any) => ({
+            headline: article.title,
+            summary: article.description,
+            fullContent: article.content || article.description,
+            source: `GNews / ${article.source.name}`,
+            imageUrl: article.image,
+            url: article.url,
+        })),
+        url
+    };
 };
 
 // Fetcher for NewsData.io
-const fetchFromNewsData = async (query: string): Promise<any[]> => {
+const fetchFromNewsData = async (query: string): Promise<{ articles: any[], url: string }> => {
     if (!newsdataApiKey) throw new Error("NewsData.io API key is missing.");
     const url = `https://newsdata.io/api/1/latest?apikey=${newsdataApiKey}&q=${encodeURIComponent(query)}&language=en&country=in`;
-    console.log(`[DEBUG] Fetching from NewsData.io: ${url}`); // DEBUG LOG
     const response = await fetch(url);
     if (!response.ok) throw new Error(`NewsData.io API error: ${response.statusText}`);
     const data = await response.json();
-    return data.results.filter(filterArticle).map((article: any) => ({
-        headline: article.title,
-        summary: article.description,
-        fullContent: article.content || article.description,
-        source: `NewsData.io / ${article.source_id}`,
-        imageUrl: article.image_url,
-        url: article.link,
-    }));
+    return {
+        articles: data.results.filter(filterArticle).map((article: any) => ({
+            headline: article.title,
+            summary: article.description,
+            fullContent: article.content || article.description,
+            source: `NewsData.io / ${article.source_id}`,
+            imageUrl: article.image_url,
+            url: article.link,
+        })),
+        url
+    };
 };
 
 // Fetcher for TheNewsAPI
-const fetchFromTheNewsAPI = async (query: string): Promise<any[]> => {
+const fetchFromTheNewsAPI = async (query: string): Promise<{ articles: any[], url: string }> => {
     if (!thenewsapiToken) throw new Error("TheNewsAPI token is missing.");
     const url = `https://api.thenewsapi.com/v1/news/all?api_token=${thenewsapiToken}&search=${encodeURIComponent(query)}&language=en&locale=in&limit=5`;
-    console.log(`[DEBUG] Fetching from TheNewsAPI: ${url}`); // DEBUG LOG
     const response = await fetch(url);
     if (!response.ok) throw new Error(`TheNewsAPI error: ${response.statusText}`);
     const data = await response.json();
-    return data.data.filter(filterArticle).map((article: any) => ({
-        headline: article.title,
-        summary: article.snippet,
-        fullContent: article.description || article.snippet,
-        source: `TheNewsAPI / ${article.source}`,
-        imageUrl: article.image_url,
-        url: article.url,
-    }));
+    return {
+        articles: data.data.filter(filterArticle).map((article: any) => ({
+            headline: article.title,
+            summary: article.snippet,
+            fullContent: article.description || article.snippet,
+            source: `TheNewsAPI / ${article.source}`,
+            imageUrl: article.image_url,
+            url: article.url,
+        })),
+        url
+    };
 };
 
 export const fetchNewsArticles = ai.defineTool(
@@ -94,6 +103,8 @@ export const fetchNewsArticles = ai.defineTool(
         output: { schema: ToolOutputSchema },
     },
     async ({ query, sortBy, sourceApi }) => {
+        const debugUrls: string[] = [];
+
         const services = {
             gnews: () => fetchFromGNews(query, sortBy),
             newsdata: () => fetchFromNewsData(query),
@@ -102,53 +113,53 @@ export const fetchNewsArticles = ai.defineTool(
 
         if (sourceApi && sourceApi !== 'auto') {
             try {
-                console.log(`Attempting to fetch news from specified source: ${sourceApi}`);
-                const articles = await services[sourceApi]();
-                if (articles.length > 0) return articles.slice(0, 10);
+                const { articles, url } = await services[sourceApi]();
+                debugUrls.push(url);
+                if (articles.length > 0) return { articles: articles.slice(0, 10), debugUrls };
                 throw new Error(`No articles from ${sourceApi}`);
             } catch (error) {
                 console.error(`${sourceApi} API failed:`, error);
-                return [{
+                const articles = [{
                     headline: 'Selected News Source Failed',
                     summary: `Could not fetch news from ${sourceApi} at this moment.`,
                     fullContent: `There was an issue connecting to the selected service. Please try another source or switch to 'Auto' mode. Error: ${(error as Error).message}`,
                     source: 'Study Buddy System',
                     url: '#',
                 }];
+                return { articles, debugUrls };
             }
         }
         
         // Auto fallback logic
         try {
-            console.log("Attempting to fetch news from GNews...");
-            const articles = await fetchFromGNews(query, sortBy);
-            if (articles.length > 0) return articles.slice(0, 10);
-            console.log("GNews returned no articles, trying NewsData.io...");
+            const { articles, url } = await fetchFromGNews(query, sortBy);
+            debugUrls.push(url);
+            if (articles.length > 0) return { articles: articles.slice(0, 10), debugUrls };
             throw new Error("No articles from GNews");
         } catch (error) {
             console.error('GNews API failed:', error);
             try {
-                console.log("Attempting to fetch news from NewsData.io...");
-                const articles = await fetchFromNewsData(query);
-                if (articles.length > 0) return articles.slice(0, 10);
-                console.log("NewsData.io returned no articles, trying TheNewsAPI...");
+                const { articles, url } = await fetchFromNewsData(query);
+                debugUrls.push(url);
+                if (articles.length > 0) return { articles: articles.slice(0, 10), debugUrls };
                 throw new Error("No articles from NewsData.io");
             } catch (error2) {
                 console.error('NewsData.io API failed:', error2);
                 try {
-                    console.log("Attempting to fetch news from TheNewsAPI...");
-                    const articles = await fetchFromTheNewsAPI(query);
-                    if (articles.length > 0) return articles.slice(0, 10);
+                    const { articles, url } = await fetchFromTheNewsAPI(query);
+                    debugUrls.push(url);
+                    if (articles.length > 0) return { articles: articles.slice(0, 10), debugUrls };
                     throw new Error("No articles from TheNewsAPI");
                 } catch (error3) {
                      console.error('TheNewsAPI failed:', error3);
-                     return [{
+                     const articles = [{
                         headline: 'All News Sources Failed',
                         summary: "Could not fetch live news at this moment from any available source.",
                         fullContent: `There was an issue connecting to all news services. Please check your internet connection or try again later. You can also switch to AI-generated news.`,
                         source: 'Study Buddy System',
                         url: '#',
                     }];
+                    return { articles, debugUrls };
                 }
             }
         }

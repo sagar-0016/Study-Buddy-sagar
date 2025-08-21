@@ -32,6 +32,7 @@ const ArticleSchema = z.object({
 
 const NewsOutputSchema = z.object({
   articles: z.array(ArticleSchema).describe('A list of 5-7 news articles.'),
+  debugUrls: z.array(z.string().url()).optional().describe('A list of URLs fetched for debugging.'),
 });
 export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 
@@ -39,12 +40,12 @@ export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 export async function getNews(input: NewsInput): Promise<NewsOutput> {
   // If not using AI, directly call the tool and bypass the AI flow.
   if (!input.useAi) {
-    const articles = await fetchNewsArticles({ 
+    const { articles, debugUrls } = await fetchNewsArticles({ 
         query: input.category, 
         sortBy: input.sortBy || 'latest',
         sourceApi: input.sourceApi || 'auto',
     });
-    return { articles };
+    return { articles, debugUrls };
   }
   // If using AI, call the generative flow.
   return await newsGenFlow(input);
