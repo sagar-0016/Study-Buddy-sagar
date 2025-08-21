@@ -45,3 +45,22 @@ export const addBrainstormingSubmission = async (submissionData: Omit<Brainstorm
         throw error;
     }
 }
+
+/**
+ * Adds a new brainstorming topic to Firestore.
+ * @param topicData - The data for the new topic.
+ * @returns The ID of the newly created document.
+ */
+export const addBrainstormingTopic = async (topicData: Omit<BrainstormingTopic, 'id'>): Promise<string> => {
+    try {
+        const brainstormingRef = collection(db, 'brainstorming');
+        const newDocRef = await addDoc(brainstormingRef, {
+            ...topicData,
+            createdAt: serverTimestamp(),
+        });
+        return newDocRef.id;
+    } catch (error) {
+        console.error('Error adding brainstorming topic:', error);
+        throw error;
+    }
+}

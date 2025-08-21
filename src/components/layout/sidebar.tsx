@@ -18,6 +18,7 @@ import {
   BrainCircuit,
   Library,
   Settings,
+  Brain,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -39,11 +40,12 @@ export const navLinks: NavLink[] = [
   { href: "/lectures", label: "Lectures", icon: Library },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/revisions", label: "Revisions", icon: BrainCircuit },
+  { href: "/brainstorming", label: "Brainstorming", icon: Brain },
   { href: "/feedback", label: "AI Feedback", icon: BotMessageSquare },
 ];
 
 const secondaryNavLinks: NavLink[] = [
-    { href: "/tricky-topics", label: "Ticky & Brainstormers", icon: Flame },
+    { href: "/tricky-topics", label: "Ticky Questions", icon: Flame },
     { href: "/doubts", label: "Doubt Centre", icon: MessageSquareQuote },
     { href: "/help", label: "Technical Help", icon: LifeBuoy },
 ]
