@@ -77,7 +77,18 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
       
       <motion.div layoutId={`card-${article.headline}`} className="relative z-10 w-full max-w-3xl">
-         <Card className="max-h-[85vh] flex flex-col">
+         <Card className="max-h-[85vh] flex flex-col overflow-hidden">
+            {article.imageUrl && (
+              <div className="relative aspect-video flex-shrink-0">
+                <Image
+                  src={article.imageUrl}
+                  alt={article.headline}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            )}
           <CardContent className="p-6 md:p-8 overflow-y-auto">
              <div className="flex justify-between items-start mb-2">
                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{article.source}</p>
@@ -95,7 +106,7 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
           </CardContent>
         </Card>
       </motion.div>
-       <button onClick={onClose} className="absolute top-4 right-4 z-20 text-foreground/70 hover:text-foreground">
+       <button onClick={onClose} className="absolute top-4 right-4 z-20 text-foreground/70 hover:text-foreground bg-background/50 rounded-full p-1">
           <X className="h-6 w-6" />
       </button>
     </motion.div>
@@ -125,8 +136,8 @@ export default function NewsPageClient() {
             sortBy: sort
         });
 
-        if (result.articles.length > 0 && ['Daily Limit Reached', 'API Key Missing', 'Error Fetching News'].includes(result.articles[0].headline)) {
-            setError(result.articles[0].summary + " " + result.articles[0].fullContent);
+        if (result.articles.length > 0 && ['All News Sources Failed', 'Daily Limit Reached', 'API Key Missing', 'Error Fetching News'].includes(result.articles[0].headline)) {
+            setError(result.articles[0].fullContent);
         } else {
             setArticles(result.articles);
         }

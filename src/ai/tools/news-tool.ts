@@ -41,7 +41,7 @@ const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Pro
     return data.articles.filter(filterArticle).map((article: any) => ({
         headline: article.title,
         summary: article.description,
-        fullContent: article.content,
+        fullContent: article.content || article.description, // Use content if available, else description
         source: article.source.name,
         imageUrl: article.image,
     }));
@@ -57,7 +57,7 @@ const fetchFromNewsData = async (query: string): Promise<any[]> => {
     return data.results.filter(filterArticle).map((article: any) => ({
         headline: article.title,
         summary: article.description,
-        fullContent: article.content,
+        fullContent: article.content || article.description,
         source: article.source_id,
         imageUrl: article.image_url,
     }));
