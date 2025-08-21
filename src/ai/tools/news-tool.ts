@@ -54,7 +54,11 @@ export const fetchNewsArticles = ai.defineTool(
                 pageSize: 20,
             });
             
-            console.log('NewsAPI Response:', JSON.stringify(response, null, 2));
+            // Log the raw response to the server terminal for debugging
+            console.log('--- RAW NEWSAPI RESPONSE ---');
+            console.log(JSON.stringify(response, null, 2));
+            console.log('--------------------------');
+
 
             if (response.status !== 'ok') {
                 if ((response as any).code === 'rateLimited') {
