@@ -1,17 +1,17 @@
-"use server";
+'use server';
 
 import {
   getMotivation as getMotivationFlow,
   type MotivationInput,
-} from "@/ai/flows/motivation-corner";
+} from '@/ai/flows/motivation-corner';
 import {
   personalizedFeedback as personalizedFeedbackFlow,
   type PersonalizedFeedbackInput,
-} from "@/ai/flows/personalized-feedback";
+} from '@/ai/flows/personalized-feedback';
 import {
   getNews as getNewsFlow,
   type NewsInput,
-} from "@/ai/flows/news-flow";
+} from '@/ai/flows/news-flow';
 
 export async function getMotivationAction(input: MotivationInput) {
   const result = await getMotivationFlow(input);
@@ -26,6 +26,7 @@ export async function getPersonalizedFeedbackAction(
 }
 
 export async function getNewsAction(input: NewsInput) {
-    const result = await getNewsFlow(input);
-    return result;
+  // This now returns an object with articles and debug info
+  const result = await getNewsFlow(input);
+  return result;
 }

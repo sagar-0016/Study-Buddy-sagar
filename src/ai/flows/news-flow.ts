@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -13,6 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { fetchNewsArticles } from '@/ai/tools/news-tool';
+import type { NewsAPIRequest } from '@/ai/tools/news-tool'; // Import the type
 
 const NewsInputSchema = z.object({
   category: z.string().describe('The category of news, e.g., "JEE", "Literature", "UPSC", "Science".'),
@@ -31,6 +31,7 @@ const ArticleSchema = z.object({
 
 const NewsOutputSchema = z.object({
   articles: z.array(ArticleSchema).describe('A list of 5-7 news articles.'),
+  debugInfo: z.custom<NewsAPIRequest | { mode: string }>().optional(), // Add debug info to output
 });
 export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 
@@ -38,14 +39,15 @@ export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 export async function getNews(input: NewsInput): Promise<NewsOutput> {
   // If not using AI, directly call the tool and bypass the AI flow.
   if (!input.useAi) {
-    const liveArticles = await fetchNewsArticles({ 
+    const { articles, requestParams } = await fetchNewsArticles({ 
         query: input.category, 
         sortBy: input.sortBy || 'latest'
     });
-    return { articles: liveArticles };
+    return { articles, debugInfo: requestParams };
   }
   // If using AI, call the generative flow.
-  return newsGenFlow(input);
+  const aiResult = await newsGenFlow(input);
+  return { ...aiResult, debugInfo: { mode: 'AI Generated' } };
 }
 
 
@@ -53,7 +55,7 @@ export async function getNews(input: NewsInput): Promise<NewsOutput> {
 const newsGenPrompt = ai.definePrompt({
   name: 'newsGenPrompt',
   input: {schema: NewsInputSchema},
-  output: {schema: NewsOutputSchema},
+  output: {schema: z.object({ articles: z.array(ArticleSchema) })}, // Output only articles here
   prompt: `You are an expert news curator for a study application.
   Your task is to generate a list of 5-7 plausible-sounding news articles from the current year, based on the user-selected category: '{{category}}'.
   The tone should be professional and informative.
@@ -80,7 +82,7 @@ const newsGenFlow = ai.defineFlow(
   {
     name: 'newsGenFlow',
     inputSchema: NewsInputSchema,
-    outputSchema: NewsOutputSchema,
+    outputSchema: z.object({ articles: z.array(ArticleSchema) }),
   },
   async input => {
     const {output} = await newsGenPrompt(input);

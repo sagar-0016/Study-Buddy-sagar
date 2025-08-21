@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -125,6 +124,12 @@ export default function NewsPageClient() {
             useAi: mode === 'ai',
             sortBy: sort
         });
+
+        // Log the debug info to the browser console
+        console.log("--- News API Request Details ---");
+        console.log(result.debugInfo);
+        console.log("------------------------------");
+
         if (result.articles.length > 0 && ['Daily Limit Reached', 'API Key Missing', 'Error Fetching News'].includes(result.articles[0].headline)) {
             setError(result.articles[0].summary + " " + result.articles[0].fullContent);
         } else {
