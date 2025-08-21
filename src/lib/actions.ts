@@ -26,7 +26,6 @@ export async function getPersonalizedFeedbackAction(
 }
 
 export async function getNewsAction(input: NewsInput) {
-  // This now returns an object with articles and debug info
   const result = await getNewsFlow(input);
   return result;
 }

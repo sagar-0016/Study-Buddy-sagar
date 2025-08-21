@@ -12,7 +12,6 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { fetchNewsArticles } from '@/ai/tools/news-tool';
-import type { NewsDebugInfo } from '@/ai/tools/news-tool';
 
 const NewsInputSchema = z.object({
   category: z.string().describe('The category of news, e.g., "JEE", "Literature", "UPSC", "Science".'),
@@ -31,7 +30,6 @@ const ArticleSchema = z.object({
 
 const NewsOutputSchema = z.object({
   articles: z.array(ArticleSchema).describe('A list of 5-7 news articles.'),
-  debugInfo: z.custom<NewsDebugInfo | { mode: string }>(),
 });
 export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 
@@ -39,15 +37,14 @@ export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 export async function getNews(input: NewsInput): Promise<NewsOutput> {
   // If not using AI, directly call the tool and bypass the AI flow.
   if (!input.useAi) {
-    const { articles, debugInfo } = await fetchNewsArticles({ 
+    const articles = await fetchNewsArticles({ 
         query: input.category, 
         sortBy: input.sortBy || 'latest'
     });
-    return { articles, debugInfo };
+    return { articles };
   }
   // If using AI, call the generative flow.
-  const aiResult = await newsGenFlow(input);
-  return { ...aiResult, debugInfo: { mode: 'AI Generated' } };
+  return await newsGenFlow(input);
 }
 
 
@@ -55,7 +52,7 @@ export async function getNews(input: NewsInput): Promise<NewsOutput> {
 const newsGenPrompt = ai.definePrompt({
   name: 'newsGenPrompt',
   input: {schema: NewsInputSchema},
-  output: {schema: z.object({ articles: z.array(ArticleSchema) })}, // Output only articles here
+  output: {schema: NewsOutputSchema}, 
   prompt: `You are an expert news curator for a study application.
   Your task is to generate a list of 5-7 plausible-sounding news articles from the current year, based on the user-selected category: '{{category}}'.
   The tone should be professional and informative.
@@ -82,7 +79,7 @@ const newsGenFlow = ai.defineFlow(
   {
     name: 'newsGenFlow',
     inputSchema: NewsInputSchema,
-    outputSchema: z.object({ articles: z.array(ArticleSchema) }),
+    outputSchema: NewsOutputSchema,
   },
   async input => {
     const {output} = await newsGenPrompt(input);
