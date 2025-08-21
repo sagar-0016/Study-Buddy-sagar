@@ -51,10 +51,10 @@ const newsGenPrompt = ai.definePrompt({
   input: {schema: NewsInputSchema},
   output: {schema: NewsOutputSchema},
   prompt: `You are an expert news curator for a study application.
-  Your task is to generate a list of 5-7 recent, relevant, and insightful news articles or summaries based on the user-selected category: '{{category}}'.
+  Your task is to generate a list of 5-7 plausible-sounding news articles from the current year, based on the user-selected category: '{{category}}'.
+  The tone should be professional and informative.
   For the 'fullContent' field, generate a plausible paragraph expanding on the summary.
-  For the 'imageUrl' field, you must leave it blank.
-  For 'imageKeywords', you MUST generate 1-2 relevant keywords (e.g., 'stock market', 'student exam') based on the headline so a placeholder image can be shown.
+  Do not include image URLs.
 
   **IMPORTANT CONTENT GUIDELINES:**
   - **ABSOLUTELY NO SENSATIONALISM:** Avoid clickbait headlines.
