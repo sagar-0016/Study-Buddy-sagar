@@ -2,14 +2,10 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import NewsAPI from 'newsapi';
-import type { TopHeadlinesRequest } from 'newsapi';
 
-// This will be populated from your .env file
-const newsApiKey = process.env.NEWS_API_KEY || '';
-
-// Initialize the NewsAPI client if the key is available
-const newsApi = newsApiKey ? new NewsAPI(newsApiKey) : null;
+const gnewsApiKey = process.env.GNEWS_API_KEY || '';
+const newsdataApiKey = process.env.NEWSDATA_API_KEY || '';
+const thenewsapiToken = process.env.THENEWSAPI_API_TOKEN || '';
 
 const NewsToolInputSchema = z.object({
     query: z.string().describe("The search query or category for the news, e.g., 'JEE exam', 'UPSC policy', 'Indian literature'."),
@@ -24,86 +20,104 @@ const ArticleSchema = z.object({
   imageUrl: z.string().optional(),
 });
 
-// The tool now only outputs an array of articles.
 const ToolOutputSchema = z.array(ArticleSchema);
+
+const forbiddenKeywords = ['murder', 'rape', 'kidnap', 'assault', 'violence', 'crime', 'death', 'killed', 'shot', 'terrorist', 'attack'];
+
+const filterArticle = (article: any): boolean => {
+    const titleLower = article.title?.toLowerCase() || '';
+    const descriptionLower = article.description?.toLowerCase() || '';
+    if (!article.description || !article.title || article.title === '[Removed]') return false;
+    return !forbiddenKeywords.some(keyword => titleLower.includes(keyword) || descriptionLower.includes(keyword));
+};
+
+// Fetcher for GNews
+const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Promise<any[]> => {
+    if (!gnewsApiKey) throw new Error("GNews API key is missing.");
+    const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&country=in&max=10&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`GNews API error: ${response.statusText}`);
+    const data = await response.json();
+    return data.articles.filter(filterArticle).map((article: any) => ({
+        headline: article.title,
+        summary: article.description,
+        fullContent: article.content,
+        source: article.source.name,
+        imageUrl: article.image,
+    }));
+};
+
+// Fetcher for NewsData.io
+const fetchFromNewsData = async (query: string): Promise<any[]> => {
+    if (!newsdataApiKey) throw new Error("NewsData.io API key is missing.");
+    const url = `https://newsdata.io/api/1/latest?apikey=${newsdataApiKey}&q=${encodeURIComponent(query)}&language=en&country=in`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`NewsData.io API error: ${response.statusText}`);
+    const data = await response.json();
+    return data.results.filter(filterArticle).map((article: any) => ({
+        headline: article.title,
+        summary: article.description,
+        fullContent: article.content,
+        source: article.source_id,
+        imageUrl: article.image_url,
+    }));
+};
+
+// Fetcher for TheNewsAPI
+const fetchFromTheNewsAPI = async (query: string): Promise<any[]> => {
+    if (!thenewsapiToken) throw new Error("TheNewsAPI token is missing.");
+    const url = `https://api.thenewsapi.com/v1/news/all?api_token=${thenewsapiToken}&search=${encodeURIComponent(query)}&language=en&locale=in&limit=5`;
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`TheNewsAPI error: ${response.statusText}`);
+    const data = await response.json();
+    return data.data.filter(filterArticle).map((article: any) => ({
+        headline: article.title,
+        summary: article.snippet,
+        fullContent: article.snippet, // This API provides snippet, not full content
+        source: article.source,
+        imageUrl: article.image_url,
+    }));
+};
 
 export const fetchNewsArticles = ai.defineTool(
     {
         name: 'fetchNewsArticles',
-        description: 'Fetches live news articles from a trusted source based on a query. Use this to get up-to-date information on various topics.',
+        description: 'Fetches live news articles from multiple trusted sources with a fallback mechanism.',
         input: { schema: NewsToolInputSchema },
         output: { schema: ToolOutputSchema },
     },
     async ({ query, sortBy }) => {
-        if (!newsApi) {
-            console.error('NewsAPI key is missing.');
-            return [{
-                headline: 'API Key Missing',
-                summary: "The NewsAPI key is not configured in the environment variables.",
-                fullContent: "To fetch live news, please add your NewsAPI key to the .env file in the root of your project. You can get a free key from newsapi.org. For now, please use the AI-generated news mode.",
-                source: 'Study Buddy System',
-            }];
-        }
-        
-        const requestParams: TopHeadlinesRequest = {
-            q: ['General', 'Science', 'Literature'].includes(query) ? undefined : query,
-            category: ['General', 'Science', 'Literature'].includes(query) ? query.toLowerCase() as any : undefined,
-            language: 'en',
-            country: 'in', // Focus on India
-            sortBy: sortBy === 'latest' ? 'publishedAt' : 'relevancy',
-            pageSize: 20,
-        };
-
         try {
-            console.log("Calling NewsAPI with params:", requestParams);
-            const response = await newsApi.v2.topHeadlines(requestParams);
-            console.log('--- RAW NEWSAPI RESPONSE ---');
-            console.log(JSON.stringify(response, null, 2));
-            
-            if (response.status !== 'ok') {
-                if ((response as any).code === 'rateLimited') {
+            console.log("Attempting to fetch news from GNews...");
+            const articles = await fetchFromGNews(query, sortBy);
+            if (articles.length > 0) return articles.slice(0, 10);
+            console.log("GNews returned no articles, trying NewsData.io...");
+            throw new Error("No articles from GNews");
+        } catch (error) {
+            console.error('GNews API failed:', error);
+            try {
+                console.log("Attempting to fetch news from NewsData.io...");
+                const articles = await fetchFromNewsData(query);
+                if (articles.length > 0) return articles.slice(0, 10);
+                console.log("NewsData.io returned no articles, trying TheNewsAPI...");
+                throw new Error("No articles from NewsData.io");
+            } catch (error2) {
+                console.error('NewsData.io API failed:', error2);
+                try {
+                    console.log("Attempting to fetch news from TheNewsAPI...");
+                    const articles = await fetchFromTheNewsAPI(query);
+                    if (articles.length > 0) return articles.slice(0, 10);
+                    throw new Error("No articles from TheNewsAPI");
+                } catch (error3) {
+                     console.error('TheNewsAPI failed:', error3);
                      return [{
-                        headline: 'Daily Limit Reached',
-                        summary: "The daily usage limit for fetching live news has been exhausted.",
-                        fullContent: "The app's ability to fetch new articles from live sources is limited. This limit has likely been reached. Please switch to AI-generated news or try again tomorrow.",
+                        headline: 'All News Sources Failed',
+                        summary: "Could not fetch live news at this moment from any available source.",
+                        fullContent: `There was an issue connecting to all news services. Please check your internet connection or try again later. You can also switch to AI-generated news.`,
                         source: 'Study Buddy System',
                     }];
                 }
-                throw new Error(`News API error: ${(response as any).message || (response as any).code}`);
             }
-            
-            const forbiddenKeywords = ['murder', 'rape', 'kidnap', 'assault', 'violence', 'crime', 'death', 'killed', 'shot', 'terrorist'];
-            const safeArticles = response.articles.filter(article => {
-                const titleLower = article.title?.toLowerCase() || '';
-                const descriptionLower = article.description?.toLowerCase() || '';
-                if (!article.description || !article.title || article.title === '[Removed]') return false;
-                return !forbiddenKeywords.some(keyword => titleLower.includes(keyword) || descriptionLower.includes(keyword));
-            });
-
-            return safeArticles.slice(0, 10).map(article => ({
-                headline: article.title || 'No Title',
-                summary: article.description || 'No summary available.',
-                fullContent: article.content || article.description || 'Full content not available.',
-                source: article.source.name || 'Unknown Source',
-                imageUrl: article.urlToImage || undefined,
-            }));
-
-        } catch (error: any) {
-            console.error('Failed to fetch news from NewsAPI:', error);
-            if (error.code === 'rateLimited' || (error.message && error.message.includes('rateLimited'))) {
-                 return [{
-                    headline: 'Daily Limit Reached',
-                    summary: "The daily usage limit for fetching live news has been exhausted.",
-                    fullContent: "The app's ability to fetch new articles from live sources is limited. This limit has likely been reached. Please switch to AI-generated news or try again tomorrow.",
-                    source: 'Study Buddy System',
-                }];
-            }
-            return [{
-                headline: 'Error Fetching News',
-                summary: "Could not fetch live news at this moment.",
-                fullContent: `There was an issue connecting to the news service. Please check your internet connection or try again later. You can also switch to AI-generated news. Error details: ${error.message}`,
-                source: 'Study Buddy System',
-            }];
         }
     }
 );
