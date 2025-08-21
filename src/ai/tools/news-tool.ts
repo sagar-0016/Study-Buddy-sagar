@@ -35,6 +35,11 @@ const filterArticle = (article: any): boolean => {
     return !forbiddenKeywords.some(keyword => titleLower.includes(keyword) || descriptionLower.includes(keyword) || contentLower.includes(keyword));
 };
 
+// Helper to get the most complete content available
+const getFullContent = (article: any): string => {
+    return article.content || article.description || article.snippet || '';
+}
+
 // Fetcher for GNews
 const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Promise<{ articles: any[], url: string }> => {
     if (!gnewsApiKey) throw new Error("GNews API key is missing.");
@@ -46,7 +51,7 @@ const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Pro
         articles: data.articles.filter(filterArticle).map((article: any) => ({
             headline: article.title,
             summary: article.description,
-            fullContent: article.content || article.description,
+            fullContent: getFullContent(article),
             source: `GNews / ${article.source.name}`,
             imageUrl: article.image,
             url: article.url,
@@ -66,7 +71,7 @@ const fetchFromNewsData = async (query: string): Promise<{ articles: any[], url:
         articles: data.results.filter(filterArticle).map((article: any) => ({
             headline: article.title,
             summary: article.description,
-            fullContent: article.content || article.description,
+            fullContent: getFullContent(article),
             source: `NewsData.io / ${article.source_id}`,
             imageUrl: article.image_url,
             url: article.link,
@@ -86,7 +91,7 @@ const fetchFromTheNewsAPI = async (query: string): Promise<{ articles: any[], ur
         articles: data.data.filter(filterArticle).map((article: any) => ({
             headline: article.title,
             summary: article.snippet,
-            fullContent: article.description || article.snippet,
+            fullContent: getFullContent(article),
             source: `TheNewsAPI / ${article.source}`,
             imageUrl: article.image_url,
             url: article.url,
