@@ -8,11 +8,40 @@ import Header from "@/components/layout/header";
 import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { AuthProvider, useAuth } from '@/context/auth-context';
+import { BackgroundProvider, useBackground } from '@/context/background-context';
 import LoginFlow from '@/components/auth/login-flow';
 import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
 import { useToast } from '@/hooks/use-toast';
 import { MessageSquareWarning, Loader2 } from 'lucide-react';
 import UnlockScreen from '@/components/auth/unlock-screen';
+
+function AppBackground() {
+  const { isAuthenticated } = useAuth();
+  const { backgroundImage } = useBackground();
+
+  // The background is only shown when the user is authenticated.
+  // The login flow will have the default solid color background.
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  if (backgroundImage) {
+    return (
+      <div
+        className="fixed inset-0 -z-10 h-full w-full bg-cover bg-center"
+        style={{ backgroundImage: `url(${backgroundImage})` }}
+      />
+    );
+  }
+
+  // Default grid background
+  return (
+    <div className="fixed inset-0 -z-10 h-full w-full bg-green-50 dark:bg-black">
+      <div className="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+    </div>
+  );
+}
+
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLocked, lockApp, unlockApp, isReloading } = useAuth();
@@ -132,8 +161,11 @@ function AppContent({ children }: { children: React.ReactNode }) {
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <AppContent>{children}</AppContent>
-      <Toaster />
+      <BackgroundProvider>
+        <AppBackground />
+        <AppContent>{children}</AppContent>
+        <Toaster />
+      </BackgroundProvider>
     </AuthProvider>
   );
 }
