@@ -24,7 +24,6 @@ type Article = {
   fullContent: string;
   source: string;
   imageUrl?: string;
-  imageKeywords?: string;
 };
 
 type NewsCategory = 'General' | 'JEE' | 'UPSC' | 'Science' | 'Literature';
@@ -33,7 +32,6 @@ type NewsMode = 'live' | 'ai';
 type SortMode = 'latest' | 'relevant';
 
 const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: () => void; }) => {
-
   return (
     <motion.div
       layoutId={`card-${article.headline}`}
@@ -48,6 +46,8 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
               alt={article.headline}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              data-ai-hint="news article"
               unoptimized={true} 
             />
           </div>
@@ -201,25 +201,8 @@ export default function NewsPageClient() {
                 </SelectContent>
                 </Select>
             </div>
-            <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
-                 <Button 
-                    variant={mode === 'live' ? 'secondary' : 'ghost'} 
-                    onClick={() => setMode('live')}
-                    className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
-                >
-                    <Tv className="mr-2 h-4 w-4"/>
-                    Live News
-                </Button>
-                <Button 
-                    variant={mode === 'ai' ? 'secondary' : 'ghost'} 
-                    onClick={() => setMode('ai')}
-                    className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
-                >
-                    <Bot className="mr-2 h-4 w-4"/>
-                    AI Generated
-                </Button>
-            </div>
-             {mode === 'live' && (
+
+            {mode === 'live' && (
                 <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
                     <Button 
                         variant={sort === 'latest' ? 'secondary' : 'ghost'} 
@@ -238,7 +221,26 @@ export default function NewsPageClient() {
                         Relevant
                     </Button>
                 </div>
-             )}
+            )}
+
+            <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg ml-auto">
+                 <Button 
+                    variant={mode === 'live' ? 'secondary' : 'ghost'} 
+                    onClick={() => setMode('live')}
+                    className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
+                >
+                    <Tv className="mr-2 h-4 w-4"/>
+                    Live News
+                </Button>
+                <Button 
+                    variant={mode === 'ai' ? 'secondary' : 'ghost'} 
+                    onClick={() => setMode('ai')}
+                    className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
+                >
+                    <Bot className="mr-2 h-4 w-4"/>
+                    AI Generated
+                </Button>
+            </div>
         </div>
         
         {renderContent()}
