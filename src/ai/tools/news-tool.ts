@@ -52,7 +52,7 @@ export const fetchNewsArticles = ai.defineTool(
             });
 
             if (response.status !== 'ok') {
-                if (response.code === 'rateLimited') {
+                if ((response as any).code === 'rateLimited') {
                      return [{
                         headline: 'Daily Limit Reached',
                         summary: "The daily usage limit for fetching live news has been exhausted.",
@@ -60,7 +60,7 @@ export const fetchNewsArticles = ai.defineTool(
                         source: 'Study Buddy System',
                     }];
                 }
-                throw new Error(`News API error: ${response.code}`);
+                throw new Error(`News API error: ${(response as any).code}`);
             }
             
             // Filter out articles with sensitive keywords in the title or description
