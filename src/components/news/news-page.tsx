@@ -190,7 +190,7 @@ export default function NewsPageClient() {
                 </Select>
             </div>
             <div className="flex items-center space-x-2">
-                 <Label htmlFor="ai-mode" className="flex items-center gap-2">
+                 <Label htmlFor="ai-mode" className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Tv className="h-5 w-5"/>
                     Live News
                 </Label>
@@ -199,7 +199,7 @@ export default function NewsPageClient() {
                     checked={mode === 'ai'}
                     onCheckedChange={(checked) => setMode(checked ? 'ai' : 'live')}
                 />
-                <Label htmlFor="ai-mode" className="flex items-center gap-2">
+                <Label htmlFor="ai-mode" className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Bot className="h-5 w-5"/>
                     AI Generated
                 </Label>
