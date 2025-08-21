@@ -36,7 +36,6 @@ export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 
 export async function getNews(input: NewsInput): Promise<NewsOutput> {
   // If not using AI, directly call the tool and bypass the AI flow.
-  // This is more efficient for just fetching data.
   if (!input.useAi) {
     const liveArticles = await fetchNewsArticles({ query: input.category });
     return { articles: liveArticles };
@@ -54,6 +53,8 @@ const newsGenPrompt = ai.definePrompt({
   prompt: `You are an expert news curator for a study application.
   Your task is to generate a list of 5-7 recent, relevant, and insightful news articles or summaries based on the user-selected category: '{{category}}'.
   For the 'fullContent' field, generate a plausible paragraph expanding on the summary.
+  For the 'imageUrl' field, you must leave it blank.
+  For 'imageKeywords', you MUST generate 1-2 relevant keywords (e.g., 'stock market', 'student exam') based on the headline so a placeholder image can be shown.
 
   **IMPORTANT CONTENT GUIDELINES:**
   - **ABSOLUTELY NO SENSATIONALISM:** Avoid clickbait headlines.

@@ -32,6 +32,7 @@ type NewsMode = 'live' | 'ai';
 
 const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: () => void; }) => {
   const hasImage = article.imageUrl || article.imageKeywords;
+  const isAiGenerated = !!article.imageKeywords;
 
   return (
     <motion.div
@@ -58,7 +59,7 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
           <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{article.summary}</p>
           <div className="flex justify-between items-center mt-4">
              <span className="text-sm font-semibold text-primary">Read More</span>
-             {article.imageKeywords && <Bot className="h-4 w-4 text-muted-foreground" />}
+             {isAiGenerated && <Bot className="h-4 w-4 text-muted-foreground" title="AI-Generated Content" />}
           </div>
         </CardContent>
       </Card>
@@ -68,6 +69,7 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
 
 const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClose: () => void; }) => {
   if (!article) return null;
+  const isAiGenerated = !!article.imageKeywords;
   
   return (
     <motion.div
@@ -81,7 +83,15 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
       <motion.div layoutId={`card-${article.headline}`} className="relative z-10 w-full max-w-3xl">
          <Card className="max-h-[85vh] flex flex-col">
           <CardContent className="p-6 md:p-8 overflow-y-auto">
-            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">{article.source}</p>
+             <div className="flex justify-between items-start mb-2">
+                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{article.source}</p>
+                 {isAiGenerated && (
+                    <div className="flex items-center gap-1 text-xs font-semibold bg-muted text-muted-foreground px-2 py-1 rounded-full">
+                        <Bot className="h-3 w-3" />
+                        <span>AI-Generated</span>
+                    </div>
+                )}
+             </div>
             <h2 className="text-2xl md:text-3xl font-bold mb-4">{article.headline}</h2>
             <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
               {article.fullContent}
@@ -109,13 +119,13 @@ export default function NewsPageClient() {
     const fetchNews = async () => {
       setIsLoading(true);
       setError(null);
+      setArticles([]);
       
       try {
         const result = await getNewsAction({ category, useAi: mode === 'ai' });
-        // Check for the specific rate limit error message from the tool
-        if (result.articles.length === 1 && result.articles[0].headline === 'Daily Limit Reached') {
-            setError("The daily usage limit for fetching live news has been exhausted for today. Please switch to AI-generated news or try again tomorrow.");
-            setArticles([]);
+        // Check for specific error messages from the tool
+        if (result.articles.length > 0 && ['Daily Limit Reached', 'API Key Missing', 'Error Fetching News'].includes(result.articles[0].headline)) {
+            setError(result.articles[0].summary + " " + result.articles[0].fullContent);
         } else {
             setArticles(result.articles);
         }
@@ -150,7 +160,7 @@ export default function NewsPageClient() {
              <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[40vh] bg-destructive/10 border-destructive">
                 <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
                 <h3 className="text-lg font-semibold text-destructive-foreground">An Error Occurred</h3>
-                <p className="text-destructive-foreground/80">{error}</p>
+                <p className="text-destructive-foreground/80 max-w-prose">{error}</p>
             </div>
         )
     }
@@ -190,7 +200,7 @@ export default function NewsPageClient() {
                 </Select>
             </div>
             <div className="flex items-center space-x-2">
-                 <Label htmlFor="ai-mode" className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                 <Label htmlFor="ai-mode" className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Tv className="h-5 w-5"/>
                     Live News
                 </Label>
@@ -199,7 +209,7 @@ export default function NewsPageClient() {
                     checked={mode === 'ai'}
                     onCheckedChange={(checked) => setMode(checked ? 'ai' : 'live')}
                 />
-                <Label htmlFor="ai-mode" className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Label htmlFor="ai-mode" className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <Bot className="h-5 w-5"/>
                     AI Generated
                 </Label>

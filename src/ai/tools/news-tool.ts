@@ -4,7 +4,11 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import NewsAPI from 'newsapi';
 
-const newsApi = new NewsAPI(process.env.NEWS_API_KEY || '');
+// This will be populated from your .env file
+const newsApiKey = process.env.NEWS_API_KEY || '';
+
+// Initialize the NewsAPI client if the key is available
+const newsApi = newsApiKey ? new NewsAPI(newsApiKey) : null;
 
 const NewsToolInputSchema = z.object({
     query: z.string().describe("The search query or category for the news, e.g., 'JEE exam', 'UPSC policy', 'Indian literature'."),
@@ -26,24 +30,41 @@ export const fetchNewsArticles = ai.defineTool(
         output: { schema: z.array(ArticleSchema) },
     },
     async ({ query }) => {
+        if (!newsApi) {
+            console.error('NewsAPI key is missing. Returning an error message.');
+            return [{
+                headline: 'API Key Missing',
+                summary: "The NewsAPI key is not configured in the environment variables.",
+                fullContent: "To fetch live news, please add your NewsAPI key to the .env file in the root of your project. You can get a free key from newsapi.org. For now, please use the AI-generated news mode.",
+                source: 'Study Buddy System',
+            }];
+        }
+
         try {
-            console.log(`Fetching news for query: ${query}`);
+            console.log(`Fetching live news for query: ${query}`);
             const response = await newsApi.v2.everything({
                 q: query,
                 language: 'en',
                 sortBy: 'relevancy',
                 pageSize: 10,
-                // Exclude sensationalist or inappropriate domains if needed
-                excludeDomains: 'tmz.com, dailymail.co.uk'
+                // Exclude sensationalist or inappropriate domains
+                excludeDomains: 'tmz.com, dailymail.co.uk, thesun.co.uk'
             });
 
             if (response.status !== 'ok') {
-                // This will be caught by the catch block below
+                if (response.code === 'rateLimited') {
+                     return [{
+                        headline: 'Daily Limit Reached',
+                        summary: "The daily usage limit for fetching live news has been exhausted.",
+                        fullContent: "The app's ability to fetch new articles from live sources is limited. This limit has likely been reached. Please switch to AI-generated news or try again tomorrow.",
+                        source: 'Study Buddy System',
+                    }];
+                }
                 throw new Error(`News API error: ${response.code}`);
             }
             
             // Filter out articles with sensitive keywords in the title or description
-            const forbiddenKeywords = ['murder', 'rape', 'kidnap', 'assault', 'violence', 'crime'];
+            const forbiddenKeywords = ['murder', 'rape', 'kidnap', 'assault', 'violence', 'crime', 'death', 'killed', 'shot'];
             const safeArticles = response.articles.filter(article => {
                 const titleLower = article.title?.toLowerCase() || '';
                 const descriptionLower = article.description?.toLowerCase() || '';
@@ -59,15 +80,22 @@ export const fetchNewsArticles = ai.defineTool(
                 imageUrl: article.urlToImage || undefined,
             }));
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to fetch news from NewsAPI:', error);
-            // Return a specific error object that the frontend can check for.
+            // Handle specific error codes if available from the newsapi client
+            if (error.code === 'rateLimited' || error.message.includes('rateLimited')) {
+                 return [{
+                    headline: 'Daily Limit Reached',
+                    summary: "The daily usage limit for fetching live news has been exhausted.",
+                    fullContent: "The app's ability to fetch new articles from live sources is limited. This limit has likely been reached. Please switch to AI-generated news or try again tomorrow.",
+                    source: 'Study Buddy System',
+                }];
+            }
             return [{
-                headline: 'Daily Limit Reached',
-                summary: "The daily usage limit for fetching live news has likely been exhausted.",
-                fullContent: "The app's ability to fetch new articles from live sources is limited to 100 requests per day. This limit has likely been reached. You can switch to AI-generated news or try again tomorrow.",
+                headline: 'Error Fetching News',
+                summary: "Could not fetch live news at this moment.",
+                fullContent: "There was an issue connecting to the news service. Please check your internet connection or try again later. You can also switch to AI-generated news.",
                 source: 'Study Buddy System',
-                imageUrl: undefined,
             }];
         }
     }
