@@ -8,6 +8,10 @@ import {
   personalizedFeedback as personalizedFeedbackFlow,
   type PersonalizedFeedbackInput,
 } from "@/ai/flows/personalized-feedback";
+import {
+  getNews as getNewsFlow,
+  type NewsInput,
+} from "@/ai/flows/news-flow";
 
 export async function getMotivationAction(input: MotivationInput) {
   const result = await getMotivationFlow(input);
@@ -19,4 +23,9 @@ export async function getPersonalizedFeedbackAction(
 ) {
   const result = await personalizedFeedbackFlow(input);
   return result;
+}
+
+export async function getNewsAction(input: NewsInput) {
+    const result = await getNewsFlow(input);
+    return result;
 }
