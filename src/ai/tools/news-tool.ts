@@ -2,10 +2,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { gnewsApiKey, newsdataApiKey, thenewsapiToken } from '@/lib/api-keys';
 
-const gnewsApiKey = process.env.GNEWS_API_KEY || '';
-const newsdataApiKey = process.env.NEWSDATA_API_KEY || '';
-const thenewsapiToken = process.env.THENEWSAPI_API_TOKEN || '';
 
 const NewsToolInputSchema = z.object({
     query: z.string().describe("The search query or category for the news, e.g., 'JEE exam', 'UPSC policy', 'Indian literature'."),
@@ -18,6 +16,7 @@ const ArticleSchema = z.object({
   fullContent: z.string(),
   source: z.string(),
   imageUrl: z.string().optional(),
+  url: z.string(),
 });
 
 const ToolOutputSchema = z.array(ArticleSchema);
@@ -27,8 +26,9 @@ const forbiddenKeywords = ['murder', 'rape', 'kidnap', 'assault', 'violence', 'c
 const filterArticle = (article: any): boolean => {
     const titleLower = article.title?.toLowerCase() || '';
     const descriptionLower = article.description?.toLowerCase() || '';
+    const contentLower = article.content?.toLowerCase() || '';
     if (!article.description || !article.title || article.title === '[Removed]') return false;
-    return !forbiddenKeywords.some(keyword => titleLower.includes(keyword) || descriptionLower.includes(keyword));
+    return !forbiddenKeywords.some(keyword => titleLower.includes(keyword) || descriptionLower.includes(keyword) || contentLower.includes(keyword));
 };
 
 // Fetcher for GNews
@@ -41,9 +41,10 @@ const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Pro
     return data.articles.filter(filterArticle).map((article: any) => ({
         headline: article.title,
         summary: article.description,
-        fullContent: article.content || article.description, // Use content if available, else description
+        fullContent: article.content || article.description,
         source: article.source.name,
         imageUrl: article.image,
+        url: article.url,
     }));
 };
 
@@ -60,6 +61,7 @@ const fetchFromNewsData = async (query: string): Promise<any[]> => {
         fullContent: article.content || article.description,
         source: article.source_id,
         imageUrl: article.image_url,
+        url: article.link,
     }));
 };
 
@@ -73,9 +75,10 @@ const fetchFromTheNewsAPI = async (query: string): Promise<any[]> => {
     return data.data.filter(filterArticle).map((article: any) => ({
         headline: article.title,
         summary: article.snippet,
-        fullContent: article.snippet, // This API provides snippet, not full content
+        fullContent: article.description || article.snippet,
         source: article.source,
         imageUrl: article.image_url,
+        url: article.url,
     }));
 };
 
@@ -115,6 +118,7 @@ export const fetchNewsArticles = ai.defineTool(
                         summary: "Could not fetch live news at this moment from any available source.",
                         fullContent: `There was an issue connecting to all news services. Please check your internet connection or try again later. You can also switch to AI-generated news.`,
                         source: 'Study Buddy System',
+                        url: '#',
                     }];
                 }
             }

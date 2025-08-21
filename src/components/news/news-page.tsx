@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Newspaper, AlertTriangle, X, Bot, Tv, Zap, BarChart } from 'lucide-react';
+import { Newspaper, AlertTriangle, X, Bot, Tv, Zap, BarChart, ExternalLink } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,12 +23,34 @@ type Article = {
   fullContent: string;
   source: string;
   imageUrl?: string;
+  url: string;
 };
 
 type NewsCategory = 'General' | 'JEE' | 'UPSC' | 'Science' | 'Literature';
 const newsCategories: NewsCategory[] = ['General', 'JEE', 'UPSC', 'Science', 'Literature'];
 type NewsMode = 'live' | 'ai';
 type SortMode = 'latest' | 'relevant';
+
+const ArticleImage = ({ article }: { article: Article }) => {
+    const [src, setSrc] = useState(article.imageUrl);
+    const fallbackSrc = 'https://placehold.co/600x400.png';
+
+    useEffect(() => {
+        setSrc(article.imageUrl);
+    }, [article.imageUrl]);
+
+    return (
+        <Image
+            src={src || fallbackSrc}
+            alt={article.headline}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            onError={() => setSrc(fallbackSrc)}
+            unoptimized={true} // Use unoptimized as we're fetching from many external sources
+        />
+    )
+}
 
 const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: () => void; }) => {
   return (
@@ -40,14 +62,7 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col border-0">
         {article.imageUrl ? (
           <div className="relative aspect-video overflow-hidden">
-            <Image
-              src={article.imageUrl}
-              alt={article.headline}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              unoptimized={true} 
-            />
+            <ArticleImage article={article} />
           </div>
         ) : null}
         <CardContent className={cn("p-4 flex-grow flex flex-col", !article.imageUrl && "pt-6")}>
@@ -80,13 +95,7 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
          <Card className="max-h-[85vh] flex flex-col overflow-hidden">
             {article.imageUrl && (
               <div className="relative aspect-video flex-shrink-0">
-                <Image
-                  src={article.imageUrl}
-                  alt={article.headline}
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
+                <ArticleImage article={article} />
               </div>
             )}
           <CardContent className="p-6 md:p-8 overflow-y-auto">
@@ -103,6 +112,11 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
             <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
               {article.fullContent}
             </div>
+             <Button asChild className="mt-6">
+                <a href={article.url} target="_blank" rel="noopener noreferrer">
+                    Read Full Article <ExternalLink className="ml-2 h-4 w-4" />
+                </a>
+            </Button>
           </CardContent>
         </Card>
       </motion.div>
