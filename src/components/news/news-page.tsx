@@ -80,6 +80,10 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
 
 const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClose: () => void; }) => {
   if (!article) return null;
+
+  // Check if the full content HTML string contains an <img> tag.
+  const contentHasImage = /<img[^>]+>/i.test(article.fullContent);
+  const showTopImage = article.imageUrl && !contentHasImage;
   
   return (
     <motion.div
@@ -92,12 +96,12 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
       
       <motion.div layoutId={`card-${article.headline}-${article.url}`} className="relative z-10 w-full max-w-3xl">
          <Card className="max-h-[85vh] flex flex-col overflow-hidden">
-            {article.imageUrl && (
-              <div className="relative aspect-video flex-shrink-0">
+          <CardContent className="p-6 md:p-8 overflow-y-auto">
+             {showTopImage && (
+              <div className="relative aspect-video mb-6 rounded-lg overflow-hidden">
                 <ArticleImage article={article} />
               </div>
             )}
-          <CardContent className="p-6 md:p-8 overflow-y-auto">
              <div className="flex justify-between items-start mb-2">
                 <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{article.source}</p>
                  {article.source === 'Study Buddy System' && (
@@ -155,9 +159,7 @@ export default function NewsPageClient() {
         });
 
         if (result.debugUrls && result.debugUrls.length > 0) {
-            console.log("--- DEBUG: API URLs Fetched ---");
-            result.debugUrls.forEach(url => console.log(url));
-            console.log("-------------------------------");
+            result.debugUrls.forEach(url => console.log(`Fetched API URL: ${url}`));
         }
 
         if (result.articles.length > 0 && (result.articles[0].headline.includes('Failed') || result.articles[0].headline.includes('Error'))) {
