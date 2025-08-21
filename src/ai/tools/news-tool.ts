@@ -8,6 +8,7 @@ import { gnewsApiKey, newsdataApiKey, thenewsapiToken } from '@/lib/api-keys';
 const NewsToolInputSchema = z.object({
     query: z.string().describe("The search query or category for the news, e.g., 'JEE exam', 'UPSC policy', 'Indian literature'."),
     sortBy: z.enum(['latest', 'relevant']).describe('Sorting preference for live news. "latest" for published date, "relevant" for relevancy.'),
+    sourceApi: z.enum(['auto', 'gnews', 'newsdata', 'thenewsapi']).optional().default('auto').describe('The specific API to use, or "auto" for fallback.'),
 });
 
 const ArticleSchema = z.object({
@@ -16,7 +17,7 @@ const ArticleSchema = z.object({
   fullContent: z.string(),
   source: z.string(),
   imageUrl: z.string().optional(),
-  url: z.string(),
+  url: z.string().url(),
 });
 
 const ToolOutputSchema = z.array(ArticleSchema);
@@ -42,7 +43,7 @@ const fetchFromGNews = async (query: string, sortBy: 'latest' | 'relevant'): Pro
         headline: article.title,
         summary: article.description,
         fullContent: article.content || article.description,
-        source: article.source.name,
+        source: `GNews / ${article.source.name}`,
         imageUrl: article.image,
         url: article.url,
     }));
@@ -59,7 +60,7 @@ const fetchFromNewsData = async (query: string): Promise<any[]> => {
         headline: article.title,
         summary: article.description,
         fullContent: article.content || article.description,
-        source: article.source_id,
+        source: `NewsData.io / ${article.source_id}`,
         imageUrl: article.image_url,
         url: article.link,
     }));
@@ -76,7 +77,7 @@ const fetchFromTheNewsAPI = async (query: string): Promise<any[]> => {
         headline: article.title,
         summary: article.snippet,
         fullContent: article.description || article.snippet,
-        source: article.source,
+        source: `TheNewsAPI / ${article.source}`,
         imageUrl: article.image_url,
         url: article.url,
     }));
@@ -85,11 +86,36 @@ const fetchFromTheNewsAPI = async (query: string): Promise<any[]> => {
 export const fetchNewsArticles = ai.defineTool(
     {
         name: 'fetchNewsArticles',
-        description: 'Fetches live news articles from multiple trusted sources with a fallback mechanism.',
+        description: 'Fetches live news articles from multiple trusted sources with a fallback mechanism, or from a specific source.',
         input: { schema: NewsToolInputSchema },
         output: { schema: ToolOutputSchema },
     },
-    async ({ query, sortBy }) => {
+    async ({ query, sortBy, sourceApi }) => {
+        const services = {
+            gnews: () => fetchFromGNews(query, sortBy),
+            newsdata: () => fetchFromNewsData(query),
+            thenewsapi: () => fetchFromTheNewsAPI(query),
+        };
+
+        if (sourceApi && sourceApi !== 'auto') {
+            try {
+                console.log(`Attempting to fetch news from specified source: ${sourceApi}`);
+                const articles = await services[sourceApi]();
+                if (articles.length > 0) return articles.slice(0, 10);
+                throw new Error(`No articles from ${sourceApi}`);
+            } catch (error) {
+                console.error(`${sourceApi} API failed:`, error);
+                return [{
+                    headline: 'Selected News Source Failed',
+                    summary: `Could not fetch news from ${sourceApi} at this moment.`,
+                    fullContent: `There was an issue connecting to the selected service. Please try another source or switch to 'Auto' mode. Error: ${(error as Error).message}`,
+                    source: 'Study Buddy System',
+                    url: '#',
+                }];
+            }
+        }
+        
+        // Auto fallback logic
         try {
             console.log("Attempting to fetch news from GNews...");
             const articles = await fetchFromGNews(query, sortBy);

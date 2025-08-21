@@ -17,6 +17,7 @@ const NewsInputSchema = z.object({
   category: z.string().describe('The category of news, e.g., "JEE", "Literature", "UPSC", "Science".'),
   useAi: z.boolean().describe('Whether to use AI to generate news or a tool to fetch live news.'),
   sortBy: z.enum(['latest', 'relevant']).optional().describe('Sorting preference for live news. "latest" for published date, "relevant" for relevancy.'),
+  sourceApi: z.enum(['auto', 'gnews', 'newsdata', 'thenewsapi']).optional().describe('The specific API to use, or "auto" for fallback.'),
 });
 export type NewsInput = z.infer<typeof NewsInputSchema>;
 
@@ -25,7 +26,8 @@ const ArticleSchema = z.object({
   summary: z.string().describe('A brief, 1-2 sentence summary of the article.'),
   fullContent: z.string().describe('The full content of the article, if available.'),
   source: z.string().describe('The original source of the article, e.g., "The Hindu", "Reuters".'),
-  imageUrl: z.string().optional().describe('A URL to a relevant image for the article.'),
+  imageUrl: z.string().url().optional().describe('A URL to a relevant image for the article.'),
+  url: z.string().url().describe('A URL to the original article.'),
 });
 
 const NewsOutputSchema = z.object({
@@ -39,7 +41,8 @@ export async function getNews(input: NewsInput): Promise<NewsOutput> {
   if (!input.useAi) {
     const articles = await fetchNewsArticles({ 
         query: input.category, 
-        sortBy: input.sortBy || 'latest'
+        sortBy: input.sortBy || 'latest',
+        sourceApi: input.sourceApi || 'auto',
     });
     return { articles };
   }
@@ -57,6 +60,7 @@ const newsGenPrompt = ai.definePrompt({
   Your task is to generate a list of 5-7 plausible-sounding news articles from the current year, based on the user-selected category: '{{category}}'.
   The tone should be professional and informative.
   For the 'fullContent' field, generate a plausible paragraph expanding on the summary.
+  For the 'url' field, use a placeholder like 'https://example.com/news'.
   Do not include image URLs.
 
   **IMPORTANT CONTENT GUIDELINES:**

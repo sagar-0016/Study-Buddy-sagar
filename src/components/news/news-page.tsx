@@ -30,6 +30,7 @@ type NewsCategory = 'General' | 'JEE' | 'UPSC' | 'Science' | 'Literature';
 const newsCategories: NewsCategory[] = ['General', 'JEE', 'UPSC', 'Science', 'Literature'];
 type NewsMode = 'live' | 'ai';
 type SortMode = 'latest' | 'relevant';
+type ApiSource = 'auto' | 'gnews' | 'newsdata' | 'thenewsapi';
 
 const ArticleImage = ({ article }: { article: Article }) => {
     const [src, setSrc] = useState(article.imageUrl);
@@ -47,7 +48,7 @@ const ArticleImage = ({ article }: { article: Article }) => {
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             onError={() => setSrc(fallbackSrc)}
-            unoptimized={true} // Use unoptimized as we're fetching from many external sources
+            unoptimized={true}
         />
     )
 }
@@ -55,7 +56,7 @@ const ArticleImage = ({ article }: { article: Article }) => {
 const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: () => void; }) => {
   return (
     <motion.div
-      layoutId={`card-${article.headline}`}
+      layoutId={`card-${article.headline}-${article.url}`}
       className="block group cursor-pointer"
       onClick={onReadMore}
     >
@@ -91,7 +92,7 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
     >
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={onClose} />
       
-      <motion.div layoutId={`card-${article.headline}`} className="relative z-10 w-full max-w-3xl">
+      <motion.div layoutId={`card-${article.headline}-${article.url}`} className="relative z-10 w-full max-w-3xl">
          <Card className="max-h-[85vh] flex flex-col overflow-hidden">
             {article.imageUrl && (
               <div className="relative aspect-video flex-shrink-0">
@@ -112,11 +113,13 @@ const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClos
             <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
               {article.fullContent}
             </div>
-             <Button asChild className="mt-6">
-                <a href={article.url} target="_blank" rel="noopener noreferrer">
-                    Read Full Article <ExternalLink className="ml-2 h-4 w-4" />
-                </a>
-            </Button>
+            {article.url !== '#' && (
+                 <Button asChild className="mt-6">
+                    <a href={article.url} target="_blank" rel="noopener noreferrer">
+                        Read Full Article <ExternalLink className="ml-2 h-4 w-4" />
+                    </a>
+                </Button>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -135,6 +138,7 @@ export default function NewsPageClient() {
   const [category, setCategory] = useState<NewsCategory>('General');
   const [mode, setMode] = useState<NewsMode>('live');
   const [sort, setSort] = useState<SortMode>('latest');
+  const [apiSource, setApiSource] = useState<ApiSource>('auto');
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
   useEffect(() => {
@@ -147,10 +151,11 @@ export default function NewsPageClient() {
         const result = await getNewsAction({ 
             category, 
             useAi: mode === 'ai',
-            sortBy: sort
+            sortBy: sort,
+            sourceApi: apiSource,
         });
 
-        if (result.articles.length > 0 && ['All News Sources Failed', 'Daily Limit Reached', 'API Key Missing', 'Error Fetching News'].includes(result.articles[0].headline)) {
+        if (result.articles.length > 0 && (result.articles[0].headline.includes('Failed') || result.articles[0].headline.includes('Error'))) {
             setError(result.articles[0].fullContent);
         } else {
             setArticles(result.articles);
@@ -163,7 +168,7 @@ export default function NewsPageClient() {
       }
     };
     fetchNews();
-  }, [category, mode, sort]);
+  }, [category, mode, sort, apiSource]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -204,7 +209,7 @@ export default function NewsPageClient() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles.map((article) => (
-                <ArticleCard key={article.headline} article={article} onReadMore={() => setSelectedArticle(article)} />
+                <ArticleCard key={`${article.headline}-${article.url}`} article={article} onReadMore={() => setSelectedArticle(article)} />
             ))}
         </div>
     )
@@ -212,10 +217,10 @@ export default function NewsPageClient() {
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
-             <div className="w-full lg:w-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
+             <div className="w-full">
                 <Select value={category} onValueChange={(value: NewsCategory) => setCategory(value)}>
-                <SelectTrigger className="w-full lg:w-[200px]">
+                <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -226,9 +231,30 @@ export default function NewsPageClient() {
                 </Select>
             </div>
 
-            <div className="flex-1 flex justify-center">
-                {mode === 'live' && (
-                    <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
+            <div className="flex justify-center items-center">
+                 <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
+                    <Button 
+                        variant={mode === 'live' ? 'secondary' : 'ghost'} 
+                        onClick={() => setMode('live')}
+                        className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
+                    >
+                        <Tv className="mr-2 h-4 w-4"/>
+                        Live News
+                    </Button>
+                    <Button 
+                        variant={mode === 'ai' ? 'secondary' : 'ghost'} 
+                        onClick={() => setMode('ai')}
+                        className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
+                    >
+                        <Bot className="mr-2 h-4 w-4"/>
+                        AI Generated
+                    </Button>
+                </div>
+            </div>
+
+            {mode === 'live' && (
+                <div className="flex justify-center lg:justify-end">
+                     <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
                         <Button 
                             variant={sort === 'latest' ? 'secondary' : 'ghost'} 
                             onClick={() => setSort('latest')}
@@ -246,28 +272,22 @@ export default function NewsPageClient() {
                             Relevant
                         </Button>
                     </div>
-                )}
-            </div>
-
-            <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
-                 <Button 
-                    variant={mode === 'live' ? 'secondary' : 'ghost'} 
-                    onClick={() => setMode('live')}
-                    className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
-                >
-                    <Tv className="mr-2 h-4 w-4"/>
-                    Live News
-                </Button>
-                <Button 
-                    variant={mode === 'ai' ? 'secondary' : 'ghost'} 
-                    onClick={() => setMode('ai')}
-                    className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
-                >
-                    <Bot className="mr-2 h-4 w-4"/>
-                    AI Generated
-                </Button>
-            </div>
+                </div>
+            )}
         </div>
+        
+        {mode === 'live' && (
+            <Card className="p-2 border-0">
+                <CardContent className="p-0">
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                        <Button variant={apiSource === 'auto' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('auto')}>Auto Fallback</Button>
+                        <Button variant={apiSource === 'gnews' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('gnews')}>GNews</Button>
+                        <Button variant={apiSource === 'newsdata' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('newsdata')}>NewsData.io</Button>
+                        <Button variant={apiSource === 'thenewsapi' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('thenewsapi')}>TheNewsAPI</Button>
+                    </div>
+                </CardContent>
+            </Card>
+        )}
         
         {renderContent()}
 
