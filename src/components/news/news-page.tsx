@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -16,6 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Newspaper, AlertTriangle, X, Bot, Tv } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 type Article = {
   headline: string;
@@ -23,7 +25,7 @@ type Article = {
   fullContent: string;
   source: string;
   imageUrl?: string;
-  imageKeywords?: string;
+  imageKeywords?: string; // This will now be ignored by the card, but kept for the flow
 };
 
 type NewsCategory = 'General News' | 'JEE News' | 'UPSC News' | 'UPSC Articles' | 'Literature';
@@ -31,8 +33,7 @@ const newsCategories: NewsCategory[] = ['General News', 'JEE News', 'UPSC News',
 type NewsMode = 'live' | 'ai';
 
 const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: () => void; }) => {
-  const hasImage = article.imageUrl || article.imageKeywords;
-  const isAiGenerated = !!article.imageKeywords;
+  const isAiGenerated = !article.imageUrl && article.imageKeywords; // A better check for AI generation source
 
   return (
     <motion.div
@@ -41,19 +42,18 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
       onClick={onReadMore}
     >
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col border-0">
-        {hasImage && (
+        {article.imageUrl && (
           <div className="relative aspect-video overflow-hidden">
             <Image
-              src={article.imageUrl || `https://placehold.co/400x300.png`}
-              data-ai-hint={article.imageKeywords}
+              src={article.imageUrl}
               alt={article.headline}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
-              unoptimized={!!article.imageUrl} // Don't optimize external news images
+              unoptimized={true} // Don't optimize external news images as their domains are not configured
             />
           </div>
         )}
-        <CardContent className="p-4 flex-grow flex flex-col">
+        <CardContent className={cn("p-4 flex-grow flex flex-col", !article.imageUrl && "pt-6")}>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{article.source}</p>
           <h3 className="font-bold text-base leading-snug flex-grow">{article.headline}</h3>
           <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{article.summary}</p>
@@ -69,7 +69,7 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
 
 const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClose: () => void; }) => {
   if (!article) return null;
-  const isAiGenerated = !!article.imageKeywords;
+  const isAiGenerated = !article.imageUrl && article.imageKeywords;
   
   return (
     <motion.div
@@ -123,7 +123,6 @@ export default function NewsPageClient() {
       
       try {
         const result = await getNewsAction({ category, useAi: mode === 'ai' });
-        // Check for specific error messages from the tool
         if (result.articles.length > 0 && ['Daily Limit Reached', 'API Key Missing', 'Error Fetching News'].includes(result.articles[0].headline)) {
             setError(result.articles[0].summary + " " + result.articles[0].fullContent);
         } else {
@@ -199,20 +198,23 @@ export default function NewsPageClient() {
                 </SelectContent>
                 </Select>
             </div>
-            <div className="flex items-center space-x-2">
-                 <Label htmlFor="ai-mode" className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Tv className="h-5 w-5"/>
+            <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
+                 <Button 
+                    variant={mode === 'live' ? 'secondary' : 'ghost'} 
+                    onClick={() => setMode('live')}
+                    className="px-3 py-1 h-8 shadow-sm"
+                >
+                    <Tv className="mr-2 h-4 w-4"/>
                     Live News
-                </Label>
-                <Switch 
-                    id="ai-mode"
-                    checked={mode === 'ai'}
-                    onCheckedChange={(checked) => setMode(checked ? 'ai' : 'live')}
-                />
-                <Label htmlFor="ai-mode" className="flex items-center gap-2 text-sm font-medium text-foreground">
-                    <Bot className="h-5 w-5"/>
+                </Button>
+                <Button 
+                    variant={mode === 'ai' ? 'secondary' : 'ghost'} 
+                    onClick={() => setMode('ai')}
+                    className="px-3 py-1 h-8 shadow-sm"
+                >
+                    <Bot className="mr-2 h-4 w-4"/>
                     AI Generated
-                </Label>
+                </Button>
             </div>
         </div>
         
