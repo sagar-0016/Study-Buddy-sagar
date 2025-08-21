@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { getNewsAction } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -17,6 +16,7 @@ import {
 import { Newspaper, AlertTriangle, X, Bot, Tv, Zap, BarChart } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 type Article = {
   headline: string;
@@ -39,7 +39,7 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
       onClick={onReadMore}
     >
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col border-0">
-        {article.imageUrl && (
+        {article.imageUrl ? (
           <div className="relative aspect-video overflow-hidden">
             <Image
               src={article.imageUrl}
@@ -47,11 +47,10 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              data-ai-hint="news article"
               unoptimized={true} 
             />
           </div>
-        )}
+        ) : null}
         <CardContent className={cn("p-4 flex-grow flex flex-col", !article.imageUrl && "pt-6")}>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{article.source}</p>
           <h3 className="font-bold text-base leading-snug flex-grow">{article.headline}</h3>
@@ -161,8 +160,8 @@ export default function NewsPageClient() {
         return (
              <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[40vh] bg-destructive/10 border-destructive">
                 <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-                <h3 className="text-lg font-semibold text-destructive-foreground">An Error Occurred</h3>
-                <p className="text-destructive-foreground/80 max-w-prose">{error}</p>
+                <h3 className="text-lg font-semibold text-destructive">An Error Occurred</h3>
+                <p className="text-destructive/80 max-w-prose">{error}</p>
             </div>
         )
     }
@@ -202,28 +201,30 @@ export default function NewsPageClient() {
                 </Select>
             </div>
 
-            {mode === 'live' && (
-                <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
-                    <Button 
-                        variant={sort === 'latest' ? 'secondary' : 'ghost'} 
-                        onClick={() => setSort('latest')}
-                        className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
-                    >
-                        <Zap className="mr-2 h-4 w-4"/>
-                        Latest
-                    </Button>
-                    <Button 
-                        variant={sort === 'relevant' ? 'secondary' : 'ghost'} 
-                        onClick={() => setSort('relevant')}
-                        className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
-                    >
-                        <BarChart className="mr-2 h-4 w-4"/>
-                        Relevant
-                    </Button>
-                </div>
-            )}
+            <div className="flex-1 flex justify-center">
+                {mode === 'live' && (
+                    <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
+                        <Button 
+                            variant={sort === 'latest' ? 'secondary' : 'ghost'} 
+                            onClick={() => setSort('latest')}
+                            className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
+                        >
+                            <Zap className="mr-2 h-4 w-4"/>
+                            Latest
+                        </Button>
+                        <Button 
+                            variant={sort === 'relevant' ? 'secondary' : 'ghost'} 
+                            onClick={() => setSort('relevant')}
+                            className="px-3 py-1 h-8 shadow-sm text-secondary-foreground"
+                        >
+                            <BarChart className="mr-2 h-4 w-4"/>
+                            Relevant
+                        </Button>
+                    </div>
+                )}
+            </div>
 
-            <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg ml-auto">
+            <div className="flex items-center space-x-2 bg-muted p-1 rounded-lg">
                  <Button 
                     variant={mode === 'live' ? 'secondary' : 'ghost'} 
                     onClick={() => setMode('live')}
