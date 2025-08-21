@@ -43,16 +43,24 @@ export const fetchNewsArticles = ai.defineTool(
         }
 
         try {
-            console.log(`Fetching live news for query: "${query}" with sortBy: "${sortBy}"`);
-            
-            const response = await newsApi.v2.topHeadlines({
+            const requestParams = {
                 q: ['General', 'Science', 'Literature'].includes(query) ? '' : query,
                 category: ['General', 'Science', 'Literature'].includes(query) ? query.toLowerCase() as any : undefined,
                 language: 'en',
                 country: 'in', // Focus on India
                 sortBy: sortBy === 'latest' ? 'publishedAt' : 'relevancy',
                 pageSize: 20,
-            });
+            };
+
+            // --- DEBUGGING LOG ---
+            console.log('\n--- Making NewsAPI Request ---');
+            console.log('Endpoint: v2/topHeadlines');
+            console.log('Parameters:', JSON.stringify(requestParams, null, 2));
+            console.log('Using API Key from .env file.');
+            console.log('-----------------------------\n');
+            // --- END DEBUGGING LOG ---
+
+            const response = await newsApi.v2.topHeadlines(requestParams);
             
             // Log the raw response to the server terminal for debugging
             console.log('--- RAW NEWSAPI RESPONSE ---');
