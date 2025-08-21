@@ -30,7 +30,7 @@ type NewsCategory = 'General' | 'JEE' | 'UPSC' | 'Science' | 'Literature';
 const newsCategories: NewsCategory[] = ['General', 'JEE', 'UPSC', 'Science', 'Literature'];
 type NewsMode = 'live' | 'ai';
 type SortMode = 'latest' | 'relevant';
-type ApiSource = 'auto' | 'gnews' | 'newsdata' | 'thenewsapi';
+type ApiSource = 'auto' | 'gnews' | 'newsdata';
 
 const ArticleImage = ({ article }: { article: Article }) => {
     const [src, setSrc] = useState(article.imageUrl);
@@ -287,10 +287,9 @@ export default function NewsPageClient() {
             <Card className="p-2 border-0">
                 <CardContent className="p-0">
                     <div className="flex flex-wrap items-center justify-center gap-2">
-                        <Button variant={apiSource === 'auto' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('auto')}>Auto Fallback</Button>
+                        <Button variant={apiSource === 'auto' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('auto')}>Auto</Button>
                         <Button variant={apiSource === 'gnews' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('gnews')}>GNews</Button>
                         <Button variant={apiSource === 'newsdata' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('newsdata')}>NewsData.io</Button>
-                        <Button variant={apiSource === 'thenewsapi' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('thenewsapi')}>TheNewsAPI</Button>
                     </div>
                 </CardContent>
             </Card>

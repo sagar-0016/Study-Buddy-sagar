@@ -17,7 +17,7 @@ const NewsInputSchema = z.object({
   category: z.string().describe('The category of news, e.g., "JEE", "Literature", "UPSC", "Science".'),
   useAi: z.boolean().describe('Whether to use AI to generate news or a tool to fetch live news.'),
   sortBy: z.enum(['latest', 'relevant']).optional().describe('Sorting preference for live news. "latest" for published date, "relevant" for relevancy.'),
-  sourceApi: z.enum(['auto', 'gnews', 'newsdata', 'thenewsapi']).optional().describe('The specific API to use, or "auto" for fallback.'),
+  sourceApi: z.enum(['auto', 'gnews', 'newsdata']).optional().describe('The specific API to use, or "auto" for fallback.'),
 });
 export type NewsInput = z.infer<typeof NewsInputSchema>;
 

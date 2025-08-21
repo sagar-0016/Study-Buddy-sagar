@@ -8,7 +8,7 @@ import { fetchFullArticleContent } from './article-parser-tool';
 const NewsToolInputSchema = z.object({
     query: z.string().describe("The search query or category for the news, e.g., 'JEE exam', 'UPSC policy', 'Indian literature'."),
     sortBy: z.enum(['latest', 'relevant']).describe('Sorting preference for live news. "latest" for published date, "relevant" for relevancy.'),
-    sourceApi: z.enum(['auto', 'gnews', 'newsdata', 'thenewsapi']).optional().default('auto').describe('The specific API to use, or "auto" for fallback.'),
+    sourceApi: z.enum(['auto', 'gnews', 'newsdata']).optional().default('auto').describe('The specific API to use, or "auto" for fallback.'),
 });
 
 const ArticleSchema = z.object({
@@ -79,25 +79,6 @@ const fetchFromNewsData = async (query: string): Promise<{ articles: any[], url:
     };
 };
 
-// Fetcher for TheNewsAPI
-const fetchFromTheNewsAPI = async (query: string): Promise<{ articles: any[], url: string }> => {
-    if (!thenewsapiToken) throw new Error("TheNewsAPI token is missing.");
-    const url = `https://api.thenewsapi.com/v1/news/all?api_token=${thenewsapiToken}&search=${encodeURIComponent(query)}&language=en&locale=in&limit=5`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`TheNewsAPI error: ${response.statusText}`);
-    const data = await response.json();
-    return {
-        articles: data.data.filter(filterArticle).map((article: any) => ({
-            headline: article.title,
-            summary: getSummaryContent(article),
-            source: `TheNewsAPI / ${article.source}`,
-            imageUrl: article.image_url,
-            url: article.url,
-        })),
-        url
-    };
-};
-
 export const fetchNewsArticles = ai.defineTool(
     {
         name: 'fetchNewsArticles',
@@ -113,7 +94,6 @@ export const fetchNewsArticles = ai.defineTool(
         const services = {
             gnews: () => fetchFromGNews(query, sortBy),
             newsdata: () => fetchFromNewsData(query),
-            thenewsapi: () => fetchFromTheNewsAPI(query),
         };
         
         const fetchFunction = sourceApi && sourceApi !== 'auto' ? services[sourceApi] : null;
