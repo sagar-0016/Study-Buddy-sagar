@@ -4,22 +4,22 @@
 
 @layer base {
   :root {
-    --background: 120 60% 96%; /* Softer light green */
+    --background: 120 60% 96% / 0.5; /* Frosted glass effect */
     --foreground: 222.2 84% 4.9%;
 
-    --card: 0 0% 100%;
+    --card: 0 0% 100% / 0.6; /* Frosted glass effect */
     --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 0 0% 100%;
+    --popover: 0 0% 100% / 0.7; /* Frosted glass effect */
     --popover-foreground: 222.2 84% 4.9%;
 
     --primary: 120 55% 55%; /* Richer, more saturated green */
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 120 50% 92%;
+    --secondary: 120 50% 92% / 0.7;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 120 50% 92%;
+    --muted: 120 50% 92% / 0.7;
     --muted-foreground: 224 7.1% 44.1%;
 
     --accent: 120 55% 45%; /* Darker Green */
@@ -28,8 +28,8 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 120 50% 88%;
-    --input: 120 50% 88%;
+    --border: 120 50% 88% / 0.8;
+    --input: 120 50% 88% / 0.7;
     --ring: 120 55% 55%;
 
     --radius: 0.5rem;
@@ -42,22 +42,22 @@
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
+    --background: 224 71.4% 4.1% / 0.5; /* Frosted glass effect */
     --foreground: 210 40% 98%;
 
-    --card: 224 71.4% 10.1%;
+    --card: 224 71.4% 10.1% / 0.6; /* Frosted glass effect */
     --card-foreground: 210 40% 98%;
 
-    --popover: 224 71.4% 4.1%;
+    --popover: 224 71.4% 4.1% / 0.7; /* Frosted glass effect */
     --popover-foreground: 210 40% 98%;
 
     --primary: 120 55% 55%; /* Richer green for dark mode too */
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 217.2 32.6% 17.5% / 0.7;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 217.2 32.6% 17.5% / 0.7;
     --muted-foreground: 215 20.2% 65.1%;
 
     --accent: 120 55% 45%; /* Darker Green */
@@ -66,8 +66,8 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 217.2 32.6% 17.5% / 0.8;
+    --input: 217.2 32.6% 17.5% / 0.7;
     --ring: 120 55% 55%;
     
     --chart-1: 120 70% 60%;
@@ -87,6 +87,16 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+@layer components {
+  .bg-glass {
+    @apply bg-background/80 backdrop-blur-lg;
+  }
+  .card-glass {
+    @apply border-card-foreground/10 bg-card/80 backdrop-blur-lg;
+  }
+}
+
 
 @layer utilities {
   @keyframes mastery-pulse {

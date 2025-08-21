@@ -93,7 +93,7 @@ export default function Sidebar() {
   const isCollapsed = false; // Add logic to collapse sidebar if needed
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[220px] flex-col border-r bg-muted/40 md:flex lg:w-[280px]">
+    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[220px] flex-col border-r bg-glass md:flex lg:w-[280px]">
       <TooltipProvider>
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">

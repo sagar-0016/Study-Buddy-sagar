@@ -55,7 +55,7 @@ export default function UnlockScreen({ onUnlock, isRelocking = false }: UnlockSc
     };
 
     return (
-        <Card className="w-full max-w-sm animate-in fade-in-50 zoom-in-95 duration-500">
+        <Card className="w-full max-w-sm animate-in fade-in-50 zoom-in-95 duration-500 card-glass">
             <CardHeader className="text-center">
                 <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit">
                     <GraduationCap className="h-10 w-10 text-primary" />
