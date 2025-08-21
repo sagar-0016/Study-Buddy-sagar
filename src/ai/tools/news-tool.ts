@@ -35,9 +35,10 @@ const filterArticle = (article: any): boolean => {
     return !forbiddenKeywords.some(keyword => titleLower.includes(keyword) || descriptionLower.includes(keyword) || contentLower.includes(keyword));
 };
 
-// Helper to get the most complete content available
+// Helper to get the most complete, clean description available
 const getFullContent = (article: any): string => {
-    return article.content || article.description || article.snippet || '';
+    // Prioritize description/snippet over content to avoid API promotional text
+    return article.description || article.snippet || article.content || '';
 }
 
 // Fetcher for GNews
