@@ -1,44 +1,59 @@
-
 'use server';
 
 /**
- * @fileOverview Provides curated news articles based on a selected category.
+ * @fileOverview Provides curated news articles based on a selected category,
+ * either by fetching live data using a tool or by generating them with AI.
  *
- * - getNews - A function that generates news articles for a given category.
+ * - getNews - A function that handles fetching or generating news.
  * - NewsInput - The input type for the getNews function.
  * - NewsOutput - The return type for the getNews function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { fetchNewsArticles } from '@/ai/tools/news-tool';
 
 const NewsInputSchema = z.object({
-  category: z.string().describe('The category of news to fetch, e.g., "JEE News", "Literature", "UPSC Articles".'),
+  category: z.string().describe('The category of news, e.g., "JEE", "Literature", "UPSC", "Science".'),
+  useAi: z.boolean().describe('Whether to use AI to generate news or a tool to fetch live news.')
 });
 export type NewsInput = z.infer<typeof NewsInputSchema>;
 
 const ArticleSchema = z.object({
   headline: z.string().describe('A concise and engaging headline for the news article.'),
   summary: z.string().describe('A brief, 1-2 sentence summary of the article.'),
-  source: z.string().describe('A plausible and well-known news source, e.g., "The Hindu", "The Indian Express", "PIB India".'),
-  imageKeywords: z.string().describe('One or two keywords for a relevant placeholder image, e.g., "student examination", "indian parliament", "classic book".'),
+  fullContent: z.string().describe('The full content of the article, if available.'),
+  source: z.string().describe('The original source of the article, e.g., "The Hindu", "Reuters".'),
+  imageUrl: z.string().optional().describe('A URL to a relevant image for the article.'),
+  imageKeywords: z.string().optional().describe('Keywords for a placeholder image if a real one is not available.'),
 });
 
 const NewsOutputSchema = z.object({
-  articles: z.array(ArticleSchema).describe('A list of 5-7 generated news articles.'),
+  articles: z.array(ArticleSchema).describe('A list of 5-7 news articles.'),
 });
 export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 
+
 export async function getNews(input: NewsInput): Promise<NewsOutput> {
-  return newsFlow(input);
+  // If not using AI, directly call the tool and bypass the AI flow.
+  // This is more efficient for just fetching data.
+  if (!input.useAi) {
+    const liveArticles = await fetchNewsArticles({ query: input.category });
+    return { articles: liveArticles };
+  }
+  // If using AI, call the generative flow.
+  return newsGenFlow(input);
 }
 
-const newsPrompt = ai.definePrompt({
-  name: 'newsPrompt',
+
+// This flow is now ONLY for AI-generated news.
+const newsGenPrompt = ai.definePrompt({
+  name: 'newsGenPrompt',
   input: {schema: NewsInputSchema},
   output: {schema: NewsOutputSchema},
   prompt: `You are an expert news curator for a study application.
   Your task is to generate a list of 5-7 recent, relevant, and insightful news articles or summaries based on the user-selected category: '{{category}}'.
+  For the 'fullContent' field, generate a plausible paragraph expanding on the summary.
 
   **IMPORTANT CONTENT GUIDELINES:**
   - **ABSOLUTELY NO SENSATIONALISM:** Avoid clickbait headlines.
@@ -56,14 +71,14 @@ const newsPrompt = ai.definePrompt({
   Generate the response now based on the category: '{{category}}'.`,
 });
 
-const newsFlow = ai.defineFlow(
+const newsGenFlow = ai.defineFlow(
   {
-    name: 'newsFlow',
+    name: 'newsGenFlow',
     inputSchema: NewsInputSchema,
     outputSchema: NewsOutputSchema,
   },
   async input => {
-    const {output} = await newsPrompt(input);
+    const {output} = await newsGenPrompt(input);
     return output!;
   }
 );

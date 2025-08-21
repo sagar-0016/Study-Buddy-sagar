@@ -1,10 +1,8 @@
-
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { getNewsAction } from '@/lib/actions';
-import { sampleNewsData, LiveArticle } from '@/lib/news-data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -16,24 +14,24 @@ import {
 } from "@/components/ui/select";
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Newspaper, AlertTriangle, X, Bot } from 'lucide-react';
+import { Newspaper, AlertTriangle, X, Bot, Tv } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-type AiArticle = {
+type Article = {
   headline: string;
   summary: string;
+  fullContent: string;
   source: string;
-  imageKeywords: string;
+  imageUrl?: string;
+  imageKeywords?: string;
 };
 
 type NewsCategory = 'General News' | 'JEE News' | 'UPSC News' | 'UPSC Articles' | 'Literature';
 const newsCategories: NewsCategory[] = ['General News', 'JEE News', 'UPSC News', 'UPSC Articles', 'Literature'];
 type NewsMode = 'live' | 'ai';
 
-const ArticleCard = ({ article, onReadMore }: { article: LiveArticle | AiArticle; onReadMore: () => void; }) => {
-  const isAi = !('fullContent' in article);
-  const summary = 'summary' in article ? article.summary : '';
-  const hasImage = 'imageKeywords' in article && article.imageKeywords;
+const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: () => void; }) => {
+  const hasImage = article.imageUrl || article.imageKeywords;
 
   return (
     <motion.div
@@ -45,21 +43,22 @@ const ArticleCard = ({ article, onReadMore }: { article: LiveArticle | AiArticle
         {hasImage && (
           <div className="relative aspect-video overflow-hidden">
             <Image
-              src={`https://placehold.co/400x300.png`}
+              src={article.imageUrl || `https://placehold.co/400x300.png`}
               data-ai-hint={article.imageKeywords}
               alt={article.headline}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
+              unoptimized={!!article.imageUrl} // Don't optimize external news images
             />
           </div>
         )}
         <CardContent className="p-4 flex-grow flex flex-col">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{article.source}</p>
           <h3 className="font-bold text-base leading-snug flex-grow">{article.headline}</h3>
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{summary}</p>
+          <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{article.summary}</p>
           <div className="flex justify-between items-center mt-4">
              <span className="text-sm font-semibold text-primary">Read More</span>
-             {isAi && <Bot className="h-4 w-4 text-muted-foreground" />}
+             {article.imageKeywords && <Bot className="h-4 w-4 text-muted-foreground" />}
           </div>
         </CardContent>
       </Card>
@@ -67,11 +66,9 @@ const ArticleCard = ({ article, onReadMore }: { article: LiveArticle | AiArticle
   );
 };
 
-const ExpandedArticle = ({ article, onClose }: { article: LiveArticle | AiArticle | null; onClose: () => void; }) => {
+const ExpandedArticle = ({ article, onClose }: { article: Article | null; onClose: () => void; }) => {
   if (!article) return null;
   
-  const content = 'fullContent' in article ? article.fullContent : article.summary;
-
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -87,7 +84,7 @@ const ExpandedArticle = ({ article, onClose }: { article: LiveArticle | AiArticl
             <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">{article.source}</p>
             <h2 className="text-2xl md:text-3xl font-bold mb-4">{article.headline}</h2>
             <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-              {content}
+              {article.fullContent}
             </div>
           </CardContent>
         </Card>
@@ -101,12 +98,12 @@ const ExpandedArticle = ({ article, onClose }: { article: LiveArticle | AiArticl
 
 
 export default function NewsPageClient() {
-  const [articles, setArticles] = useState<(LiveArticle | AiArticle)[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<NewsCategory>('General News');
   const [mode, setMode] = useState<NewsMode>('live');
-  const [selectedArticle, setSelectedArticle] = useState<LiveArticle | AiArticle | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -114,13 +111,13 @@ export default function NewsPageClient() {
       setError(null);
       
       try {
-        if (mode === 'ai') {
-          const result = await getNewsAction({ category });
-          setArticles(result.articles);
+        const result = await getNewsAction({ category, useAi: mode === 'ai' });
+        // Check for the specific rate limit error message from the tool
+        if (result.articles.length === 1 && result.articles[0].headline === 'Daily Limit Reached') {
+            setError("The daily usage limit for fetching live news has been exhausted for today. Please switch to AI-generated news or try again tomorrow.");
+            setArticles([]);
         } else {
-          // Simulate API call for live news with sample data
-          const filteredData = sampleNewsData.filter(a => a.category === category);
-          setArticles(filteredData);
+            setArticles(result.articles);
         }
       } catch (err) {
         console.error("Failed to get news:", err);
@@ -193,6 +190,10 @@ export default function NewsPageClient() {
                 </Select>
             </div>
             <div className="flex items-center space-x-2">
+                 <Label htmlFor="ai-mode" className="flex items-center gap-2">
+                    <Tv className="h-5 w-5"/>
+                    Live News
+                </Label>
                 <Switch 
                     id="ai-mode"
                     checked={mode === 'ai'}
@@ -200,7 +201,7 @@ export default function NewsPageClient() {
                 />
                 <Label htmlFor="ai-mode" className="flex items-center gap-2">
                     <Bot className="h-5 w-5"/>
-                    AI Generated News
+                    AI Generated
                 </Label>
             </div>
         </div>
