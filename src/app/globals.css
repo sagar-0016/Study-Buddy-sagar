@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 120 60% 96% / 0.5; /* Frosted glass effect */
+    --background: 120 30% 97%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100% / 0.6; /* Frosted glass effect */
