@@ -46,8 +46,8 @@ export const fetchNewsArticles = ai.defineTool(
             console.log(`Fetching live news for query: "${query}" with sortBy: "${sortBy}"`);
             
             const response = await newsApi.v2.topHeadlines({
-                q: query === 'General' ? '' : query, // Use q for specific categories
-                category: query === 'General' ? 'general' : query === 'Science' ? 'science' : undefined, // Use category for broad topics
+                q: ['General', 'Science', 'Literature'].includes(query) ? '' : query,
+                category: ['General', 'Science', 'Literature'].includes(query) ? query.toLowerCase() : undefined,
                 language: 'en',
                 country: 'in', // Focus on India
                 sortBy: sortBy === 'latest' ? 'publishedAt' : 'relevancy',
