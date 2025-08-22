@@ -10,6 +10,11 @@ interface DynamicIconProps extends LucideProps {
 }
 
 const DynamicIcon = ({ name, ...props }: DynamicIconProps) => {
+  // Gracefully handle cases where the name is not provided
+  if (!name || typeof name !== 'string') {
+    return <Atom {...props} />;
+  }
+
   // Convert kebab-case or snake_case to PascalCase
   const pascalCaseName = name.replace(/(^|-|_)(.)/g, (match, sep, char) => char.toUpperCase());
   
