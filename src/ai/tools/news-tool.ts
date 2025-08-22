@@ -56,7 +56,7 @@ const fetchFromGNews = async (query: string, isGeneral: boolean, sortBy: 'latest
     if (isGeneral) {
         finalQuery = `${query} -politics -entertainment -celebrity -gossip -crime -sports -movies`;
     }
-    const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(finalQuery)}&lang=en&country=in&max=10&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
+    const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(finalQuery)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error(`GNews API error: ${response.statusText}`);
     const data = await response.json();
