@@ -6,16 +6,12 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Orbit, Wind, Atom, Waves, Thermometer, Zap, AlertTriangle, Search, BookOpen } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Search, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getFlashcardDecks } from '@/lib/flashcards';
 import type { FlashcardDeck } from '@/lib/types';
 import { Input } from '@/components/ui/input';
-
-const iconMap: { [key: string]: React.ElementType } = {
-    Orbit, Wind, Atom, Waves, Thermometer, Zap
-};
-
+import DynamicIcon from '../ui/dynamic-icon';
 
 const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
     const getDifficultyClass = () => {
@@ -34,7 +30,6 @@ const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
 
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   const isAvailable = deck.status === 'available';
-  const IconComponent = iconMap[deck.icon] || Atom;
 
   const cardContent = (
     <Card className={cn("flex flex-col h-full transition-all duration-300", 
@@ -42,7 +37,7 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
     )}>
         <CardHeader className="flex-row items-start justify-between">
             <div className="p-3 rounded-full bg-primary/10 text-primary">
-                <IconComponent className="w-8 h-8" />
+                <DynamicIcon name={deck.icon} className="w-8 h-8" />
             </div>
              <Badge variant={isAvailable ? 'default' : 'outline'}>{isAvailable ? 'Available' : 'Coming Soon'}</Badge>
         </CardHeader>
