@@ -109,7 +109,7 @@ export const fetchNewsArticles = ai.defineTool(
         output: { schema: ToolOutputSchema },
     },
     async ({ query, isGeneral = false, sortBy, sourceApi }) => {
-        const debugUrls: string[] = [];
+        let debugUrls: string[] = [];
         let fetchedArticles: any[] = [];
         
         const services = {
@@ -126,16 +126,17 @@ export const fetchNewsArticles = ai.defineTool(
                 debugUrls.push(url);
             } else {
                 // Auto fallback logic
+                const gnewsQuery = isGeneral ? `${query} -politics...` : query;
+                const gnewsFallbackUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(gnewsQuery)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey ? '...REDACTED...' : '...MISSING...'}`;
+                debugUrls.push(gnewsFallbackUrl); // Push a redacted URL for debugging immediately
+
                 try {
                     const { articles, url } = await fetchFromGNews(query, isGeneral, sortBy);
                     fetchedArticles = articles;
-                    debugUrls.push(url);
+                    // Overwrite the redacted URL with the actual one if successful
+                    debugUrls[debugUrls.length - 1] = url;
                 } catch (error) {
                     console.error('GNews API failed, falling back to NewsData.io:', error);
-                    // Manually construct and log the GNews URL on failure
-                    const gnewsFallbackUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(isGeneral ? `${query} -politics...` : query)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=...`;
-                    debugUrls.push(gnewsFallbackUrl.replace('...', '...REDACTED...')); // Push a redacted URL for debugging
-
                     const { articles, url } = await fetchFromNewsData(query, isGeneral);
                     fetchedArticles = articles;
                     debugUrls.push(url);
