@@ -130,13 +130,15 @@ export const fetchNewsArticles = ai.defineTool(
                     const { articles, url } = await fetchFromGNews(query, isGeneral, sortBy);
                     fetchedArticles = articles;
                     debugUrls.push(url);
-                    if (articles.length === 0) throw new Error("No articles from GNews");
                 } catch (error) {
                     console.error('GNews API failed, falling back to NewsData.io:', error);
+                    // Manually construct and log the GNews URL on failure
+                    const gnewsFallbackUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(isGeneral ? `${query} -politics...` : query)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=...`;
+                    debugUrls.push(gnewsFallbackUrl.replace('...', '...REDACTED...')); // Push a redacted URL for debugging
+
                     const { articles, url } = await fetchFromNewsData(query, isGeneral);
                     fetchedArticles = articles;
                     debugUrls.push(url);
-                    if (articles.length === 0) throw new Error("No articles from NewsData.io");
                 }
             }
 
