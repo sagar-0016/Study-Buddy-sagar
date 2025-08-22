@@ -26,17 +26,30 @@ export const fetchFullArticleContent = ai.defineTool(
             let cleanContent = parsedArticle.content;
 
             if (cleanContent) {
-                // Define the markers for cleaning
+                // Define the markers for cleaning, handling variations in whitespace.
                 const startMarker = "Share AA +Text Size Small Medium Large";
                 const endMarker = "End of Article";
+                
+                // Create a version of the content with normalized whitespace to find the marker's position
+                const normalizedContent = cleanContent.replace(/\s+/g, ' ');
+                const normalizedStartMarker = startMarker.replace(/\s+/g, ' ');
 
-                // 1. Remove header cruft if the marker exists
-                const startMarkerIndex = cleanContent.indexOf(startMarker);
+                const startMarkerIndex = normalizedContent.indexOf(normalizedStartMarker);
+                
+                // Find the actual index in the original content to slice from
                 if (startMarkerIndex !== -1) {
-                    cleanContent = cleanContent.substring(startMarkerIndex + startMarker.length);
+                    // This is an approximation but should work for most cases
+                    const originalIndex = cleanContent.indexOf('Share');
+                     if (originalIndex !== -1) {
+                        // Find the end of the "Large" text to slice after it.
+                        const sliceAfterIndex = cleanContent.toLowerCase().indexOf('large', originalIndex);
+                        if (sliceAfterIndex !== -1) {
+                             cleanContent = cleanContent.substring(sliceAfterIndex + 'large'.length);
+                        }
+                    }
                 }
 
-                // 2. Remove footer cruft if the marker exists
+                // Remove footer cruft if the marker exists
                 const endMarkerIndex = cleanContent.indexOf(endMarker);
                 if (endMarkerIndex !== -1) {
                     cleanContent = cleanContent.substring(0, endMarkerIndex);
