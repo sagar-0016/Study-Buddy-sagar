@@ -33,22 +33,16 @@ type SortMode = 'latest' | 'relevant';
 type ApiSource = 'auto' | 'gnews' | 'newsdata';
 
 const ArticleImage = ({ article }: { article: Article }) => {
-    const [src, setSrc] = useState(article.imageUrl);
-    const fallbackSrc = 'https://placehold.co/600x400.png';
-
-    useEffect(() => {
-        setSrc(article.imageUrl);
-    }, [article.imageUrl]);
-
+    // This component now assumes article.imageUrl exists.
+    // The fallback is removed as the parent component will handle conditional rendering.
     return (
         <Image
-            src={src || fallbackSrc}
+            src={article.imageUrl!}
             alt={article.headline}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            onError={() => setSrc(fallbackSrc)}
-            unoptimized={true}
+            unoptimized={true} // Good for external, sometimes problematic URLs
         />
     )
 }
@@ -61,9 +55,11 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
       onClick={onReadMore}
     >
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col border-0">
-        <div className="relative aspect-video overflow-hidden">
-          <ArticleImage article={article} />
-        </div>
+        {article.imageUrl && (
+            <div className="relative aspect-video overflow-hidden">
+                <ArticleImage article={article} />
+            </div>
+        )}
         <CardContent className={cn("p-4 flex-grow flex flex-col")}>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{article.source}</p>
           <h3 className="font-bold text-base leading-snug flex-grow">{article.headline}</h3>
