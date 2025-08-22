@@ -126,17 +126,17 @@ export const fetchNewsArticles = ai.defineTool(
                 debugUrls.push(url);
             } else {
                 // Auto fallback logic
-                const gnewsQuery = isGeneral ? `${query} -politics...` : query;
-                const gnewsFallbackUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(gnewsQuery)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey ? '...REDACTED...' : '...MISSING...'}`;
-                debugUrls.push(gnewsFallbackUrl); // Push a redacted URL for debugging immediately
-
                 try {
                     const { articles, url } = await fetchFromGNews(query, isGeneral, sortBy);
                     fetchedArticles = articles;
-                    // Overwrite the redacted URL with the actual one if successful
-                    debugUrls[debugUrls.length - 1] = url;
+                    debugUrls.push(url);
                 } catch (error) {
                     console.error('GNews API failed, falling back to NewsData.io:', error);
+                    // Construct and add the failed GNews URL for debugging
+                    const gnewsQuery = isGeneral ? `${query} -politics -entertainment -celebrity -gossip -crime -sports -movies` : query;
+                    const gnewsFallbackUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(gnewsQuery)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
+                    debugUrls.push(gnewsFallbackUrl);
+
                     const { articles, url } = await fetchFromNewsData(query, isGeneral);
                     fetchedArticles = articles;
                     debugUrls.push(url);
