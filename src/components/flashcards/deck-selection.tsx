@@ -22,11 +22,20 @@ const iconMap: { [key: string]: React.ElementType } = {
 };
 
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
+  const [accessLevel, setAccessLevel] = useState<string | null>(null);
+
+  useEffect(() => {
+    const level = localStorage.getItem('study-buddy-access-level');
+    setAccessLevel(level);
+  }, []);
+
   const isAvailable = deck.status === 'available';
 
   const getBadgeText = () => {
     if (deck.status === 'available') return 'Available';
-    if (deck.status === 'not-for-you') return 'Not for you babe';
+    if (deck.status === 'not-for-you') {
+        return accessLevel === 'full' ? 'Not for you babe' : 'Not for you';
+    }
     return 'Coming Soon';
   };
   
