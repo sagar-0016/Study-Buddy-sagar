@@ -6,14 +6,14 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Sigma, CaseUpper, Shapes, FunctionSquare, Bot, AlertTriangle, Search, BookOpen } from 'lucide-react';
+import { ArrowLeft, Sigma, CaseUpper, Shapes, FunctionSquare, Bot, AlertTriangle, Search, BookOpen, FlaskConicalOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getFlashcardDecks } from '@/lib/flashcards';
 import type { FlashcardDeck } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 
 const iconMap: { [key: string]: React.ElementType } = {
-    Sigma, CaseUpper, Shapes, FunctionSquare, Bot
+    Sigma, CaseUpper, Shapes, FunctionSquare, Bot, FlaskConicalOff
 };
 
 const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
