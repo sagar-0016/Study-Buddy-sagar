@@ -6,24 +6,12 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, Search, BookOpen, Atom, FlaskConical, Sigma, Dna, Rocket, BrainCircuit, Wind, Orbit, Combine } from 'lucide-react';
+import { AlertTriangle, Search, BookOpen } from 'lucide-react';
 import { getFlashcardDecks } from '@/lib/flashcards';
 import type { FlashcardDeck } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import type { AccessLevel } from '@/context/auth-context';
-import type { LucideProps } from 'lucide-react';
-
-const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
-  Atom,
-  FlaskConical,
-  Sigma,
-  Dna,
-  Rocket,
-  BrainCircuit,
-  Wind,
-  Orbit,
-  Combine,
-};
+import Icon from '@/components/ui/icon';
 
 
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
@@ -47,14 +35,13 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   
   const isClickable = deck.status === 'available' || deck.status === 'not-for-you';
   const href = deck.status === 'not-for-you' ? '/flashcards/not-for-you' : deck.href;
-  const IconComponent = iconMap[deck.icon] || Atom;
-
+  
   const cardContent = (
     <Card className={`flex flex-col h-full transition-all duration-300 ${isClickable ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : 'opacity-60 cursor-not-allowed'}`}>
       <CardHeader className="p-6 pb-4">
         <div className="flex justify-between items-start">
           <div className={`p-3 rounded-full ${deck.status === 'available' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
-             <IconComponent className="w-8 h-8" />
+             <Icon name={deck.icon} className="w-8 h-8" />
           </div>
           <Badge variant={getBadgeVariant()}>
             {getBadgeText()}

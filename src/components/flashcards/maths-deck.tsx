@@ -6,24 +6,12 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, AlertTriangle, Search, BookOpen, Atom, Sigma, SquareDot, InfinityIcon, Percent, Pi, FlaskConicalOff } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Search, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getFlashcardDecks } from '@/lib/flashcards';
 import type { FlashcardDeck } from '@/lib/types';
 import { Input } from '@/components/ui/input';
-import type { LucideProps } from 'lucide-react';
-
-const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
-  Atom,
-  Sigma,
-  SquareRoot: SquareDot, // Use a valid icon as a fallback for the old name
-  SquareDot,
-  Infinity: InfinityIcon,
-  Percent,
-  Pi,
-  'flask-conical-off': FlaskConicalOff,
-};
-
+import Icon from '@/components/ui/icon';
 
 const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
     const getDifficultyClass = () => {
@@ -42,15 +30,14 @@ const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
 
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   const isAvailable = deck.status === 'available';
-  const IconComponent = iconMap[deck.icon] || Sigma;
-
+  
   const cardContent = (
     <Card className={cn("flex flex-col h-full transition-all duration-300", 
         isAvailable ? "hover:border-primary hover:-translate-y-1 hover:shadow-lg cursor-pointer" : "opacity-70 bg-muted/50"
     )}>
         <CardHeader className="flex-row items-start justify-between">
             <div className="p-3 rounded-full bg-primary/10 text-primary">
-                <IconComponent className="w-8 h-8" />
+                <Icon name={deck.icon} className="w-8 h-8" />
             </div>
              <Badge variant={isAvailable ? 'default' : 'outline'}>{isAvailable ? 'Available' : 'Coming Soon'}</Badge>
         </CardHeader>
