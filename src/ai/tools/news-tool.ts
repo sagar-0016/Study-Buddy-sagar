@@ -54,7 +54,8 @@ const fetchFromGNews = async (query: string, isGeneral: boolean, sortBy: 'latest
     if (!gnewsApiKey) throw new Error("GNews API key is missing.");
     let finalQuery = query;
     if (isGeneral) {
-        finalQuery = `${query} -politics -entertainment -celebrity -gossip -crime -sports -movies`;
+        // GNews uses NOT operator for exclusion.
+        finalQuery = `${query} NOT politics NOT entertainment NOT celebrity NOT gossip NOT crime NOT sports NOT movies`;
     }
     const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(finalQuery)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
     
@@ -63,6 +64,10 @@ const fetchFromGNews = async (query: string, isGeneral: boolean, sortBy: 'latest
     const response = await fetch(url);
     if (!response.ok) throw new Error(`GNews API error: ${response.statusText}`);
     const data = await response.json();
+    if (data.errors) {
+        throw new Error(`GNews API returned an error: ${JSON.stringify(data.errors)}`);
+    }
+
     return {
         articles: data.articles.filter(filterArticle).map((article: any) => ({
             headline: article.title,
@@ -80,6 +85,7 @@ const fetchFromNewsData = async (query: string, isGeneral: boolean): Promise<{ a
     if (!newsdataApiKey) throw new Error("NewsData.io API key is missing.");
     let finalQuery = query;
     if (isGeneral) {
+        // NewsData.io also uses NOT operator.
         finalQuery = `${query} NOT politics NOT entertainment NOT celebrity NOT gossip NOT crime NOT sports NOT movies`;
     }
     const url = `https://newsdata.io/api/1/latest?apikey=${newsdataApiKey}&q=${encodeURIComponent(finalQuery)}&language=en&country=in`;
@@ -127,16 +133,14 @@ export const fetchNewsArticles = ai.defineTool(
             } else {
                 // Auto fallback logic
                 try {
-                    const { articles, url } = await fetchFromGNews(query, isGeneral, sortBy);
+                    const gnewsQuery = isGeneral ? `${query} NOT politics NOT entertainment NOT celebrity NOT gossip NOT crime NOT sports NOT movies` : query;
+                    const gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(gnewsQuery)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
+                    debugUrls.push(gnewsUrl); // Add GNews URL for debugging regardless of outcome
+                    
+                    const { articles } = await fetchFromGNews(query, isGeneral, sortBy);
                     fetchedArticles = articles;
-                    debugUrls.push(url);
                 } catch (error) {
                     console.error('GNews API failed, falling back to NewsData.io:', error);
-                    // Construct and add the failed GNews URL for debugging
-                    const gnewsQuery = isGeneral ? `${query} -politics -entertainment -celebrity -gossip -crime -sports -movies` : query;
-                    const gnewsFallbackUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(gnewsQuery)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
-                    debugUrls.push(gnewsFallbackUrl);
-
                     const { articles, url } = await fetchFromNewsData(query, isGeneral);
                     fetchedArticles = articles;
                     debugUrls.push(url);
