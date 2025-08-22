@@ -13,10 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Newspaper, AlertTriangle, X, Bot, Tv, Zap, BarChart, ExternalLink } from 'lucide-react';
+import { Newspaper, AlertTriangle, X, Bot, Tv, Zap, BarChart, ExternalLink, Info } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type Article = {
   headline: string;
@@ -59,7 +60,7 @@ const ArticleCard = ({ article, onReadMore }: { article: Article; onReadMore: ()
                 <ArticleImage article={article} />
             </div>
         )}
-        <CardContent className={cn("p-4 flex-grow flex flex-col")}>
+        <CardContent className={cn("p-4 flex-grow flex flex-col", !article.imageUrl && "pt-6")}>
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{article.source}</p>
           <h3 className="font-bold text-base leading-snug flex-grow">{article.headline}</h3>
           <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{article.summary}</p>
@@ -280,16 +281,13 @@ export default function NewsPageClient() {
             )}
         </div>
         
-        {mode === 'live' && (
-            <Card className="p-2 border-0">
-                <CardContent className="p-0">
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                        <Button variant={apiSource === 'auto' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('auto')}>Auto</Button>
-                        <Button variant={apiSource === 'gnews' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('gnews')}>GNews</Button>
-                        <Button variant={apiSource === 'newsdata' ? 'default' : 'outline'} size="sm" onClick={() => setApiSource('newsdata')}>NewsData.io</Button>
-                    </div>
-                </CardContent>
-            </Card>
+        {mode === 'ai' && (
+            <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                    AI-generated news is for reading practice and may not be up-to-date.
+                </AlertDescription>
+            </Alert>
         )}
         
         {renderContent()}

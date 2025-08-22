@@ -70,7 +70,7 @@ const newsGenPrompt = ai.definePrompt({
   The tone should be professional and informative.
   For the 'fullContent' field, generate a plausible paragraph expanding on the summary.
   For the 'url' field, use a placeholder like 'https://example.com/news'.
-  For the 'imageUrl' field, use a placeholder like 'https://placehold.co/600x400.png' and add a data-ai-hint attribute with one or two relevant keywords.
+  The 'imageUrl' field should be left empty.
 
   **IMPORTANT CONTENT GUIDELINES:**
   - **ABSOLUTELY NO SENSATIONALISM:** Avoid clickbait headlines.
