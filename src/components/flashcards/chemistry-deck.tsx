@@ -16,14 +16,14 @@ import Icon from '@/components/ui/icon';
 const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
     const getDifficultyClass = () => {
         switch (difficulty.toLowerCase()) {
-            case 'basic': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-            case 'intermediate': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-            case 'advanced': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+            case 'basic': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50';
+            case 'intermediate': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-900/50';
+            case 'advanced': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50';
             default: return 'bg-muted text-muted-foreground';
         }
     }
     return (
-         <Badge className={`mt-4 font-semibold ${getDifficultyClass()}`}>{difficulty}</Badge>
+         <Badge className={`mt-4 font-semibold transition-colors ${getDifficultyClass()}`}>{difficulty}</Badge>
     )
 }
 
