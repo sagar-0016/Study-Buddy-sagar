@@ -34,11 +34,10 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   const getBadgeText = () => {
     if (deck.status === 'available') return 'Available';
     if (deck.status === 'not-for-you') {
-      // Logic is now based on state, which is updated after mount
       if (accessLevel === 'full') return 'Not for you babe';
       return 'Not for you';
     }
-    return 'Coming Soon';
+    return 'Coming Soon'; // Covers 'coming-soon' and 'not-available'
   };
   
   const getBadgeVariant = () => {
@@ -48,9 +47,12 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   }
 
   const IconComponent = iconMap[deck.icon] || Atom;
+  
+  const isClickable = deck.status === 'available' || deck.status === 'not-for-you';
+  const href = deck.status === 'not-for-you' ? '/flashcards/not-for-you' : deck.href;
 
   const cardContent = (
-    <Card className={`flex flex-col h-full transition-all duration-300 ${deck.status === 'available' ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : deck.status === 'not-for-you' ? 'opacity-80 hover:border-destructive hover:-translate-y-1 hover:shadow-lg' : 'opacity-60 cursor-not-allowed'}`}>
+    <Card className={`flex flex-col h-full transition-all duration-300 ${isClickable ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : 'opacity-60 cursor-not-allowed'}`}>
       <CardHeader className="p-6 pb-4">
         <div className="flex justify-between items-start">
           <div className={`p-3 rounded-full ${deck.status === 'available' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
@@ -68,10 +70,10 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
     </Card>
   );
 
-  if (deck.status === 'not-available' || deck.status === 'coming-soon') {
-      return <div>{cardContent}</div>
+  if (isClickable) {
+    return <Link href={href}>{cardContent}</Link>;
   }
-  return <Link href={deck.href}>{cardContent}</Link>;
+  return <div>{cardContent}</div>;
 };
 
 export default function DeckSelection() {
