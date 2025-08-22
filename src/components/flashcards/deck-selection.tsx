@@ -25,15 +25,17 @@ const iconMap: { [key: string]: React.ElementType } = {
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(null);
 
+  // This effect will run once when the component mounts on the client
   useEffect(() => {
     const level = localStorage.getItem('study-buddy-access-level') as AccessLevel | null;
     setAccessLevel(level);
   }, []);
-
+  
   const getBadgeText = () => {
     if (deck.status === 'available') return 'Available';
     if (deck.status === 'not-for-you') {
-        return accessLevel === 'full' ? 'Not for you babe' : 'Not for you';
+      // The logic is now based on the state, which is updated after mount
+      return accessLevel === 'full' ? 'Not for you babe' : 'Not for you';
     }
     return 'Coming Soon';
   };
