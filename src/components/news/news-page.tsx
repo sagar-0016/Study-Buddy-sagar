@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -153,7 +154,7 @@ export default function NewsPageClient() {
         });
 
         if (result.debugUrls && result.debugUrls.length > 0) {
-            result.debugUrls.forEach(url => console.log(`Fetched API URL: ${url}`));
+            console.log("Fetched API URLs:", result.debugUrls);
         }
 
         if (result.articles.length > 0 && (result.articles[0].headline.includes('Failed') || result.articles[0].headline.includes('Error'))) {
