@@ -57,6 +57,9 @@ const fetchFromGNews = async (query: string, isGeneral: boolean, sortBy: 'latest
         finalQuery = `${query} -politics -entertainment -celebrity -gossip -crime -sports -movies`;
     }
     const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(finalQuery)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
+    
+    console.log('Attempting to fetch from GNews URL:', url); // LOG URL BEFORE FETCH
+
     const response = await fetch(url);
     if (!response.ok) throw new Error(`GNews API error: ${response.statusText}`);
     const data = await response.json();
@@ -80,6 +83,9 @@ const fetchFromNewsData = async (query: string, isGeneral: boolean): Promise<{ a
         finalQuery = `${query} NOT politics NOT entertainment NOT celebrity NOT gossip NOT crime NOT sports NOT movies`;
     }
     const url = `https://newsdata.io/api/1/latest?apikey=${newsdataApiKey}&q=${encodeURIComponent(finalQuery)}&language=en&country=in`;
+
+    console.log('Attempting to fetch from NewsData.io URL:', url); // LOG URL BEFORE FETCH
+
     const response = await fetch(url);
     if (!response.ok) throw new Error(`NewsData.io API error: ${response.statusText}`);
     const data = await response.json();
@@ -105,8 +111,7 @@ export const fetchNewsArticles = ai.defineTool(
     async ({ query, isGeneral = false, sortBy, sourceApi }) => {
         const debugUrls: string[] = [];
         let fetchedArticles: any[] = [];
-        let fetchedUrl = '';
-
+        
         const services = {
             gnews: () => fetchFromGNews(query, isGeneral, sortBy),
             newsdata: () => fetchFromNewsData(query, isGeneral),
@@ -118,22 +123,19 @@ export const fetchNewsArticles = ai.defineTool(
             if (fetchFunction) {
                 const { articles, url } = await fetchFunction();
                 fetchedArticles = articles;
-                fetchedUrl = url;
-                debugUrls.push(fetchedUrl);
+                debugUrls.push(url);
             } else {
                 // Auto fallback logic
                 try {
                     const { articles, url } = await fetchFromGNews(query, isGeneral, sortBy);
                     fetchedArticles = articles;
-                    fetchedUrl = url;
-                    debugUrls.push(fetchedUrl);
+                    debugUrls.push(url);
                     if (articles.length === 0) throw new Error("No articles from GNews");
                 } catch (error) {
                     console.error('GNews API failed, falling back to NewsData.io:', error);
                     const { articles, url } = await fetchFromNewsData(query, isGeneral);
                     fetchedArticles = articles;
-                    fetchedUrl = url;
-                    debugUrls.push(fetchedUrl);
+                    debugUrls.push(url);
                     if (articles.length === 0) throw new Error("No articles from NewsData.io");
                 }
             }
