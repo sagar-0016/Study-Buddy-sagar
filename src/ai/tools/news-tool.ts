@@ -18,7 +18,7 @@ const ArticleSchema = z.object({
   summary: z.string(),
   fullContent: z.string(),
   source: z.string(),
-  imageUrl: z.string().optional(),
+  imageUrl: z.string().url().optional(),
   url: z.string().url(),
 });
 
@@ -167,6 +167,7 @@ export const fetchNewsArticles = ai.defineTool(
                 fullContent: `There was an issue connecting to the news services or parsing the articles. Please check your internet connection or try again later. You can also switch to AI-generated news.`,
                 source: 'Study Buddy System',
                 url: '#',
+                imageUrl: undefined,
             }];
             return { articles, debugUrls };
         }
