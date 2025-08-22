@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, AlertTriangle, Search, BookOpen, Atom, Sigma, SquareRoot, InfinityIcon, Percent, Pi } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, Search, BookOpen, Atom, Sigma, SquareDot, InfinityIcon, Percent, Pi, FlaskConicalOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getFlashcardDecks } from '@/lib/flashcards';
 import type { FlashcardDeck } from '@/lib/types';
@@ -16,11 +16,14 @@ import type { LucideProps } from 'lucide-react';
 const iconMap: { [key: string]: React.ComponentType<LucideProps> } = {
   Atom,
   Sigma,
-  SquareRoot,
+  SquareRoot: SquareDot, // Use a valid icon as a fallback for the old name
+  SquareDot,
   Infinity: InfinityIcon,
   Percent,
   Pi,
+  'flask-conical-off': FlaskConicalOff,
 };
+
 
 const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
     const getDifficultyClass = () => {
@@ -39,7 +42,7 @@ const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
 
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   const isAvailable = deck.status === 'available';
-  const IconComponent = iconMap[deck.icon] || Atom;
+  const IconComponent = iconMap[deck.icon] || Sigma;
 
   const cardContent = (
     <Card className={cn("flex flex-col h-full transition-all duration-300", 
