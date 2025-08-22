@@ -2,7 +2,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { gnewsApiKey, newsdataApiKey, thenewsapiToken } from '@/lib/api-keys';
+import { gnewsApiKey, newsdataApiKey } from '@/lib/api-keys';
 import { fetchFullArticleContent } from './article-parser-tool';
 
 const NewsToolInputSchema = z.object({
@@ -25,13 +25,19 @@ const ToolOutputSchema = z.object({
     debugUrls: z.array(z.string().url()),
 });
 
-const forbiddenKeywords = ['murder', 'rape', 'kidnap', 'assault', 'violence', 'crime', 'death', 'killed', 'shot', 'terrorist', 'attack'];
+const forbiddenKeywords = ['murder', 'rape', 'kidnap', 'assault', 'violence', 'crime', 'death', 'killed', 'shot', 'terrorist', 'attack', 'sports', 'movies', 'entertainment', 'celebrity', 'gossip'];
+const forbiddenTitles = ['Legend of the Female General'];
 
 const filterArticle = (article: any): boolean => {
     const titleLower = article.title?.toLowerCase() || '';
     const descriptionLower = article.description?.toLowerCase() || '';
     const contentLower = article.content?.toLowerCase() || '';
     if (!article.description || !article.title || article.title === '[Removed]') return false;
+
+    if (forbiddenTitles.some(forbiddenTitle => titleLower.includes(forbiddenTitle.toLowerCase()))) {
+        return false;
+    }
+
     return !forbiddenKeywords.some(keyword => titleLower.includes(keyword) || descriptionLower.includes(keyword) || contentLower.includes(keyword));
 };
 
