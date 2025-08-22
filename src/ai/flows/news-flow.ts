@@ -40,8 +40,15 @@ export type NewsOutput = z.infer<typeof NewsOutputSchema>;
 export async function getNews(input: NewsInput): Promise<NewsOutput> {
   // If not using AI, directly call the tool and bypass the AI flow.
   if (!input.useAi) {
+    let query = input.category;
+    // Special handling for combined category
+    if (input.category === 'History & Literature') {
+      query = '"Indian History" OR "Indian Literature"';
+    }
+
     const { articles, debugUrls } = await fetchNewsArticles({ 
-        query: input.category, 
+        query: query, 
+        isGeneral: input.category === 'General',
         sortBy: input.sortBy || 'latest',
         sourceApi: input.sourceApi || 'auto',
     });
@@ -74,8 +81,7 @@ const newsGenPrompt = ai.definePrompt({
   - **General:** Focus on national news, science & technology, and economic developments.
   - **JEE:** Focus on exam dates, changes in patterns, counseling updates, and inspiring stories of toppers.
   - **UPSC:** Focus on policy changes, government schemes, Supreme Court rulings, and international relations relevant to the civil services exam.
-  - **History:** Provide summaries of recent historical findings, museum exhibitions, or profiles of historical figures.
-  - **Literature:** Provide summaries of classic book reviews, news about literary awards, or profiles of famous authors.
+  - **History & Literature:** Provide a mix of summaries of recent historical findings, museum exhibitions, profiles of historical figures, classic book reviews, news about literary awards, or profiles of famous authors.
 
   Generate the response now based on the category: '{{category}}'.`,
 });

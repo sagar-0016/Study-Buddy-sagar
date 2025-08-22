@@ -26,15 +26,13 @@ type Article = {
   url: string;
 };
 
-type NewsCategory = 'General' | 'JEE' | 'UPSC' | 'History' | 'Literature';
-const newsCategories: NewsCategory[] = ['General', 'JEE', 'UPSC', 'History', 'Literature'];
+type NewsCategory = 'General' | 'JEE' | 'UPSC' | 'History & Literature';
+const newsCategories: NewsCategory[] = ['General', 'JEE', 'UPSC', 'History & Literature'];
 type NewsMode = 'live' | 'ai';
 type SortMode = 'latest' | 'relevant';
 type ApiSource = 'auto' | 'gnews' | 'newsdata';
 
 const ArticleImage = ({ article }: { article: Article }) => {
-    // This component now assumes article.imageUrl exists.
-    // The fallback is removed as the parent component will handle conditional rendering.
     return (
         <Image
             src={article.imageUrl!}
@@ -179,7 +177,9 @@ export default function NewsPageClient() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
              <div key={i} className="space-y-2">
-                <Skeleton className="h-40 w-full" />
+                <div className="relative aspect-video overflow-hidden rounded-lg">
+                    <Skeleton className="h-full w-full" />
+                </div>
                 <Skeleton className="h-4 w-1/4" />
                 <Skeleton className="h-6 w-full" />
                 <Skeleton className="h-12 w-3/4" />
