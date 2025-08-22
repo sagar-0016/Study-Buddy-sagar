@@ -14,7 +14,7 @@ import {z} from 'genkit';
 import { fetchNewsArticles } from '@/ai/tools/news-tool';
 
 const NewsInputSchema = z.object({
-  category: z.string().describe('The category of news, e.g., "JEE", "Literature", "UPSC", "Science".'),
+  category: z.string().describe('The category of news, e.g., "JEE", "Literature", "UPSC", "History".'),
   useAi: z.boolean().describe('Whether to use AI to generate news or a tool to fetch live news.'),
   sortBy: z.enum(['latest', 'relevant']).optional().describe('Sorting preference for live news. "latest" for published date, "relevant" for relevancy.'),
   sourceApi: z.enum(['auto', 'gnews', 'newsdata']).optional().describe('The specific API to use, or "auto" for fallback.'),
@@ -74,7 +74,7 @@ const newsGenPrompt = ai.definePrompt({
   - **General:** Focus on national news, science & technology, and economic developments.
   - **JEE:** Focus on exam dates, changes in patterns, counseling updates, and inspiring stories of toppers.
   - **UPSC:** Focus on policy changes, government schemes, Supreme Court rulings, and international relations relevant to the civil services exam.
-  - **Science:** Focus on recent discoveries, technological advancements, and space exploration.
+  - **History:** Provide summaries of recent historical findings, museum exhibitions, or profiles of historical figures.
   - **Literature:** Provide summaries of classic book reviews, news about literary awards, or profiles of famous authors.
 
   Generate the response now based on the category: '{{category}}'.`,
