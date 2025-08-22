@@ -26,42 +26,16 @@ export const fetchFullArticleContent = ai.defineTool(
             let cleanContent = parsedArticle.content;
 
             if (cleanContent) {
-                // --- TEMPORARY DEBUGGING CODE ---
-                if (cleanContent.includes("Whether President would seek SC opinion")) {
-                    console.log("!!! DEBUG: Found target article !!!");
-                    const largeIndex = cleanContent.indexOf("Large");
-                    if (largeIndex !== -1) {
-                        const snippet = cleanContent.substring(largeIndex - 100, largeIndex + 100);
-                        console.log("--- SNIPPET AROUND 'Large' ---");
-                        console.log(snippet);
-                        console.log("------------------------------");
-                    } else {
-                        console.log("!!! DEBUG: 'Large' not found in article content.");
-                    }
-                }
-                // --- END TEMPORARY DEBUGGING CODE ---
-
-
-                // Define the markers for cleaning, handling variations in whitespace.
-                const startMarker = "Share AA +Text Size Small Medium Large";
+                // Define the markers for cleaning.
                 const endMarker = "End of Article";
                 
-                // Create a version of the content with normalized whitespace to find the marker's position
-                const normalizedContent = cleanContent.replace(/\s+/g, ' ');
-                const normalizedStartMarker = startMarker.replace(/\s+/g, ' ');
-
-                const startMarkerIndex = normalizedContent.indexOf(normalizedStartMarker);
-                
-                // Find the actual index in the original content to slice from
-                if (startMarkerIndex !== -1) {
-                    // This is an approximation but should work for most cases
-                    const originalIndex = cleanContent.indexOf('Share');
-                     if (originalIndex !== -1) {
-                        // Find the end of the "Large" text to slice after it.
-                        const sliceAfterIndex = cleanContent.toLowerCase().indexOf('large', originalIndex);
-                        if (sliceAfterIndex !== -1) {
-                             cleanContent = cleanContent.substring(sliceAfterIndex + 'large'.length);
-                        }
+                // More robust start marker detection
+                const shareIndex = cleanContent.indexOf('Share');
+                if (shareIndex !== -1) {
+                    // Find the end of the "Large" text to slice after it.
+                    const largeIndex = cleanContent.toLowerCase().indexOf('large', shareIndex);
+                    if (largeIndex !== -1) {
+                         cleanContent = cleanContent.substring(largeIndex + 'large'.length);
                     }
                 }
 
