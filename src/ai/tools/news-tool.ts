@@ -1,3 +1,4 @@
+
 'use server';
 
 import { ai } from '@/ai/genkit';
@@ -143,7 +144,7 @@ export const fetchNewsArticles = ai.defineTool(
 
             // Step 2: Parse each article for full content
             const enrichedArticles = await Promise.all(
-                fetchedArticles.slice(0, 7).map(async (article) => {
+                fetchedArticles.map(async (article) => {
                     if (!article.url) return { ...article, fullContent: article.summary };
                     
                     const parsed = await fetchFullArticleContent({ url: article.url });
