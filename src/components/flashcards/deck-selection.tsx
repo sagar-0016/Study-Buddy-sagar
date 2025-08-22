@@ -10,6 +10,7 @@ import { Dna, Sigma, FlaskConical, Atom, Rocket, BrainCircuit, AlertTriangle, Se
 import { getFlashcardDecks } from '@/lib/flashcards';
 import type { FlashcardDeck } from '@/lib/types';
 import { Input } from '@/components/ui/input';
+import type { AccessLevel } from '@/context/auth-context';
 
 // Icon mapping
 const iconMap: { [key: string]: React.ElementType } = {
@@ -22,14 +23,12 @@ const iconMap: { [key: string]: React.ElementType } = {
 };
 
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
-  const [accessLevel, setAccessLevel] = useState<string | null>(null);
+  const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(null);
 
   useEffect(() => {
-    const level = localStorage.getItem('study-buddy-access-level');
+    const level = localStorage.getItem('study-buddy-access-level') as AccessLevel | null;
     setAccessLevel(level);
   }, []);
-
-  const isAvailable = deck.status === 'available';
 
   const getBadgeText = () => {
     if (deck.status === 'available') return 'Available';
@@ -48,10 +47,10 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   const IconComponent = iconMap[deck.icon] || Atom;
 
   const cardContent = (
-    <Card className={`flex flex-col h-full transition-all duration-300 ${isAvailable ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : deck.status === 'not-for-you' ? 'opacity-80 hover:border-destructive hover:-translate-y-1 hover:shadow-lg' : 'opacity-60 cursor-not-allowed'}`}>
+    <Card className={`flex flex-col h-full transition-all duration-300 ${deck.status === 'available' ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : deck.status === 'not-for-you' ? 'opacity-80 hover:border-destructive hover:-translate-y-1 hover:shadow-lg' : 'opacity-60 cursor-not-allowed'}`}>
       <CardHeader className="p-6 pb-4">
         <div className="flex justify-between items-start">
-          <div className={`p-3 rounded-full ${isAvailable ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
+          <div className={`p-3 rounded-full ${deck.status === 'available' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>
             <IconComponent className="w-8 h-8" />
           </div>
           <Badge variant={getBadgeVariant()}>
