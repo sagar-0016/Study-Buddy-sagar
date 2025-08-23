@@ -29,7 +29,7 @@ const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
 
 
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
-  const isAvailable = deck.status === 'available' && deck.href;
+  const isAvailable = deck.status === 'available';
   
   const cardContent = (
     <Card className={cn("flex flex-col h-full transition-all duration-300", 
