@@ -6,8 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { Bot, User, Blend, Target } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Bot, User, Blend } from "lucide-react";
 
 export type MotivationMode = "ai" | "personal" | "mixed";
 
@@ -27,50 +26,18 @@ const ProfileCard = () => {
                     className="overflow-hidden rounded-full border-2 border-primary p-1"
                 />
                 <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                        <User className="h-5 w-5 text-muted-foreground" />
+                    <div className="flex items-baseline gap-3">
+                        <p className="text-sm font-medium text-muted-foreground w-12">Name:</p>
                         <p className="font-semibold text-lg">Pranjal</p>
                     </div>
-                     <div className="flex items-center gap-3">
-                        <Target className="h-5 w-5 text-muted-foreground" />
+                     <div className="flex items-baseline gap-3">
+                        <p className="text-sm font-medium text-muted-foreground w-12">Aim:</p>
                         <p className="font-semibold text-lg">IIT Delhi</p>
                     </div>
                 </div>
             </CardContent>
         </Card>
     )
-}
-
-const DirectEditSettings = () => {
-    const [isDirectEdit, setIsDirectEdit] = useLocalStorage('direct-edit-enabled', false);
-
-    return (
-        <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
-            <CardHeader>
-                <CardTitle>Advanced Settings</CardTitle>
-                <CardDescription>
-                    Control advanced features of the application.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                        <Label htmlFor="direct-edit-mode" className="text-base">
-                            Bypass Discipline Check
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                            Enable direct editing of schedules without the reflection questions.
-                        </p>
-                    </div>
-                    <Switch
-                        id="direct-edit-mode"
-                        checked={isDirectEdit}
-                        onCheckedChange={setIsDirectEdit}
-                    />
-                </div>
-            </CardContent>
-        </Card>
-    );
 }
 
 export default function SettingsPage() {
@@ -136,7 +103,6 @@ export default function SettingsPage() {
                     </RadioGroup>
                 </CardContent>
             </Card>
-            <DirectEditSettings />
         </div>
     )
 }
