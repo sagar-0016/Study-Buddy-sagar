@@ -20,7 +20,7 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
     const accessLevel = typeof window !== 'undefined' ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
     
     if (deck.status === 'available') return 'Available';
-    if (deck.status === 'not-for-you') {
+    if (deck.status === 'not-available') {
       if (accessLevel === 'full') return 'Not for you babe';
       return 'Not for you';
     }
