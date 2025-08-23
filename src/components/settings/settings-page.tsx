@@ -1,92 +1,76 @@
 
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import Image from "next/image";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { Bot, User, Blend, Image as ImageIcon, Trash2, Upload } from "lucide-react";
-import { useBackground } from "@/context/background-context";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import React from "react";
+import { Bot, User, Blend, Target } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 
 export type MotivationMode = "ai" | "personal" | "mixed";
 
-const BackgroundSettings = () => {
-    const { backgroundImage, setBackgroundImage, clearBackgroundImage } = useBackground();
-    const { toast } = useToast();
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
+const ProfileCard = () => {
+    return (
+        <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+            <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>Your personal details and current focus.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center gap-6">
+                 <Image
+                    src="/avatar.png"
+                    width={80}
+                    height={80}
+                    alt="Avatar"
+                    className="overflow-hidden rounded-full border-2 border-primary p-1"
+                />
+                <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                        <User className="h-5 w-5 text-muted-foreground" />
+                        <p className="font-semibold text-lg">Pranjal</p>
+                    </div>
+                     <div className="flex items-center gap-3">
+                        <Target className="h-5 w-5 text-muted-foreground" />
+                        <p className="font-semibold text-lg">IIT Delhi</p>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) { // 2MB limit
-                toast({
-                    title: "Image Too Large",
-                    description: "Please select an image smaller than 2MB.",
-                    variant: "destructive",
-                });
-                return;
-            }
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setBackgroundImage(reader.result as string);
-                toast({
-                    title: "Background Updated",
-                    description: "Your new custom background has been set.",
-                });
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleRemove = () => {
-        clearBackgroundImage();
-        toast({
-            title: "Background Removed",
-            description: "You are back to the default background.",
-        });
-    }
+const DirectEditSettings = () => {
+    const [isDirectEdit, setIsDirectEdit] = useLocalStorage('direct-edit-enabled', false);
 
     return (
-         <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
+        <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
             <CardHeader>
-                <CardTitle>Custom Background</CardTitle>
+                <CardTitle>Advanced Settings</CardTitle>
                 <CardDescription>
-                    Personalize your app by setting a custom background image. This is stored only on your current device.
+                    Control advanced features of the application.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                {backgroundImage && (
-                    <div className="mb-4">
-                        <Label>Current Background</Label>
-                        <div className="mt-2 aspect-video w-full max-w-sm rounded-md border p-1">
-                            <img src={backgroundImage} alt="Current custom background" className="h-full w-full rounded-sm object-cover" />
-                        </div>
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label htmlFor="direct-edit-mode" className="text-base">
+                            Bypass Discipline Check
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                            Enable direct editing of schedules without the reflection questions.
+                        </p>
                     </div>
-                )}
+                    <Switch
+                        id="direct-edit-mode"
+                        checked={isDirectEdit}
+                        onCheckedChange={setIsDirectEdit}
+                    />
+                </div>
             </CardContent>
-            <CardFooter className="flex gap-2">
-                 <Input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept="image/png, image/jpeg, image/gif, image/webp"
-                />
-                <Button onClick={() => fileInputRef.current?.click()}>
-                    <Upload className="mr-2 h-4 w-4" /> Upload Image
-                </Button>
-                {backgroundImage && (
-                    <Button variant="destructive" onClick={handleRemove}>
-                        <Trash2 className="mr-2 h-4 w-4" /> Remove
-                    </Button>
-                )}
-            </CardFooter>
         </Card>
-    )
+    );
 }
 
 export default function SettingsPage() {
@@ -94,6 +78,7 @@ export default function SettingsPage() {
 
     return (
         <div className="space-y-6">
+            <ProfileCard />
             <Card className="border-0 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
                 <CardHeader>
                     <CardTitle>Motivation Corner</CardTitle>
@@ -151,7 +136,7 @@ export default function SettingsPage() {
                     </RadioGroup>
                 </CardContent>
             </Card>
-            <BackgroundSettings />
+            <DirectEditSettings />
         </div>
     )
 }

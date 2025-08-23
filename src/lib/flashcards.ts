@@ -1,6 +1,6 @@
 
 import { db } from './firebase';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, doc, getDoc } from 'firebase/firestore';
 import type { FlashcardDeck, Flashcard } from './types';
 
 type DeckCategory = 'main' | 'physics' | 'chemistry' | 'maths';
@@ -29,6 +29,30 @@ export const getFlashcardDecks = async (category: DeckCategory): Promise<Flashca
     return [];
   }
 };
+
+/**
+ * Fetches a single flashcard deck by its document ID.
+ * @param {string} deckId - The ID of the deck document.
+ * @returns {Promise<FlashcardDeck | null>} A flashcard deck object or null if not found.
+ */
+export const getFlashcardDeckById = async (deckId: string): Promise<FlashcardDeck | null> => {
+    try {
+        const deckRef = doc(db, 'flashcardDecks', deckId);
+        const docSnap = await getDoc(deckRef);
+
+        if (!docSnap.exists()) {
+            console.warn(`No flashcard deck found with ID: ${deckId}`);
+            return null;
+        }
+
+        return { id: docSnap.id, ...docSnap.data() } as FlashcardDeck;
+
+    } catch (error) {
+        console.error(`Error fetching flashcard deck by ID ${deckId}:`, error);
+        return null;
+    }
+}
+
 
 /**
  * Fetches all flashcards for a specific deck from its nested 'cards' collection.

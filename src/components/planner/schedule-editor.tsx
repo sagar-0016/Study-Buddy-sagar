@@ -77,12 +77,12 @@ const ScheduleList = ({
   }
 
   const handleEnableEditingClick = async () => {
-    const directEdit = await isDirectEditEnabled();
-    if (directEdit) {
+    // Check the client-side setting first
+    if (isDirectEditEnabled()) {
       setIsEditMode(true);
       toast({
         title: "Direct Edit Enabled",
-        description: "You have bypassed the discipline challenge.",
+        description: "You have bypassed the discipline challenge via settings.",
       });
       return;
     }

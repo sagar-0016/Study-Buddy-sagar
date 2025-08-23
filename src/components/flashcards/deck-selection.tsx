@@ -33,8 +33,8 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
     return 'outline';
   }
   
-  const isClickable = deck.status === 'available' || deck.status === 'not-for-you';
-  const href = deck.status === 'not-for-you' ? '/flashcards/not-for-you' : deck.href;
+  const isClickable = deck.status === 'available';
+  const href = deck.status === 'not-for-you' ? '/flashcards/not-for-you' : `/flashcards/${deck.category}`;
   
   const cardContent = (
     <Card className={`flex flex-col h-full transition-all duration-300 ${isClickable ? 'hover:border-primary hover:-translate-y-1 hover:shadow-lg' : 'opacity-60 cursor-not-allowed'}`}>

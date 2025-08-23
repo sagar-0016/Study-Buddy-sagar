@@ -30,6 +30,7 @@ const DifficultyBadge = ({ difficulty }: { difficulty: string }) => {
 
 const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   const isAvailable = deck.status === 'available';
+  const href = `/flashcards/physics/${deck.id}`;
   
   const cardContent = (
     <Card className={cn("flex flex-col h-full transition-all duration-300", 
@@ -50,7 +51,7 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
   );
 
   if (isAvailable) {
-    return <Link href={deck.href}>{cardContent}</Link>
+    return <Link href={href}>{cardContent}</Link>
   }
   return <div>{cardContent}</div>;
 };
