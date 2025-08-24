@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
@@ -12,7 +12,7 @@ import { BackgroundProvider, useBackground } from '@/context/background-context'
 import LoginFlow from '@/components/auth/login-flow';
 import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
 import { useToast } from '@/hooks/use-toast';
-import { MessageSquareWarning, Loader2 } from 'lucide-react';
+import { MessageSquareWarning, Loader2, X, Github } from 'lucide-react';
 import UnlockScreen from '@/components/auth/unlock-screen';
 
 function AppBackground() {
@@ -38,6 +38,44 @@ function AppBackground() {
   return (
     <div className="fixed inset-0 -z-10 h-full w-full bg-green-50 dark:bg-black">
       <div className="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+    </div>
+  );
+}
+
+const MaintenanceBanner = () => {
+  const [isVisible, setIsVisible] = useState(true);
+
+  if (!isVisible) {
+    return null;
+  }
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 animate-in fade-in-50 slide-in-from-bottom-10 duration-500">
+      <div className="bg-background/80 backdrop-blur-lg border border-border rounded-lg shadow-lg p-4 max-w-xs sm:max-w-sm relative">
+        <button
+          onClick={() => setIsVisible(false)}
+          className="absolute top-1 right-1 p-1 text-muted-foreground hover:text-foreground rounded-full transition-colors"
+          aria-label="Dismiss maintenance message"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="flex items-start gap-3 pr-4">
+           <Github className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              This app is no longer under maintenance. If you wish to contribute,
+              you can refer {' '}
+              <a
+                href="https://github.com/sagar-0016/Study-Buddy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline hover:text-primary/80"
+              >
+                here
+              </a>
+              .
+            </p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -154,6 +192,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      {isAuthenticated && <MaintenanceBanner />}
     </div>
   );
 }
