@@ -22,8 +22,8 @@ export default function Home() {
         </div>
         <div className="space-y-6">
             <MotivationCorner />
-            <AppFeatures />
             <QuickStats />
+            <AppFeatures />
         </div>
       </div>
     </div>
