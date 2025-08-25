@@ -11,10 +11,11 @@ import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
 import { addLectureFeedback, getLectureNotes } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import CustomVideoPlayer from './custom-video-player';
 import Image from 'next/image';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 
 
 const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
@@ -61,10 +62,11 @@ const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
     )
 }
 
-const FeedbackSection = ({ lecture }: { lecture: Lecture }) => {
+const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
     const [feedbackText, setFeedbackText] = useState('');
     const [rating, setRating] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
 
     const handleSubmitFeedback = async () => {
@@ -78,38 +80,56 @@ const FeedbackSection = ({ lecture }: { lecture: Lecture }) => {
             toast({ title: "Thank you!", description: "Your feedback has been submitted." });
             setFeedbackText('');
             setRating(0);
+            setIsOpen(false);
         } catch (error) {
             toast({ title: "Error", description: "Could not submit your feedback.", variant: "destructive" });
         } finally {
             setIsSubmitting(false);
         }
     }
-
+    
     return (
-        <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Lecture Feedback</h3>
-            <div className="flex items-center gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                    <button key={star} onClick={() => setRating(star)}>
-                        <Star className={`h-6 w-6 transition-colors ${rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />
-                    </button>
-                ))}
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="feedback-textarea">Your Feedback</Label>
-                <Textarea 
-                    id="feedback-textarea"
-                    value={feedbackText}
-                    onChange={(e) => setFeedbackText(e.target.value)}
-                    placeholder="What did you like or dislike about this lecture?"
-                    rows={4}
-                />
-            </div>
-            <Button onClick={handleSubmitFeedback} disabled={isSubmitting || !feedbackText || rating === 0}>
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                Submit Feedback
-            </Button>
-        </div>
+         <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline" className="fixed bottom-6 right-6 z-50 shadow-lg rounded-full">
+                    <Star className="mr-2 h-4 w-4"/> Feedback
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Lecture Feedback</DialogTitle>
+                    <DialogDescription>
+                        How would you rate this lecture? Your feedback helps.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="flex items-center justify-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button key={star} onClick={() => setRating(star)}>
+                                <Star className={`h-8 w-8 transition-colors ${rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />
+                            </button>
+                        ))}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="feedback-textarea">Your Feedback</Label>
+                        <Textarea 
+                            id="feedback-textarea"
+                            value={feedbackText}
+                            onChange={(e) => setFeedbackText(e.target.value)}
+                            placeholder="What did you like or dislike?"
+                            rows={4}
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSubmitFeedback} disabled={isSubmitting || !feedbackText || rating === 0}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        Submit Feedback
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     )
 }
 
@@ -187,23 +207,12 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                             <CardDescription>{lecture.channel} • {lecture.subject}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Tabs defaultValue="description">
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="description">Description & Doubts</TabsTrigger>
-                                    <TabsTrigger value="feedback">Feedback</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="description" className="pt-6">
-                                     <div className="prose prose-sm dark:prose-invert max-w-none">
-                                        <p>{lecture.description}</p>
-                                    </div>
-                                    <div className="mt-6 pt-6 border-t">
-                                        <DoubtSection lecture={lecture} />
-                                    </div>
-                                </TabsContent>
-                                <TabsContent value="feedback" className="pt-6">
-                                    <FeedbackSection lecture={lecture} />
-                                </TabsContent>
-                            </Tabs>
+                             <div className="prose prose-sm dark:prose-invert max-w-none">
+                                <p>{lecture.description}</p>
+                            </div>
+                            <div className="mt-6 pt-6 border-t">
+                                <DoubtSection lecture={lecture} />
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
@@ -219,6 +228,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                     </Card>
                 </div>
             </div>
+             <FeedbackDialog lecture={lecture} />
         </div>
     )
 }
