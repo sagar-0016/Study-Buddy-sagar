@@ -115,20 +115,29 @@ export const getLectureNotes = async (lectureId: string): Promise<LectureNote[]>
 }
 
 /**
- * Adds a feedback entry for a specific lecture.
+ * Adds a feedback entry for a specific lecture to a nested collection.
  * @param {string} lectureId - The ID of the lecture.
  * @param {string} feedbackText - The feedback content.
- * @param {number} rating - The rating given by the user (e.g., 1-5).
+ * @param {number} [rating] - The rating given by the user (e.g., 1-5). Optional.
  */
-export const addLectureFeedback = async (lectureId: string, feedbackText: string, rating: number): Promise<void> => {
+export const addLectureFeedback = async (lectureId: string, feedbackText: string, rating?: number): Promise<void> => {
     try {
-        const feedbackRef = collection(db, 'lecture-feedback');
-        await addDoc(feedbackRef, {
-            lectureId,
+        const feedbackRef = collection(db, 'lectures', lectureId, 'feedback');
+        
+        const feedbackData: {
+            feedback: string;
+            submittedAt: any;
+            rating?: number;
+        } = {
             feedback: feedbackText,
-            rating,
             submittedAt: serverTimestamp(),
-        });
+        };
+
+        if (rating !== undefined) {
+            feedbackData.rating = rating;
+        }
+
+        await addDoc(feedbackRef, feedbackData);
     } catch (error) {
         console.error(`Error submitting feedback for lecture ${lectureId}:`, error);
         throw error;

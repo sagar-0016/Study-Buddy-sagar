@@ -1,9 +1,8 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Lecture, LectureNote } from '@/lib/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import CustomVideoPlayer from './custom-video-player';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { useLocalStorage } from '@/hooks/use-local-storage';
 
 
 const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
@@ -68,16 +68,24 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const { toast } = useToast();
+    const [ratedLectures, setRatedLectures] = useLocalStorage<string[]>('rated-lectures', []);
+
+    const hasRated = ratedLectures.includes(lecture.id);
 
     const handleSubmitFeedback = async () => {
-        if (!feedbackText || rating === 0) {
-            toast({ title: "Incomplete", description: "Please provide a rating and some feedback text.", variant: "destructive" });
+        if (!feedbackText || (!hasRated && rating === 0)) {
+            toast({ title: "Incomplete", description: "Please provide a rating (if it's your first time) and some feedback text.", variant: "destructive" });
             return;
         }
         setIsSubmitting(true);
         try {
-            await addLectureFeedback(lecture.id, feedbackText, rating);
+            await addLectureFeedback(lecture.id, feedbackText, hasRated ? undefined : rating);
             toast({ title: "Thank you!", description: "Your feedback has been submitted." });
+            
+            if (!hasRated) {
+                setRatedLectures([...ratedLectures, lecture.id]);
+            }
+            
             setFeedbackText('');
             setRating(0);
             setIsOpen(false);
@@ -99,31 +107,33 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
                 <DialogHeader>
                     <DialogTitle>Lecture Feedback</DialogTitle>
                     <DialogDescription>
-                        How would you rate this lecture? Your feedback helps.
+                        {hasRated ? "Share additional thoughts on this lecture." : "How would you rate this lecture? Your feedback helps."}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                    <div className="flex items-center justify-center gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <button key={star} onClick={() => setRating(star)}>
-                                <Star className={`h-8 w-8 transition-colors ${rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />
-                            </button>
-                        ))}
-                    </div>
+                    {!hasRated && (
+                        <div className="flex items-center justify-center gap-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <button key={star} onClick={() => setRating(star)}>
+                                    <Star className={`h-8 w-8 transition-colors ${rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground'}`} />
+                                </button>
+                            ))}
+                        </div>
+                    )}
                     <div className="space-y-2">
                         <Label htmlFor="feedback-textarea">Your Feedback</Label>
                         <Textarea 
                             id="feedback-textarea"
                             value={feedbackText}
                             onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="What did you like or dislike?"
+                            placeholder={hasRated ? "Add another comment..." : "What did you like or dislike?"}
                             rows={4}
                         />
                     </div>
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
-                    <Button onClick={handleSubmitFeedback} disabled={isSubmitting || !feedbackText || rating === 0}>
+                    <Button onClick={handleSubmitFeedback} disabled={isSubmitting || !feedbackText || (!hasRated && rating === 0)}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                         Submit Feedback
                     </Button>
@@ -137,7 +147,7 @@ const NotesSection = ({ lecture }: { lecture: Lecture }) => {
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useState(() => {
+    useEffect(() => {
         const fetchNotes = async () => {
             setIsLoading(true);
             const fetchedNotes = await getLectureNotes(lecture.id);
@@ -145,7 +155,7 @@ const NotesSection = ({ lecture }: { lecture: Lecture }) => {
             setIsLoading(false);
         }
         fetchNotes();
-    })
+    }, [lecture.id])
 
     return (
         <div className="space-y-6">

@@ -1,10 +1,9 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 
-// Custom hook for localStorage
-export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T) => void] {
+function useLocalStorage<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === 'undefined') {
       return initialValue;
@@ -19,31 +18,16 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T)
   });
 
   useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-          const item = window.localStorage.getItem(key);
-          const currentValue = item ? JSON.parse(item) : initialValue;
-          if (JSON.stringify(storedValue) !== JSON.stringify(currentValue)) {
-              window.localStorage.setItem(key, JSON.stringify(storedValue));
-          }
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(storedValue));
+      } catch (error) {
+        console.log(error);
       }
-    } catch (error) {
-      console.log(error);
     }
-  }, [key, storedValue, initialValue]);
+  }, [key, storedValue]);
 
-
-  const setValue = (value: T | ((val: T) => T)) => {
-    try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  return [storedValue, setValue];
+  return [storedValue, setStoredValue];
 }
+
+export { useLocalStorage };
