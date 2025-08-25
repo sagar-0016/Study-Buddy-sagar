@@ -47,39 +47,27 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const logAppOpenAndCheckMessages = async () => {
       try {
         if (isAuthenticated) {
-            const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
-            await addDoc(collection(db, "opened"), {
-              time: new Date(),
-              accessLevel: accessLevel,
-              device: {
-                userAgent: navigator.userAgent,
-                screenWidth: window.screen.width,
-                screenHeight: window.screen.height,
-                windowWidth: window.innerWidth,
-                windowHeight: window.innerHeight,
-                language: navigator.language,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                online: navigator.onLine,
-              }
-            });
-            console.log("App open event logged to Firestore.");
-
-            if (accessLevel === 'full') {
-                const messages = await getUnreadMessages();
-                messages.forEach(async (msg) => {
-                    toast({
-                        title: (
-                            <div className="flex items-center gap-2">
-                                <MessageSquareWarning className="h-5 w-5 text-primary" />
-                                <span>New Message</span>
-                            </div>
-                        ),
-                        description: msg.text,
-                        duration: 10000,
-                    });
-                    await markMessageAsRead(msg.id);
-                });
+            const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | 'unknown';
+            
+            if (accessLevel !== 'full') {
+              console.log("Access level is not 'full', skipping message check.");
+              return;
             }
+
+            const messages = await getUnreadMessages();
+            messages.forEach(async (msg) => {
+                toast({
+                    title: (
+                        <div className="flex items-center gap-2">
+                            <MessageSquareWarning className="h-5 w-5 text-primary" />
+                            <span>New Message</span>
+                        </div>
+                    ),
+                    description: msg.text,
+                    duration: 10000,
+                });
+                await markMessageAsRead(msg.id);
+            });
         }
       } catch (error) {
         console.error("Error during app startup tasks: ", error);
