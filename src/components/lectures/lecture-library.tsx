@@ -101,8 +101,8 @@ export default function LectureLibrary() {
     return (
         <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[40vh]">
             <Ban className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">No authorized videos here</h3>
-            <p className="text-muted-foreground">This section is available for authorized users only.</p>
+            <h3 className="text-lg font-semibold">Access Denied</h3>
+            <p className="text-muted-foreground">This feature is available for authorized users only.</p>
         </div>
     )
   }
