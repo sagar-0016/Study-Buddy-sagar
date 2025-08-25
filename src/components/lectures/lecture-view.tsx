@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Lecture, LectureNote } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,14 @@ import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
 import { addLectureFeedback, getLectureNotes, uploadLectureNote } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Download, Notebook } from 'lucide-react';
+import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Download, Notebook, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import CustomVideoPlayer from './custom-video-player';
 import Image from 'next/image';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/context/auth-context';
 
 
 const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
@@ -148,7 +149,10 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+    const { pauseLocking } = useAuth();
+
 
     const fetchNotes = async () => {
         setIsLoading(true);
@@ -181,6 +185,11 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
             setIsUploading(false);
         }
     };
+    
+    const triggerFileInput = () => {
+        pauseLocking(10000); // Pause lock for 10 seconds
+        fileInputRef.current?.click();
+    }
 
 
     return (
@@ -215,23 +224,44 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                 <h3 className="text-lg font-semibold">Your Notes</h3>
                 <p className="text-sm text-muted-foreground">Upload your own PDF notes for this lecture.</p>
                 <div className="mt-4">
-                     <Label htmlFor="pdf-upload" className="w-full">
-                        <div className="border-2 border-dashed rounded-lg flex flex-col items-center text-center p-4 cursor-pointer hover:bg-muted/50 transition-colors">
-                           {isUploading ? (
-                                <>
-                                    <Loader2 className="h-8 w-8 text-muted-foreground mb-2 animate-spin" />
-                                    <p className="font-semibold mb-1">Uploading...</p>
-                                </>
-                           ) : (
-                                <>
-                                    <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                                    <p className="font-semibold mb-1">Upload PDF</p>
-                                    <p className="text-xs text-muted-foreground">Click here to choose a file</p>
-                                </>
-                           )}
+                     <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full">
+                                <Upload className="mr-2 h-4 w-4" /> Upload PDF
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Heads up!</DialogTitle>
+                                <DialogDescription>
+                                    For security reasons, after clicking "Proceed to Upload", you'll have 10 seconds to choose your file. The app will lock if it takes longer.
+                                </DialogDescription>
+                            </DialogHeader>
+                             <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="secondary">Cancel</Button>
+                                </DialogClose>
+                                <DialogClose asChild>
+                                    <Button onClick={triggerFileInput}>Proceed to Upload</Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                     </Dialog>
+                     <input 
+                        id="pdf-upload" 
+                        ref={fileInputRef}
+                        type="file" 
+                        className="sr-only" 
+                        accept=".pdf" 
+                        onChange={handleFileUpload} 
+                        disabled={isUploading}
+                    />
+                     {isUploading && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Uploading...</span>
                         </div>
-                    </Label>
-                    <input id="pdf-upload" type="file" className="sr-only" accept=".pdf" onChange={handleFileUpload} disabled={isUploading}/>
+                    )}
                 </div>
             </div>
         </div>

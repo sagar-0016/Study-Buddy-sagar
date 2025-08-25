@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -15,6 +15,7 @@ type AuthContextType = {
   logout: () => void;
   lockApp: () => void;
   unlockApp: (accessLevel: AccessLevel) => void;
+  pauseLocking: (durationInMs: number) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +25,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLocked, setIsLocked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isReloading, setIsReloading] = useState(false);
+  const [isLockingPaused, setIsLockingPaused] = useState(false);
+  const lockPauseTimer = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -86,8 +89,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.reload();
   };
 
-  const lockApp = () => {
-    if (isAuthenticated) {
+  const lockApp = useCallback(() => {
+    if (isAuthenticated && !isLockingPaused) {
         try {
             localStorage.setItem('study-buddy-app-locked', 'true');
         } catch (e) {
@@ -95,11 +98,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
         setIsLocked(true);
     }
-  }
+  }, [isAuthenticated, isLockingPaused]);
 
   const unlockApp = (accessLevel: AccessLevel) => {
     login(accessLevel);
   }
+
+  const pauseLocking = (durationInMs: number) => {
+    if (lockPauseTimer.current) {
+        clearTimeout(lockPauseTimer.current);
+    }
+    setIsLockingPaused(true);
+    lockPauseTimer.current = setTimeout(() => {
+        setIsLockingPaused(false);
+        lockPauseTimer.current = null;
+    }, durationInMs);
+  };
 
   if (isLoading) {
     return (
@@ -110,7 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLocked, isReloading, login, logout, lockApp, unlockApp }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLocked, isReloading, login, logout, lockApp, unlockApp, pauseLocking }}>
       {children}
     </AuthContext.Provider>
   );
