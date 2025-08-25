@@ -11,7 +11,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "populate-schedules": "tsx ./scripts/populateSchedules.ts",
-    "populate-flashcards": "tsx ./scripts/populateFlashcards.ts"
+    "populate-flashcards": "tsx ./scripts/populateFlashcards.ts",
+    "populate-messages": "tsx ./scripts/populateMessages.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
