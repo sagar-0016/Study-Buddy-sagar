@@ -12,6 +12,7 @@ import { addDoubt } from '@/lib/doubts';
 import { addLectureFeedback, getLectureNotes } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
     const [doubtText, setDoubtText] = useState('');
