@@ -3,78 +3,44 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { getLectures } from '@/lib/lectures';
 import type { Lecture } from '@/lib/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Skeleton } from '@/components/ui/skeleton';
 import { Search, Clapperboard, Play, Ban } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-const VideoPlayerDialog = ({ lecture, children }: { lecture: Lecture, children: React.ReactNode }) => {
-    return (
-        <Dialog>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="max-w-4xl">
-                <DialogHeader>
-                    <DialogTitle>{lecture.title}</DialogTitle>
-                    <DialogDescription>{lecture.channel} • {lecture.subject}</DialogDescription>
-                </DialogHeader>
-                <div className="aspect-video bg-black rounded-lg">
-                    <video
-                        controls
-                        src={lecture.videoUrl}
-                        className="w-full h-full"
-                    >
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
-
 const LectureCard = ({ lecture }: { lecture: Lecture }) => {
   return (
-    <VideoPlayerDialog lecture={lecture}>
-        <div className="block group cursor-pointer">
-            <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col border-0">
-                <div className="relative aspect-video">
-                <Image 
-                    src={lecture.thumbnailUrl} 
-                    alt={`Thumbnail for ${lecture.title}`} 
-                    fill 
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                    <Play className="h-12 w-12 text-white/80 group-hover:text-white group-hover:scale-110 transition-transform" />
-                </div>
-                <Badge className="absolute bottom-2 right-2 bg-black/70 text-white border-none text-xs">{lecture.duration}</Badge>
-                </div>
-                <CardContent className="p-4 flex-grow">
-                <Badge variant={lecture.subject === 'Physics' ? 'default' : lecture.subject === 'Chemistry' ? 'destructive' : 'secondary'} className="mb-2">
-                    {lecture.subject}
-                </Badge>
-                <h3 className="font-semibold text-base line-clamp-2">{lecture.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{lecture.description}</p>
-                </CardContent>
-                <CardFooter className="p-4 pt-0">
-                    <p className="text-xs text-muted-foreground font-medium">{lecture.channel}</p>
-                </CardFooter>
-            </Card>
-        </div>
-    </VideoPlayerDialog>
+    <Link href={`/lectures/${lecture.id}`} className="block group">
+        <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col border-0">
+            <div className="relative aspect-video">
+            <Image 
+                src={lecture.thumbnailUrl} 
+                alt={`Thumbnail for ${lecture.title}`} 
+                fill 
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                <Play className="h-12 w-12 text-white/80 group-hover:text-white group-hover:scale-110 transition-transform" />
+            </div>
+            <Badge className="absolute bottom-2 right-2 bg-black/70 text-white border-none text-xs">{lecture.duration}</Badge>
+            </div>
+            <CardContent className="p-4 flex-grow">
+            <Badge variant={lecture.subject === 'Physics' ? 'default' : lecture.subject === 'Chemistry' ? 'destructive' : 'secondary'} className="mb-2">
+                {lecture.subject}
+            </Badge>
+            <h3 className="font-semibold text-base line-clamp-2">{lecture.title}</h3>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{lecture.description}</p>
+            </CardContent>
+            <CardFooter className="p-4 pt-0">
+                <p className="text-xs text-muted-foreground font-medium">{lecture.channel}</p>
+            </CardFooter>
+        </Card>
+    </Link>
   );
 };
 

@@ -133,6 +133,13 @@ export interface Lecture extends DocumentData {
   duration: string;
 }
 
+export interface LectureNote extends DocumentData {
+    id: string;
+    name: string;
+    url: string;
+    type: 'pdf' | 'link';
+}
+
 export interface Doubt extends DocumentData {
     id: string;
     text: string;
