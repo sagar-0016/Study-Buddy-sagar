@@ -189,3 +189,8 @@ export interface MoodLog extends DocumentData {
     mood: string;
     createdAt: Timestamp;
 }
+
+export interface FeatureTip extends DocumentData {
+    id: string;
+    text: string;
+}

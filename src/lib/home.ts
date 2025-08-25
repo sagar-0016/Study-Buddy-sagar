@@ -48,3 +48,26 @@ export const getRandomOneLiner = async (): Promise<string> => {
         return "Believe in your potential.";
     }
 };
+
+/**
+ * Fetches a random feature tip from the 'features' collection.
+ * @returns A random feature tip string from the collection.
+ */
+export const getRandomFeatureTip = async (): Promise<string> => {
+    try {
+        const featuresRef = collection(db, 'features');
+        const q = query(featuresRef, limit(50));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            return "You can customize the motivation messages in the Settings page.";
+        }
+
+        const tips = querySnapshot.docs.map(doc => doc.data().text as string);
+        const randomIndex = Math.floor(Math.random() * tips.length);
+        return tips[randomIndex];
+    } catch (error) {
+        console.error(`Error fetching feature tips:`, error);
+        return "Check out the Syllabus Analysis page to prioritize your studies based on chapter weightage.";
+    }
+};
