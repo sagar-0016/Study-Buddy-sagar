@@ -11,8 +11,11 @@ import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
 import { addLectureFeedback, getLectureNotes } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info } from 'lucide-react';
+import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import CustomVideoPlayer from './custom-video-player';
+import Image from 'next/image';
+
 
 const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
     const [doubtText, setDoubtText] = useState('');
@@ -169,17 +172,11 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
     return (
         <div className="space-y-6">
-            <Card className="overflow-hidden">
-                <div className="aspect-video bg-black">
-                     <video
-                        controls
-                        src={lecture.videoUrl}
-                        className="w-full h-full"
-                        poster={lecture.thumbnailUrl}
-                    >
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
+            <Card className="overflow-hidden border-0 shadow-none">
+                 <CustomVideoPlayer 
+                    src={lecture.videoUrl}
+                    poster={lecture.thumbnailUrl}
+                 />
             </Card>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
