@@ -48,4 +48,3 @@ export default async function LecturePage({ params }: LecturePageProps) {
         <LectureView lecture={lecture} />
     </div>
   );
-}
