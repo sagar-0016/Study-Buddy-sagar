@@ -14,6 +14,8 @@ import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
 import { useToast } from '@/hooks/use-toast';
 import { MessageSquareWarning, Loader2, X, Github } from 'lucide-react';
 import UnlockScreen from '@/components/auth/unlock-screen';
+import type { AccessLevel } from '@/context/auth-context';
+
 
 function AppBackground() {
   const { isAuthenticated } = useAuth();
@@ -41,45 +43,6 @@ function AppBackground() {
     </div>
   );
 }
-
-const MaintenanceBanner = () => {
-  const [isVisible, setIsVisible] = useState(true);
-
-  if (!isVisible) {
-    return null;
-  }
-
-  return (
-    <div className="fixed bottom-4 right-4 z-50 animate-in fade-in-50 slide-in-from-bottom-10 duration-500">
-      <div className="bg-background/80 backdrop-blur-lg border border-border rounded-lg shadow-lg p-4 max-w-xs sm:max-w-sm relative">
-        <button
-          onClick={() => setIsVisible(false)}
-          className="absolute top-1 right-1 p-1 text-muted-foreground hover:text-foreground rounded-full transition-colors"
-          aria-label="Dismiss maintenance message"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <div className="flex items-start gap-3 pr-4">
-           <Github className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-            <p className="text-sm text-muted-foreground">
-              This app is no longer under maintenance. If you wish to contribute,
-              you can refer {' '}
-              <a
-                href="https://github.com/sagar-0016/Study-Buddy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary underline hover:text-primary/80"
-              >
-                here
-              </a>
-              .
-            </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLocked, lockApp, unlockApp, isReloading } = useAuth();
@@ -134,7 +97,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
                 });
             }
 
-            const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
+            const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | 'unknown';
             if (accessLevel === 'full') {
                 const messages = await getUnreadMessages();
                 messages.forEach(async (msg) => {
@@ -192,7 +155,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
-      {isAuthenticated && <MaintenanceBanner />}
     </div>
   );
 }
