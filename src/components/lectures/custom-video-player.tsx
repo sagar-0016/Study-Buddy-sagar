@@ -5,24 +5,32 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { 
-    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, CirclePower 
+    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings
 } from 'lucide-react';
 import { 
     DropdownMenu, 
     DropdownMenuContent, 
     DropdownMenuItem, 
-    DropdownMenuTrigger 
+    DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 interface CustomVideoPlayerProps {
-    src: string;
+    src: string; // HD src
+    sdSrc?: string; // Optional SD src
     poster: string;
 }
 
-export default function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProps) {
+type Quality = 'hd' | 'sd';
+
+export default function CustomVideoPlayer({ src, sdSrc, poster }: CustomVideoPlayerProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const playerRef = useRef<HTMLDivElement>(null);
+    const timeRef = useRef<number>(0);
     const [isPlaying, setIsPlaying] = useState(false);
     const [volume, setVolume] = useState(1);
     const [isMuted, setIsMuted] = useState(false);
@@ -31,6 +39,7 @@ export default function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProp
     const [playbackRate, setPlaybackRate] = useState(1);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showControls, setShowControls] = useState(true);
+    const [quality, setQuality] = useState<Quality>('hd');
     let controlsTimeout: NodeJS.Timeout;
 
     const formatTime = (time: number) => {
@@ -84,6 +93,7 @@ export default function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProp
     const handleLoadedMetadata = () => {
         if (videoRef.current) {
             setDuration(videoRef.current.duration);
+            videoRef.current.currentTime = timeRef.current;
         }
     };
 
@@ -91,6 +101,14 @@ export default function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProp
         if (videoRef.current) {
             videoRef.current.playbackRate = rate;
             setPlaybackRate(rate);
+        }
+    };
+
+    const handleQualityChange = (newQuality: Quality) => {
+        if (videoRef.current && quality !== newQuality) {
+            timeRef.current = videoRef.current.currentTime;
+            setQuality(newQuality);
+            // The `key` prop on the video element will handle re-mounting and loading the new source
         }
     };
 
@@ -172,17 +190,21 @@ export default function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProp
         }
     }, [handleKeyDown]);
 
+    const activeSrc = quality === 'hd' ? src : sdSrc || src;
+
     return (
         <div ref={playerRef} className="relative w-full aspect-video bg-black rounded-lg overflow-hidden group" onMouseMove={handleMouseMove}>
             <video
+                key={activeSrc} // Force re-mount on source change
                 ref={videoRef}
-                src={src}
+                src={activeSrc}
                 poster={poster}
                 className="w-full h-full"
                 onLoadedMetadata={handleLoadedMetadata}
                 onTimeUpdate={handleTimeUpdate}
                 onClick={handlePlayPause}
                 onDoubleClick={toggleFullscreen}
+                autoPlay={isPlaying}
             >
                 Your browser does not support the video tag.
             </video>
@@ -198,7 +220,7 @@ export default function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProp
             <div className={cn("absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent transition-opacity duration-300", 
                  showControls ? 'opacity-100' : 'opacity-0'
             )}>
-                <div className="flex items-center gap-4 text-white">
+                <div className="flex items-center gap-2 sm:gap-4 text-white">
                     <Button variant="ghost" size="icon" onClick={handlePlayPause}>
                         {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6" />}
                     </Button>
@@ -220,13 +242,13 @@ export default function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProp
                             onValueChange={handleVolumeChange}
                             max={1}
                             step={0.1}
-                            className="w-24"
+                            className="w-24 hidden sm:flex"
                         />
                     </div>
 
                     <span className="text-sm font-mono">{formatTime(videoRef.current?.currentTime || 0)} / {formatTime(duration)}</span>
 
-                    <div className="flex-grow mx-4">
+                    <div className="flex-grow mx-2 sm:mx-4">
                         <Slider
                             value={[progress]}
                             onValueChange={handleProgressChange}
@@ -241,6 +263,8 @@ export default function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProp
                             <Button variant="ghost" className="font-mono">{playbackRate}x</Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
+                             <DropdownMenuLabel>Playback Speed</DropdownMenuLabel>
+                             <DropdownMenuSeparator />
                             {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
                                 <DropdownMenuItem key={rate} onSelect={() => handlePlaybackRateChange(rate)}>
                                     {rate}x
@@ -248,6 +272,24 @@ export default function CustomVideoPlayer({ src, poster }: CustomVideoPlayerProp
                             ))}
                         </DropdownMenuContent>
                     </DropdownMenu>
+
+                     {sdSrc && (
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Settings className="h-5 w-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuLabel>Quality</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuRadioGroup value={quality} onValueChange={(q) => handleQualityChange(q as Quality)}>
+                                    <DropdownMenuRadioItem value="hd">HD (1080p)</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="sd">SD (480p)</DropdownMenuRadioItem>
+                                </DropdownMenuRadioGroup>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
 
                     <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
                         {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}

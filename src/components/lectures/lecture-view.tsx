@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -335,6 +334,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                     <Card className="overflow-hidden border-0 shadow-none">
                         <CustomVideoPlayer 
                             src={lecture.videoUrl}
+                            sdSrc={lecture.sdVideoUrl}
                             poster={lecture.thumbnailUrl}
                         />
                     </Card>

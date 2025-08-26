@@ -128,6 +128,7 @@ export interface Lecture extends DocumentData {
   description: string;
   subject: 'Physics' | 'Chemistry' | 'Maths';
   videoUrl: string;
+  sdVideoUrl?: string; // Standard Definition video URL
   thumbnailUrl: string;
   channel: string;
   duration: string;
@@ -152,7 +153,7 @@ export interface Doubt extends DocumentData {
 }
 
 export interface TechnicalHelp extends DocumentData {
-    id: string;
+    id:string;
     text: string;
     category: string;
     imageUrl?: string;
