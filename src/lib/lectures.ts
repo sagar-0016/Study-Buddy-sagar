@@ -1,7 +1,8 @@
 
+
 import { db, storage } from './firebase';
 import { collection, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import type { Lecture, LectureNote } from './types';
 
@@ -115,36 +116,62 @@ export const getLectureNotes = async (lectureId: string): Promise<LectureNote[]>
 }
 
 /**
- * Uploads a PDF note to Firebase Storage and adds its reference to Firestore.
+ * Uploads a PDF note to Firebase Storage, reports progress, and adds its reference to Firestore.
  * @param lectureId The ID of the lecture document.
  * @param lectureTitle The title of the lecture, used for the folder path.
  * @param file The PDF file to upload.
+ * @param onProgress A callback function to report upload progress (0-100).
  */
-export const uploadLectureNote = async (lectureId: string, lectureTitle: string, file: File): Promise<void> => {
-    try {
-        // Sanitize the title to create a valid folder name
-        const sanitizedTitle = lectureTitle.replace(/[^a-zA-Z0-9]/g, '_');
-        const storagePath = `lectures/${sanitizedTitle}/${file.name}`;
-        const storageRef = ref(storage, storagePath);
-        
-        // Upload file to Storage
-        const snapshot = await uploadBytes(storageRef, file);
-        const downloadURL = await getDownloadURL(snapshot.ref);
+export const uploadLectureNote = (
+    lectureId: string, 
+    lectureTitle: string, 
+    file: File,
+    onProgress: (progress: number) => void
+): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        try {
+            const sanitizedTitle = lectureTitle.replace(/[^a-zA-Z0-9]/g, '_');
+            const storagePath = `lectures/${sanitizedTitle}/${file.name}`;
+            const storageRef = ref(storage, storagePath);
+            
+            const uploadTask = uploadBytesResumable(storageRef, file);
 
-        // Add reference to Firestore
-        const notesRef = collection(db, 'lectures', lectureId, 'notes');
-        await addDoc(notesRef, {
-            name: file.name,
-            url: downloadURL,
-            type: 'pdf',
-            uploadedAt: serverTimestamp()
-        });
-
-    } catch (error) {
-        console.error(`Error uploading note for lecture ${lectureId}:`, error);
-        throw error;
-    }
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    // Report progress
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    onProgress(progress);
+                },
+                (error) => {
+                    // Handle unsuccessful uploads
+                    console.error(`Error during note upload for lecture ${lectureId}:`, error);
+                    reject(error);
+                },
+                async () => {
+                    // Handle successful uploads on complete
+                    try {
+                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                        const notesRef = collection(db, 'lectures', lectureId, 'notes');
+                        await addDoc(notesRef, {
+                            name: file.name,
+                            url: downloadURL,
+                            type: 'pdf',
+                            uploadedAt: serverTimestamp()
+                        });
+                        resolve();
+                    } catch (firestoreError) {
+                        console.error(`Error adding note to Firestore for lecture ${lectureId}:`, firestoreError);
+                        reject(firestoreError);
+                    }
+                }
+            );
+        } catch (error) {
+            console.error(`Error initiating upload for lecture ${lectureId}:`, error);
+            reject(error);
+        }
+    });
 };
+
 
 /**
  * Adds a feedback entry for a specific lecture to a nested collection.

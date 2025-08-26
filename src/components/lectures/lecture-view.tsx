@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -149,6 +150,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
     const { pauseLocking } = useAuth();
@@ -175,8 +177,14 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         }
 
         setIsUploading(true);
+        setUploadProgress(0);
         try {
-            await uploadLectureNote(lecture.id, lecture.title, file);
+            await uploadLectureNote(
+                lecture.id, 
+                lecture.title, 
+                file,
+                (progress) => setUploadProgress(progress) // Progress callback
+            );
             toast({ title: "Success", description: "Your note has been uploaded." });
             await fetchNotes(); // Refresh the notes list
         } catch (error) {
@@ -259,7 +267,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                      {isUploading && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Uploading...</span>
+                            <span>Uploading... ({Math.round(uploadProgress)}%)</span>
                         </div>
                     )}
                 </div>
