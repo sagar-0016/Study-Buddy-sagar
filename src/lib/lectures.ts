@@ -2,7 +2,7 @@
 
 import { db, storage } from './firebase';
 import { collection, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, uploadBytesResumable, UploadTaskSnapshot } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import type { Lecture, LectureNote } from './types';
 
@@ -122,53 +122,49 @@ export const getLectureNotes = async (lectureId: string): Promise<LectureNote[]>
  * @param file The PDF file to upload.
  * @param onProgress A callback function to report upload progress (0-100).
  */
-export const uploadLectureNote = (
+export const uploadLectureNote = async (
     lectureId: string, 
     lectureTitle: string, 
     file: File,
     onProgress: (progress: number) => void
 ): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        try {
-            const sanitizedTitle = lectureTitle.replace(/[^a-zA-Z0-9]/g, '_');
-            const storagePath = `lectures/${sanitizedTitle}/${file.name}`;
-            const storageRef = ref(storage, storagePath);
-            
-            const uploadTask = uploadBytesResumable(storageRef, file);
+    const sanitizedTitle = lectureTitle.replace(/[^a-zA-Z0-9]/g, '_');
+    const storagePath = `lectures/${sanitizedTitle}/${file.name}`;
+    const storageRef = ref(storage, storagePath);
+    
+    const uploadTask = uploadBytesResumable(storageRef, file);
 
-            uploadTask.on('state_changed',
-                (snapshot) => {
-                    // Report progress
-                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                    onProgress(progress);
-                },
-                (error) => {
-                    // Handle unsuccessful uploads
-                    console.error(`Error during note upload for lecture ${lectureId}:`, error);
-                    reject(error);
-                },
-                async () => {
-                    // Handle successful uploads on complete
-                    try {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        const notesRef = collection(db, 'lectures', lectureId, 'notes');
-                        await addDoc(notesRef, {
-                            name: file.name,
-                            url: downloadURL,
-                            type: 'pdf',
-                            uploadedAt: serverTimestamp()
-                        });
-                        resolve();
-                    } catch (firestoreError) {
-                        console.error(`Error adding note to Firestore for lecture ${lectureId}:`, firestoreError);
-                        reject(firestoreError);
-                    }
+    // Create a new promise to manage the upload lifecycle
+    await new Promise<void>((resolve, reject) => {
+        uploadTask.on('state_changed',
+            (snapshot: UploadTaskSnapshot) => {
+                // Report progress
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                onProgress(progress);
+            },
+            (error) => {
+                // Handle unsuccessful uploads
+                console.error(`Error during note upload for lecture ${lectureId}:`, error);
+                reject(error);
+            },
+            async () => {
+                // Handle successful uploads on complete
+                try {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    const notesRef = collection(db, 'lectures', lectureId, 'notes');
+                    await addDoc(notesRef, {
+                        name: file.name,
+                        url: downloadURL,
+                        type: 'pdf',
+                        uploadedAt: serverTimestamp()
+                    });
+                    resolve(); // Resolve the promise on success
+                } catch (firestoreError) {
+                    console.error(`Error adding note to Firestore for lecture ${lectureId}:`, firestoreError);
+                    reject(firestoreError); // Reject the promise on Firestore error
                 }
-            );
-        } catch (error) {
-            console.error(`Error initiating upload for lecture ${lectureId}:`, error);
-            reject(error);
-        }
+            }
+        );
     });
 };
 
