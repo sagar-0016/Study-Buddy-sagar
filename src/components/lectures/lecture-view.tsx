@@ -202,21 +202,23 @@ const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }
                     </Button>
                 </div>
             </div>
-            <div ref={containerRef} className="flex-grow flex justify-center bg-muted/20 overflow-auto">
-                <Document
-                    file={proxiedUrl}
-                    onLoadSuccess={onDocumentLoadSuccess}
-                    onLoadError={onDocumentLoadError}
-                    loading={<Skeleton className='h-full w-full'/>}
-                    className="flex justify-center"
-                >
-                    <Page 
-                        pageNumber={pageNumber} 
-                        scale={fitMode === 'width' ? 1 : scale} 
-                        width={fitMode === 'width' ? containerWidth : undefined}
-                        renderTextLayer={true} 
-                    />
-                </Document>
+            <div ref={containerRef} className="flex-grow bg-muted/20 overflow-auto">
+                <div className="flex justify-center p-4">
+                    <Document
+                        file={proxiedUrl}
+                        onLoadSuccess={onDocumentLoadSuccess}
+                        onLoadError={onDocumentLoadError}
+                        loading={<Skeleton className='h-[80vh] w-[60vw]'/>}
+                        className="flex justify-center"
+                    >
+                        <Page 
+                            pageNumber={pageNumber} 
+                            scale={fitMode === 'width' ? 1 : scale} 
+                            width={fitMode === 'width' ? containerWidth : undefined}
+                            renderTextLayer={true} 
+                        />
+                    </Document>
+                </div>
             </div>
         </div>
     )
@@ -294,11 +296,7 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
 
         const handleClick = () => {
             if (note.type === 'pdf') {
-                if (isClassMode) {
-                    setViewingPdfUrl(note.url);
-                } else {
-                    toast({title: "Please use the 'Notes' button on the video player to view this PDF."});
-                }
+                setViewingPdfUrl(note.url);
             } else {
                 window.open(note.url, '_blank', 'noopener,noreferrer');
             }
@@ -442,10 +440,6 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         fetchNotes();
     }, [fetchNotes, lecture.id]);
 
-    const handleToggleClassMode = () => {
-        toggleClassMode();
-    };
-
     const unmountCallback = useRef(toggleClassMode);
 
     useEffect(() => {
@@ -453,10 +447,20 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
     }, [toggleClassMode]);
 
     useEffect(() => {
-        return () => {
-            if (isClassMode) {
+        const handleUnload = () => {
+             if (isClassMode) {
                 unmountCallback.current();
             }
+        }
+        // This handles browser refresh or closing tab
+        window.addEventListener('beforeunload', handleUnload);
+
+        return () => {
+            // This cleanup handles component unmount (e.g., navigating away)
+             if (isClassMode) {
+                unmountCallback.current();
+            }
+            window.removeEventListener('beforeunload', handleUnload);
         };
     }, [isClassMode]);
 
@@ -464,7 +468,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
     return (
         <div className="relative min-h-screen">
              <div className="mb-4 flex justify-end">
-                <Button variant="outline" onClick={handleToggleClassMode}>
+                <Button variant="outline" onClick={toggleClassMode}>
                     {isClassMode ? <X className="mr-2"/> : <View className="mr-2"/>}
                     {isClassMode ? 'Exit' : 'Enter'} Class Mode
                 </Button>
