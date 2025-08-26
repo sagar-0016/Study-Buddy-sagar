@@ -2,9 +2,10 @@
 
 import { db, storage } from './firebase';
 import { collection, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import type { Lecture, LectureNote } from './types';
+import { uploadNoteAction } from './actions';
 
 /**
  * Uploads a video to Firebase Storage and returns the download URL.
@@ -14,7 +15,7 @@ import type { Lecture, LectureNote } from './types';
 const uploadVideo = async (file: File): Promise<string> => {
     const fileId = uuidv4();
     const storageRef = ref(storage, `lectures/${fileId}-${file.name}`);
-    const snapshot = await uploadBytesResumable(storageRef, file, {
+    const snapshot = await uploadBytes(storageRef, file, {
         contentType: 'video/mp4' // Set appropriate content type
     });
     const downloadURL = await getDownloadURL(snapshot.ref);
@@ -116,67 +117,38 @@ export const getLectureNotes = async (lectureId: string): Promise<LectureNote[]>
 }
 
 /**
- * Uploads a PDF note to Firebase Storage, adds its reference to Firestore, and reports progress.
+ * Uploads a PDF note to Firebase Storage BY THE SERVER and adds its reference to Firestore.
+ * This function is called by a server action.
  * @param lectureId The ID of the lecture document.
- * @param title The title of the lecture, used for creating the folder path.
+ * @param lectureTitle The title of the lecture, used for creating the folder path.
  * @param file The PDF file to upload.
- * @param onProgress A callback function to report upload progress (percentage).
  */
-export const uploadLectureNote = (
+export const uploadPdfNote = async (
     lectureId: string,
-    title: string,
+    lectureTitle: string,
     file: File,
-    onProgress: (percentage: number) => void
 ): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        if (!file) {
-            console.error("Upload function called with no file.");
-            return reject(new Error("No file provided."));
-        }
+    if (!file) {
+        throw new Error("No file provided for upload.");
+    }
+    const storagePath = `lectures/${lectureTitle}/${file.name}`;
+    const storageRef = ref(storage, storagePath);
 
-        console.log("File object:", file);
-        console.log("Type:", file?.type);
-        console.log("File size:", file.size);
+    // Upload the file
+    const snapshot = await uploadBytes(storageRef, file, {
+        contentType: 'application/pdf'
+    });
 
-        const storagePath = `lectures/${title}/${file.name}`;
-        const storageRef = ref(storage, storagePath);
+    // Get the public URL
+    const downloadURL = await getDownloadURL(snapshot.ref);
 
-        console.log("Starting upload to:", storagePath);
-
-        const uploadTask = uploadBytesResumable(storageRef, file, {
-            contentType: 'application/pdf',
-        });
-
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                console.log("Progress:", snapshot.bytesTransferred, "/", snapshot.totalBytes);
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                onProgress(Math.round(progress));
-            },
-            (error) => {
-                console.error("Upload failed:", error);
-                reject(error);
-            },
-            async () => {
-                try {
-                    console.log("Upload complete!");
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                    
-                    const notesRef = collection(db, 'lectures', lectureId, 'notes');
-                    await addDoc(notesRef, {
-                        name: file.name,
-                        url: downloadURL,
-                        type: 'pdf',
-                        uploadedAt: serverTimestamp()
-                    });
-                    console.log("Firestore reference created successfully.");
-                    resolve();
-                } catch (error) {
-                    console.error("Failed to save note reference to Firestore:", error);
-                    reject(error);
-                }
-            }
-        );
+    // Add reference to Firestore
+    const notesRef = collection(db, 'lectures', lectureId, 'notes');
+    await addDoc(notesRef, {
+        name: file.name,
+        url: downloadURL,
+        type: 'pdf',
+        uploadedAt: serverTimestamp()
     });
 };
 
