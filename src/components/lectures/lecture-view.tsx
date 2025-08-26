@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Lecture, LectureNote } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -156,16 +156,16 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     const { pauseLocking } = useAuth();
 
 
-    const fetchNotes = async () => {
+    const fetchNotes = useCallback(async () => {
         setIsLoading(true);
         const fetchedNotes = await getLectureNotes(lecture.id);
         setNotes(fetchedNotes);
         setIsLoading(false);
-    }
+    }, [lecture.id]);
     
     useEffect(() => {
         fetchNotes();
-    }, [lecture.id]);
+    }, [fetchNotes]);
 
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
