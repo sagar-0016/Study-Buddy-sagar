@@ -19,10 +19,10 @@ import type { Message } from './types';
 export const getUnreadMessages = async (): Promise<Message[]> => {
   try {
     const messagesRef = collection(db, 'messages');
+    // Removed orderBy to prevent needing a composite index for this basic query.
     const q = query(
         messagesRef, 
-        where('isRead', '==', false), 
-        orderBy('createdAt', 'desc')
+        where('isRead', '==', false)
     );
     const querySnapshot = await getDocs(q);
 

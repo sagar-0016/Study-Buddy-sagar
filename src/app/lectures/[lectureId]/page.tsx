@@ -14,7 +14,8 @@ interface LecturePageProps {
 }
 
 export async function generateMetadata({ params }: LecturePageProps): Promise<Metadata> {
-  const lecture = await getLectureById(params.lectureId);
+  const lectureId = params.lectureId;
+  const lecture = await getLectureById(lectureId);
 
   if (!lecture) {
     return {
@@ -29,7 +30,8 @@ export async function generateMetadata({ params }: LecturePageProps): Promise<Me
 }
 
 export default async function LecturePage({ params }: LecturePageProps) {
-  const lecture = await getLectureById(params.lectureId);
+  const lectureId = params.lectureId;
+  const lecture = await getLectureById(lectureId);
 
   if (!lecture) {
     notFound();
@@ -48,3 +50,4 @@ export default async function LecturePage({ params }: LecturePageProps) {
         <LectureView lecture={lecture} />
     </div>
   );
+}
