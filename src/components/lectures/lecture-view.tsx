@@ -296,33 +296,30 @@ const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
       e.preventDefault();
       isResizing.current = true;
-      // No need to add listeners here, they are managed by useEffect
     }, []);
   
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            if (isResizing.current && panelRef.current?.parentElement) {
-              const newWidth = panelRef.current.parentElement.getBoundingClientRect().right - e.clientX;
-              const boundedWidth = Math.max(300, Math.min(newWidth, panelRef.current.parentElement.clientWidth - 400));
-              setWidth(boundedWidth);
-              onResize(boundedWidth);
-            }
+            if (!isResizing.current || !panelRef.current?.parentElement) return;
+
+            const newWidth = panelRef.current.parentElement.getBoundingClientRect().right - e.clientX;
+            const boundedWidth = Math.max(300, Math.min(newWidth, panelRef.current.parentElement.clientWidth - 400));
+            setWidth(boundedWidth);
+            onResize(boundedWidth);
         };
 
         const handleMouseUp = () => {
             isResizing.current = false;
         };
 
-        if (isResizing.current) { // Add listeners only when resizing
-            window.addEventListener('mousemove', handleMouseMove);
-            window.addEventListener('mouseup', handleMouseUp);
-        }
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
 
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [handleMouseDown, onResize]);
+    }, [onResize]);
   
     return (
       <div ref={panelRef} className="relative h-full" style={{ flexBasis: `${width}px`, flexShrink: 0, flexGrow: 0 }}>
@@ -351,23 +348,26 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
     useEffect(() => {
         fetchNotes();
+        // This effect should only run when the component mounts and unmounts
+        // to handle the class mode state correctly when navigating away.
         return () => {
-            if(isClassMode) {
+            if (isClassMode) {
                 toggleClassMode();
             }
         };
-    }, [lecture.id, isClassMode, toggleClassMode]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lecture.id]);
 
     return (
         <div className="relative min-h-screen">
-             <div className="absolute top-0 right-0 z-20">
+             <div className="mb-4 flex justify-end">
                 <Button variant="outline" onClick={toggleClassMode}>
                     {isClassMode ? <X className="mr-2"/> : <View className="mr-2"/>}
                     {isClassMode ? 'Exit' : 'Enter'} Class Mode
                 </Button>
             </div>
             
-            <div className={cn("mt-12", isClassMode && "flex gap-2 h-[calc(100vh-120px)]")}>
+            <div className={cn("mt-2", isClassMode && "flex gap-2 h-[calc(100vh-200px)]")}>
                 
                 <div className={cn("space-y-6", isClassMode ? "flex-1 flex flex-col" : "lg:grid lg:grid-cols-3 lg:gap-6")}>
                     <div className={cn(isClassMode ? "flex-1" : "lg:col-span-2")}>
