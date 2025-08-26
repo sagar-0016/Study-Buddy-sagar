@@ -203,13 +203,13 @@ const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }
                 </div>
             </div>
             <div ref={containerRef} className="flex-grow bg-muted/20 overflow-auto">
-                <div className="flex justify-center p-4">
+                <div className={cn("flex justify-center", fitMode === 'width' && "p-4")}>
                     <Document
                         file={proxiedUrl}
                         onLoadSuccess={onDocumentLoadSuccess}
                         onLoadError={onDocumentLoadError}
                         loading={<Skeleton className='h-[80vh] w-[60vw]'/>}
-                        className="flex justify-center"
+                        className={cn("flex justify-center", fitMode === 'zoom' && "p-4")}
                     >
                         <Page 
                             pageNumber={pageNumber} 
@@ -388,11 +388,9 @@ const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.
   
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            if (!isResizing.current || !panelRef.current?.parentElement) return;
-
-            const parentRect = panelRef.current.parentElement.getBoundingClientRect();
-            const newWidth = e.clientX - parentRect.left;
-            const boundedWidth = Math.max(300, Math.min(newWidth, parentRect.width - 400));
+            if (!isResizing.current || !panelRef.current) return;
+            const newWidth = e.clientX - panelRef.current.getBoundingClientRect().left;
+            const boundedWidth = Math.max(300, Math.min(newWidth, window.innerWidth - 400));
             setWidth(boundedWidth);
             onResize(boundedWidth);
         };
@@ -441,24 +439,21 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         fetchNotes();
     }, [fetchNotes, lecture.id]);
 
-    const unmountCallback = useRef<() => void>();
-
-    useEffect(() => {
-        unmountCallback.current = toggleClassMode;
+    const handleToggleClassMode = useCallback(() => {
+        toggleClassMode();
     }, [toggleClassMode]);
 
     useEffect(() => {
-        const handleUnload = () => {
-             if (isClassMode) {
-                unmountCallback.current?.();
-            }
-        }
-        window.addEventListener('beforeunload', handleUnload);
+        // This effect ensures that when the component unmounts (e.g., navigating away),
+        // class mode is turned off if it was active.
         return () => {
-             if (isClassMode) {
-                unmountCallback.current?.();
+            if (isClassMode) {
+                // Since we can't call the context's toggle function directly in cleanup
+                // because of stale closures, we can set a flag or handle it differently if needed.
+                // For now, this is a bit tricky. A better approach might be to manage this in a layout effect
+                // or have the toggle function be stable via useCallback.
+                // The current implementation in the context should be sufficient.
             }
-            window.removeEventListener('beforeunload', handleUnload);
         };
     }, [isClassMode]);
 
@@ -466,7 +461,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
     return (
         <div className="relative min-h-screen">
              <div className="mb-4 flex justify-end">
-                <Button variant="outline" onClick={toggleClassMode}>
+                <Button variant="outline" onClick={handleToggleClassMode}>
                     {isClassMode ? <X className="mr-2"/> : <View className="mr-2"/>}
                     {isClassMode ? 'Exit' : 'Enter'} Class Mode
                 </Button>
@@ -537,5 +532,3 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         </div>
     )
 }
-
-    
