@@ -14,7 +14,7 @@ import {
   type NewsInput,
   type NewsOutput,
 } from '@/ai/flows/news-flow';
-import { uploadLectureNote } from '@/lib/lectures';
+import { uploadPdfAndGetUrl, addNoteToLecture } from '@/lib/lectures';
 
 export async function getMotivationAction(input: MotivationInput) {
   const result = await getMotivationFlow(input);
@@ -43,8 +43,15 @@ export async function uploadNoteAction(formData: FormData): Promise<{ success: b
   }
 
   try {
-    // This function doesn't take an onProgress callback because server actions can't stream progress back to the client yet.
-    await uploadLectureNote(lectureId, lectureTitle, file, () => {});
+    // 1. Get the file content as a buffer
+    const fileBuffer = await file.arrayBuffer();
+
+    // 2. Upload the file buffer to Storage and get the URL
+    const noteUrl = await uploadPdfAndGetUrl(fileBuffer, file.name, lectureTitle);
+
+    // 3. Add the note metadata (with the new URL) to Firestore
+    await addNoteToLecture(lectureId, file.name, noteUrl);
+
     return { success: true };
   } catch (error) {
     console.error("Upload action failed:", error);
