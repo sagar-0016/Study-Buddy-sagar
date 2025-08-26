@@ -16,6 +16,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
+    DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { LectureNote } from '@/lib/types';
@@ -227,26 +228,29 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
                                 Notes
                             </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuLabel>Lecture Materials</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {notes.length > 0 ? (
-                                notes.map(note => (
-                                    <DropdownMenuItem key={note.id} onSelect={() => {
-                                        if (note.type === 'pdf') {
-                                            onSelectPdf(note.url)
-                                        } else {
-                                            window.open(note.url, '_blank')
-                                        }
-                                    }}>
-                                        {note.type === 'pdf' ? <FileText className="mr-2 h-4 w-4" /> : <LinkIcon className="mr-2 h-4 w-4" />}
-                                        {note.name}
-                                    </DropdownMenuItem>
-                                ))
-                            ) : (
-                                <DropdownMenuItem disabled>No notes available</DropdownMenuItem>
-                            )}
-                        </DropdownMenuContent>
+                        <DropdownMenuPortal container={playerRef.current}>
+                            <DropdownMenuContent>
+                                <DropdownMenuLabel>Lecture Materials</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {notes.length > 0 ? (
+                                    notes.map(note => (
+                                        <DropdownMenuItem key={note.id} onSelect={(e) => {
+                                            e.preventDefault();
+                                            if (note.type === 'pdf') {
+                                                onSelectPdf(note.url)
+                                            } else {
+                                                window.open(note.url, '_blank')
+                                            }
+                                        }}>
+                                            {note.type === 'pdf' ? <FileText className="mr-2 h-4 w-4" /> : <LinkIcon className="mr-2 h-4 w-4" />}
+                                            {note.name}
+                                        </DropdownMenuItem>
+                                    ))
+                                ) : (
+                                    <DropdownMenuItem disabled>No notes available</DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenuPortal>
                     </DropdownMenu>
                 </div>
             </div>
@@ -296,15 +300,17 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="font-mono">{playbackRate}x</Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                             <DropdownMenuLabel>Playback Speed</DropdownMenuLabel>
-                             <DropdownMenuSeparator />
-                            {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
-                                <DropdownMenuItem key={rate} onSelect={() => handlePlaybackRateChange(rate)}>
-                                    {rate}x
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
+                         <DropdownMenuPortal container={playerRef.current}>
+                            <DropdownMenuContent>
+                                <DropdownMenuLabel>Playback Speed</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {[0.5, 0.75, 1, 1.25, 1.5, 2].map(rate => (
+                                    <DropdownMenuItem key={rate} onSelect={() => handlePlaybackRateChange(rate)}>
+                                        {rate}x
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenuPortal>
                     </DropdownMenu>
 
                      {sdSrc && (
@@ -314,14 +320,16 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
                                     <Settings className="h-5 w-5" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                                <DropdownMenuLabel>Quality</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuRadioGroup value={quality} onValueChange={(q) => handleQualityChange(q as Quality)}>
-                                    <DropdownMenuRadioItem value="hd">HD (1080p)</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="sd">SD (480p)</DropdownMenuRadioItem>
-                                </DropdownMenuRadioGroup>
-                            </DropdownMenuContent>
+                            <DropdownMenuPortal container={playerRef.current}>
+                                <DropdownMenuContent>
+                                    <DropdownMenuLabel>Quality</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuRadioGroup value={quality} onValueChange={(q) => handleQualityChange(q as Quality)}>
+                                        <DropdownMenuRadioItem value="hd">HD (1080p)</DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="sd">SD (480p)</DropdownMenuRadioItem>
+                                    </DropdownMenuRadioGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenuPortal>
                         </DropdownMenu>
                     )}
 
