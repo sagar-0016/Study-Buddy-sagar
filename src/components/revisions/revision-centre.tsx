@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search, XCircle, Image as ImageIcon, BrainCircuit, Info } from 'lucide-react';
+import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search, XCircle, Image as ImageIcon, BrainCircuit, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
@@ -449,12 +449,12 @@ const ResetProgressPrompt = ({ onConfirm }: { onConfirm: () => Promise<void> }) 
     }
     
     return (
-        <Alert>
-            <Info className="h-4 w-4" />
+        <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Reset Sample Progress?</AlertTitle>
             <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <p>This is sample data. Press confirm to reset the progress and let's build it according to you.</p>
-                 <Button onClick={handleConfirm} disabled={isResetting} className="mt-2 sm:mt-0 flex-shrink-0">
+                 <Button variant="destructive" onClick={handleConfirm} disabled={isResetting} className="mt-2 sm:mt-0 flex-shrink-0">
                     {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
                     Confirm
                 </Button>
