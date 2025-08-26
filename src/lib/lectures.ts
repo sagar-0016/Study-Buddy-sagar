@@ -32,10 +32,10 @@ export const addLecture = async (lectureData: {
   videoFile: File;
 }): Promise<string | null> => {
   try {
-    // 1. First, upload the video and get the URL. This must complete before proceeding.
+    // Step 1: Upload the video file to Firebase Storage and get its public URL.
     const videoUrl = await uploadVideo(lectureData.videoFile);
 
-    // 2. Then, add the document to Firestore with the correct videoUrl.
+    // Step 2: Add a new document to the 'lectures' collection in Firestore.
     const lecturesRef = collection(db, 'lectures');
     const newDocRef = await addDoc(lecturesRef, {
       title: lectureData.title,
@@ -43,14 +43,14 @@ export const addLecture = async (lectureData: {
       subject: lectureData.subject,
       channel: lectureData.channel,
       duration: lectureData.duration,
-      videoUrl: videoUrl, // Use the URL from the completed upload
-      thumbnailUrl: `https://placehold.co/1280x720.png`, // Generic placeholder
-      createdAt: serverTimestamp(),
+      videoUrl: videoUrl, // The public URL from Storage
+      thumbnailUrl: `https://placehold.co/1280x720.png`, // A placeholder thumbnail
+      createdAt: serverTimestamp(), // The time it was added
     });
     return newDocRef.id;
   } catch (error) {
     console.error('Error adding lecture:', error);
-    throw error; // Re-throw the error to be caught by the UI
+    throw error;
   }
 };
 
