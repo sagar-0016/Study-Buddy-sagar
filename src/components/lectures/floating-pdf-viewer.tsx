@@ -141,6 +141,8 @@ export default function FloatingPdfViewer({ src, onClose }: FloatingPdfViewerPro
     </div>
   )
 
+  const proxiedUrl = `/api/proxy-pdf?url=${encodeURIComponent(src)}`;
+
   return (
     <div className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm">
         <DraggableResizableDiv onClose={onClose}>
@@ -163,7 +165,7 @@ export default function FloatingPdfViewer({ src, onClose }: FloatingPdfViewerPro
             </div>
             <div className="p-4 flex justify-center bg-muted/20">
                 <Document
-                    file={src}
+                    file={proxiedUrl}
                     onLoadSuccess={onDocumentLoadSuccess}
                     onLoadError={onDocumentLoadError}
                     loading={loadingSkeleton}
