@@ -2,51 +2,65 @@
 
 import { db, storage } from './firebase';
 import { collection, getDocs, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import type { Lecture, LectureNote } from './types';
 
 
 /**
- * SERVER-SIDE-ONLY HELPER
- * Uploads a PDF file buffer to Firebase Storage and returns the public download URL.
- * @param fileBuffer The buffer of the file to upload.
- * @param fileName The name of the original file.
- * @param lectureTitle The title of the lecture, used for creating the folder path.
- * @returns {Promise<string>} The public URL of the uploaded video.
- */
-export const uploadPdfAndGetUrl = async (
-    fileBuffer: ArrayBuffer,
-    fileName: string,
-    lectureTitle: string
-): Promise<string> => {
-    const storagePath = `lectures/${lectureTitle}/notes/${fileName}`;
-    const storageRef = ref(storage, storagePath);
-    const snapshot = await uploadBytes(storageRef, fileBuffer, {
-        contentType: 'application/pdf'
-    });
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
-}
-
-/**
- * SERVER-SIDE-ONLY HELPER
- * Adds a note record to a lecture's subcollection in Firestore.
+ * CLIENT-SIDE FUNCTION
+ * Uploads a PDF file to Firebase Storage, adds the note to the lecture's subcollection in Firestore,
+ * and reports progress.
+ *
  * @param lectureId The ID of the lecture document.
- * @param noteName The name of the note file.
- * @param noteUrl The public URL of the note file.
+ * @param lectureTitle The title of the lecture, used for the storage path.
+ * @param file The PDF file to upload.
+ * @param onProgress A callback function to report upload progress (0-100).
+ * @returns A promise that resolves when the entire process is complete.
  */
-export const addNoteToLecture = async (
+export const uploadLectureNote = (
     lectureId: string,
-    noteName: string,
-    noteUrl: string
+    lectureTitle: string,
+    file: File,
+    onProgress: (progress: number) => void
 ): Promise<void> => {
-    const notesRef = collection(db, 'lectures', lectureId, 'notes');
-    await addDoc(notesRef, {
-        name: noteName,
-        url: noteUrl,
-        type: 'pdf',
-        uploadedAt: serverTimestamp(),
+    return new Promise((resolve, reject) => {
+        const storagePath = `lectures/${lectureTitle}/notes/${uuidv4()}-${file.name}`;
+        const storageRef = ref(storage, storagePath);
+
+        const uploadTask = uploadBytesResumable(storageRef, file, {
+            contentType: 'application/pdf',
+        });
+
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                onProgress(Math.round(progress));
+            },
+            (error) => {
+                console.error("Upload failed:", error);
+                reject(error);
+            },
+            async () => {
+                try {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    
+                    // Add note metadata to Firestore
+                    const notesRef = collection(db, 'lectures', lectureId, 'notes');
+                    await addDoc(notesRef, {
+                        name: file.name,
+                        url: downloadURL,
+                        type: 'pdf',
+                        uploadedAt: serverTimestamp(),
+                    });
+                    
+                    resolve();
+                } catch (error) {
+                    console.error("Failed to get download URL or write to Firestore:", error);
+                    reject(error);
+                }
+            }
+        );
     });
 }
 
