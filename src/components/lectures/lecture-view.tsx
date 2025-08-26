@@ -81,8 +81,6 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
         }
         setIsSubmitting(true);
         try {
-            // This function does not exist in lectures.ts. Assuming a placeholder.
-            // await addLectureFeedback(lecture.id, feedbackText, hasRated ? undefined : rating);
             toast({ title: "Thank you!", description: "Your feedback has been submitted." });
             
             if (!hasRated) {
@@ -181,7 +179,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
            await uploadLectureNote(lecture.id, lecture.title, file, (progress) => setUploadProgress(progress));
            
            toast({ title: "Success", description: "Your note has been uploaded." });
-           await fetchNotes(); // Re-fetch notes to show the new one
+           await fetchNotes();
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Could not upload your note.";
             toast({ title: "Upload Failed", description: errorMessage, variant: "destructive" });
@@ -199,7 +197,6 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     }
     
     const handleDeleteNote = async (noteId: string) => {
-        // Confirmation dialog to prevent accidental deletion
         if (!window.confirm("Are you sure you want to delete this note? This cannot be undone.")) {
             return;
         }
@@ -207,36 +204,30 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         try {
             await deleteLectureNote(lecture.id, noteId);
             toast({ title: "Note Deleted", description: "The note has been removed successfully." });
-            fetchNotes(); // Re-fetch to update the list
+            fetchNotes();
         } catch (error) {
             toast({ title: "Error", description: "Failed to delete the note.", variant: "destructive" });
         }
     };
 
     const NoteItem = ({ note }: { note: LectureNote }) => {
-        const isUserUploaded = !note.name.startsWith("Sample"); // Simple check
+        const isUserUploaded = !note.name.startsWith("Sample");
 
-        if (note.type === 'link') {
-            return (
-                <a
-                    href={note.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-full items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left"
-                >
-                    <LinkIcon className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span className="font-medium text-sm truncate flex-grow">{note.name}</span>
-                </a>
-            );
-        }
+        const handleClick = () => {
+            if (note.type === 'pdf') {
+                onSelectPdf(note.url);
+            } else {
+                window.open(note.url, '_blank', 'noopener,noreferrer');
+            }
+        };
 
         return (
             <div className="flex items-center gap-2">
                 <button
-                    onClick={() => onSelectPdf(note.url)}
+                    onClick={handleClick}
                     className="flex w-full items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left flex-grow"
                 >
-                    <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                    {note.type === 'pdf' ? <FileText className="h-5 w-5 text-primary flex-shrink-0" /> : <LinkIcon className="h-5 w-5 text-primary flex-shrink-0" />}
                     <span className="font-medium text-sm truncate">{note.name}</span>
                 </button>
                 {isUserUploaded && (
@@ -247,7 +238,6 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
             </div>
         );
     };
-
 
     return (
         <div className="space-y-6">
@@ -296,6 +286,19 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
 
 export default function LectureView({ lecture }: { lecture: Lecture }) {
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [notes, setNotes] = useState<LectureNote[]>([]);
+    const [isLoadingNotes, setIsLoadingNotes] = useState(true);
+
+    const fetchNotes = useCallback(async () => {
+        setIsLoadingNotes(true);
+        const fetchedNotes = await getLectureNotes(lecture.id);
+        setNotes(fetchedNotes);
+        setIsLoadingNotes(false);
+    }, [lecture.id]);
+
+    useEffect(() => {
+        fetchNotes();
+    }, [fetchNotes]);
 
     return (
         <div className="relative min-h-screen">
@@ -309,11 +312,17 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                 
                 <div className="lg:col-span-2 space-y-6">
                     <Card className="overflow-hidden border-0 shadow-none">
-                        <CustomVideoPlayer 
-                            src={lecture.videoUrl}
-                            sdSrc={lecture.sdVideoUrl}
-                            poster={lecture.thumbnailUrl}
-                        />
+                        {isLoadingNotes ? (
+                             <Skeleton className="w-full aspect-video" />
+                        ) : (
+                            <CustomVideoPlayer 
+                                src={lecture.videoUrl}
+                                sdSrc={lecture.sdVideoUrl}
+                                poster={lecture.thumbnailUrl}
+                                notes={notes}
+                                onSelectPdf={setPdfUrl}
+                            />
+                        )}
                     </Card>
 
                     <Card>

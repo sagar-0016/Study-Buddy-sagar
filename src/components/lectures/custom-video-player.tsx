@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { 
-    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings
+    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings, Notebook, FileText, Link as LinkIcon
 } from 'lucide-react';
 import { 
     DropdownMenu, 
@@ -18,16 +18,19 @@ import {
     DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import type { LectureNote } from '@/lib/types';
 
 interface CustomVideoPlayerProps {
-    src: string; // HD src
-    sdSrc?: string; // Optional SD src
+    src: string;
+    sdSrc?: string;
     poster: string;
+    notes: LectureNote[];
+    onSelectPdf: (url: string) => void;
 }
 
 type Quality = 'hd' | 'sd';
 
-export default function CustomVideoPlayer({ src, sdSrc, poster }: CustomVideoPlayerProps) {
+export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectPdf }: CustomVideoPlayerProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const playerRef = useRef<HTMLDivElement>(null);
     const timeRef = useRef<number>(0);
@@ -108,7 +111,6 @@ export default function CustomVideoPlayer({ src, sdSrc, poster }: CustomVideoPla
         if (videoRef.current && quality !== newQuality) {
             timeRef.current = videoRef.current.currentTime;
             setQuality(newQuality);
-            // The `key` prop on the video element will handle re-mounting and loading the new source
         }
     };
 
@@ -175,7 +177,6 @@ export default function CustomVideoPlayer({ src, sdSrc, poster }: CustomVideoPla
         const player = playerRef.current;
         if (player) {
             player.addEventListener('fullscreenchange', () => setIsFullscreen(!!document.fullscreenElement));
-             // Listen on the player container for better event capturing
             player.addEventListener('keydown', handleKeyDown);
         }
 
@@ -195,7 +196,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster }: CustomVideoPla
     return (
         <div ref={playerRef} className="relative w-full aspect-video bg-black rounded-lg overflow-hidden group" onMouseMove={handleMouseMove}>
             <video
-                key={activeSrc} // Force re-mount on source change
+                key={activeSrc}
                 ref={videoRef}
                 src={activeSrc}
                 poster={poster}
@@ -215,6 +216,39 @@ export default function CustomVideoPlayer({ src, sdSrc, poster }: CustomVideoPla
                  <Button variant="ghost" size="icon" className="h-20 w-20 rounded-full" onClick={handlePlayPause}>
                     <Play className="h-10 w-10 text-white" />
                 </Button>
+            </div>
+            
+             <div className={cn("absolute top-0 left-0 right-0 p-4 transition-opacity duration-300", showControls ? 'opacity-100' : 'opacity-0')}>
+                <div className="flex justify-end">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="secondary" size="sm">
+                                <Notebook className="mr-2 h-4 w-4" />
+                                Notes
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuLabel>Lecture Materials</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {notes.length > 0 ? (
+                                notes.map(note => (
+                                    <DropdownMenuItem key={note.id} onSelect={() => {
+                                        if (note.type === 'pdf') {
+                                            onSelectPdf(note.url)
+                                        } else {
+                                            window.open(note.url, '_blank')
+                                        }
+                                    }}>
+                                        {note.type === 'pdf' ? <FileText className="mr-2 h-4 w-4" /> : <LinkIcon className="mr-2 h-4 w-4" />}
+                                        {note.name}
+                                    </DropdownMenuItem>
+                                ))
+                            ) : (
+                                <DropdownMenuItem disabled>No notes available</DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
 
             <div className={cn("absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent transition-opacity duration-300", 

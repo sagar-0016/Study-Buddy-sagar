@@ -128,7 +128,7 @@ export interface Lecture extends DocumentData {
   description: string;
   subject: 'Physics' | 'Chemistry' | 'Maths';
   videoUrl: string;
-  sdVideoUrl?: string; // Standard Definition video URL
+  sdVideoUrl?: string;
   thumbnailUrl: string;
   channel: string;
   duration: string;
