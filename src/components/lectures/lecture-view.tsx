@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
 import { uploadLectureNote, getLectureNotes, deleteLectureNote } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Trash2, Notebook, AlertCircle, View, X, Minus, Plus, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Trash2, Notebook, AlertCircle, View, X, Minus, Plus, ArrowLeft, ArrowRight, Maximize, ZoomIn } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import CustomVideoPlayer from './custom-video-player';
 import Image from 'next/image';
@@ -151,7 +151,9 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
 const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }) => {
     const [numPages, setNumPages] = useState<number | null>(null);
     const [pageNumber, setPageNumber] = useState(1);
-    const [scale, setScale] = useState(1.5);
+    const [scale, setScale] = useState(0.9);
+    const [fitMode, setFitMode] = useState<'width' | 'zoom'>('width');
+    const containerRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
 
     function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
@@ -169,6 +171,8 @@ const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }
     }
     
     const proxiedUrl = `/api/proxy-pdf?url=${encodeURIComponent(url)}`;
+    
+    const containerWidth = containerRef.current?.clientWidth;
 
     return (
         <div className="flex flex-col h-full bg-background">
@@ -184,17 +188,21 @@ const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPageNumber(p => Math.min(p + 1, numPages || 1))} disabled={!numPages || pageNumber >= numPages}>
                         <ArrowRight className="h-4 w-4" />
                     </Button>
-                     <div className="w-px h-6 bg-border mx-1"></div>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setScale(s => Math.max(s - 0.2, 0.5))} disabled={scale <= 0.5}>
+                    <div className="w-px h-6 bg-border mx-1"></div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setScale(s => Math.max(s - 0.2, 0.5))} disabled={scale <= 0.5 || fitMode === 'width'}>
                         <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="text-xs font-medium">{Math.round(scale * 100)}%</span>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setScale(s => Math.min(s + 0.2, 3))} disabled={scale >= 3}>
+                    <span className="text-xs font-medium">{fitMode === 'width' ? 'Fit' : `${Math.round(scale * 100)}%`}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setScale(s => Math.min(s + 0.2, 3))} disabled={scale >= 3 || fitMode === 'width'}>
                         <Plus className="h-4 w-4" />
+                    </Button>
+                    <div className="w-px h-6 bg-border mx-1"></div>
+                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setFitMode(m => m === 'width' ? 'zoom' : 'width')}>
+                        {fitMode === 'width' ? <ZoomIn className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                     </Button>
                 </div>
             </div>
-            <div className="flex-grow p-4 flex justify-center bg-muted/20 overflow-auto">
+            <div ref={containerRef} className="flex-grow flex justify-center bg-muted/20 overflow-auto">
                 <Document
                     file={proxiedUrl}
                     onLoadSuccess={onDocumentLoadSuccess}
@@ -202,7 +210,12 @@ const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }
                     loading={<Skeleton className='h-full w-full'/>}
                     className="flex justify-center"
                 >
-                    <Page pageNumber={pageNumber} scale={scale} renderTextLayer={true} />
+                    <Page 
+                        pageNumber={pageNumber} 
+                        scale={fitMode === 'width' ? 1 : scale} 
+                        width={fitMode === 'width' ? containerWidth : undefined}
+                        renderTextLayer={true} 
+                    />
                 </Document>
             </div>
         </div>
@@ -371,6 +384,8 @@ const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
       e.preventDefault();
       isResizing.current = true;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
     }, []);
   
     useEffect(() => {
@@ -385,6 +400,8 @@ const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.
 
         const handleMouseUp = () => {
             isResizing.current = false;
+            document.body.style.cursor = 'default';
+            document.body.style.userSelect = 'auto';
         };
 
         window.addEventListener('mousemove', handleMouseMove);
@@ -425,21 +442,26 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         fetchNotes();
     }, [fetchNotes, lecture.id]);
 
+    const handleToggleClassMode = () => {
+        toggleClassMode();
+    };
+
      // This effect ensures class mode is turned off when navigating away from a lecture page
     useEffect(() => {
         return () => {
             if (isClassMode) {
+                // This will run when the component unmounts
                 toggleClassMode();
             }
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [lecture.id]);
+    }, []);
 
 
     return (
         <div className="relative min-h-screen">
              <div className="mb-4 flex justify-end">
-                <Button variant="outline" onClick={toggleClassMode}>
+                <Button variant="outline" onClick={handleToggleClassMode}>
                     {isClassMode ? <X className="mr-2"/> : <View className="mr-2"/>}
                     {isClassMode ? 'Exit' : 'Enter'} Class Mode
                 </Button>
