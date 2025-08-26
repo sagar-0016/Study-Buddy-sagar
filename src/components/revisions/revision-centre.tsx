@@ -25,7 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Confetti from 'react-confetti';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MasteryLegend } from './mastery-legend';
+import { MasteryLegend, masteryLevels } from './mastery-legend';
 
 
 const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () => void, children: React.ReactNode }) => {
@@ -221,27 +221,23 @@ const EditRevisionTopicDialog = ({ topic, onTopicUpdated, children }: { topic: R
 
 const MasteryDot = ({ success, fails }: { success: number, fails: number }) => {
     const total = success + fails;
-    
-    const getMasteryStyle = () => {
-        if (total < 3) {
-             return { backgroundColor: 'hsl(220, 8%, 75%)', '--mastery-color-rgb': '188, 196, 209' };
-        }
-        
-        const successRate = success / total;
+    let level = 1;
 
-        if (successRate < 0.4) {
-             return { backgroundColor: 'hsl(0, 72%, 51%)', '--mastery-color-rgb': '220, 38, 38' }; // red
-        } else if (successRate < 0.75) {
-            return { backgroundColor: 'hsl(48, 96%, 50%)', '--mastery-color-rgb': '234, 179, 8' }; // yellow
-        } else {
-            return { backgroundColor: 'hsl(142, 71%, 45%)', '--mastery-color-rgb': '34, 197, 94' }; // green
-        }
-    };
+    if (total >= 3) {
+        const successRate = success / total;
+        if (successRate >= 0.85) level = 7;
+        else if (successRate >= 0.7) level = 6;
+        else if (successRate >= 0.5) level = 5;
+        else if (successRate >= 0.3) level = 4;
+        else level = 3;
+    }
     
+    const masteryInfo = masteryLevels.find(l => l.level === level) || masteryLevels[0];
+
     return (
         <div 
-            className="w-3 h-3 rounded-full animate-mastery-pulse"
-            style={getMasteryStyle() as React.CSSProperties}
+            className={cn("w-3 h-3 rounded-full animate-mastery-pulse", masteryInfo.color)}
+            style={{ animationDelay: `${Math.random() * -2}s` }}
         ></div>
     );
 };

@@ -9,11 +9,14 @@ import {
 import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
 
-const masteryLevels = [
-    { label: 'Needs Practice', description: 'Low success rate. These topics should be a high priority for your next recall session.', color: 'bg-red-500' },
-    { label: 'Reviewing', description: 'You are making progress but haven\'t fully mastered the topic yet. Keep reviewing!', color: 'bg-yellow-500' },
-    { label: 'Mastered', description: 'High success rate! You have a strong grasp of this topic.', color: 'bg-green-500' },
-    { label: 'Not enough data', description: 'This topic has not been attempted enough times to determine a mastery level.', color: 'bg-gray-400' },
+export const masteryLevels = [
+    { level: 1, label: 'Brand New', description: 'Not enough data. Let\'s see how well you know this.', color: 'bg-gray-400' },
+    { level: 2, label: 'Critical', description: 'Very low success rate. This is a top priority for review.', color: 'bg-red-600' },
+    { level: 3, label: 'Needs Work', description: 'You\'re struggling with this one. Let\'s practice it more often.', color: 'bg-orange-500' },
+    { level: 4, label: 'Inconsistent', description: 'You get this right about half the time. A little more focus is needed.', color: 'bg-yellow-500' },
+    { level: 5, label: 'Getting There', description: 'Good progress! You\'re starting to understand this topic well.', color: 'bg-yellow-400' },
+    { level: 6, label: 'Solid', description: 'You have a strong grasp of this topic. Keep it fresh!', color: 'bg-green-400' },
+    { level: 7, label: 'Mastered', description: 'Excellent! You consistently recall this topic correctly.', color: 'bg-green-500' },
 ];
 
 export function MasteryLegend() {
@@ -22,10 +25,9 @@ export function MasteryLegend() {
         <PopoverTrigger asChild>
             <div className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
                  <div className="flex items-center space-x-1.5">
-                    <div className="h-3 w-3 rounded-full bg-red-500" />
-                    <div className="h-3 w-3 rounded-full bg-yellow-500" />
-                    <div className="h-3 w-3 rounded-full bg-green-500" />
-                    <div className="h-3 w-3 rounded-full bg-gray-400" />
+                    {masteryLevels.map(level => (
+                         <div key={level.level} className={cn("h-3 w-3 rounded-full", level.color)} />
+                    ))}
                 </div>
                 <Info className="h-4 w-4" />
                 <span className="text-sm font-medium">Mastery Key</span>
