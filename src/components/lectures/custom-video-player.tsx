@@ -265,22 +265,15 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         }
     }, []);
     
-    const handleVolumeChange = (value: number[]) => {
-        if (videoRef.current) {
-            const newVolume = value[0];
-            videoRef.current.volume = newVolume;
-            setVolume(newVolume);
-            if (newVolume > 0) {
-                setIsMuted(false);
-                videoRef.current.muted = false;
-            }
-        }
-    };
-    
     const toggleMute = () => {
         if (videoRef.current) {
             videoRef.current.muted = !isMuted;
             setIsMuted(!isMuted);
+            // If unmuting and volume was 0, set it to a default value
+            if (!videoRef.current.muted && videoRef.current.volume === 0) {
+                 videoRef.current.volume = 0.75;
+                 setVolume(0.75);
+            }
         }
     };
 
@@ -377,15 +370,21 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         video.addEventListener('play', () => setIsPlaying(true));
         video.addEventListener('pause', () => setIsPlaying(false));
         video.addEventListener('ended', () => setIsPlaying(false));
+        video.addEventListener('volumechange', () => {
+            if (videoRef.current) {
+                setVolume(videoRef.current.volume);
+                setIsMuted(videoRef.current.muted);
+            }
+        });
         
         const player = playerRef.current;
         if (player) {
             const fullscreenChangeHandler = () => setIsFullscreen(!!document.fullscreenElement);
-            player.addEventListener('fullscreenchange', fullscreenChangeHandler);
+            document.addEventListener('fullscreenchange', fullscreenChangeHandler);
             player.addEventListener('keydown', handleKeyDown);
 
             return () => {
-                player.removeEventListener('fullscreenchange', fullscreenChangeHandler);
+                document.removeEventListener('fullscreenchange', fullscreenChangeHandler);
                 player.removeEventListener('keydown', handleKeyDown);
             };
         }
@@ -394,6 +393,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
             video.removeEventListener('play', () => setIsPlaying(true));
             video.removeEventListener('pause', () => setIsPlaying(false));
             video.removeEventListener('ended', () => setIsPlaying(false));
+            video.removeEventListener('volumechange', () => {});
         }
     }, [handleKeyDown]);
 
@@ -426,14 +426,16 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
             
              <div className={cn("absolute top-0 left-0 right-0 p-4 transition-opacity duration-300 z-10", showControls ? 'opacity-100' : 'opacity-0')}>
                 <div className="flex justify-end">
-                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 hover:text-white" onClick={() => setIsNotesSidebarOpen(prev => !prev)}>
-                        <Notebook className="mr-2 h-4 w-4" />
-                        Notes
-                    </Button>
+                     {isFullscreen && (
+                         <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 hover:text-white" onClick={() => setIsNotesSidebarOpen(prev => !prev)}>
+                            <Notebook className="mr-2 h-4 w-4" />
+                            Notes
+                        </Button>
+                     )}
                 </div>
             </div>
             
-            {isNotesSidebarOpen && (
+            {isFullscreen && isNotesSidebarOpen && (
                 <NotesSidebar
                     notes={notes}
                     position={sidebarPosition}
@@ -464,13 +466,6 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleMute}>
                            {isMuted || volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                         </Button>
-                        <Slider
-                            value={[isMuted ? 0 : volume]}
-                            onValueChange={handleVolumeChange}
-                            max={1}
-                            step={0.1}
-                            className="w-24 hidden sm:flex"
-                        />
                     </div>
 
                     <span className="text-sm font-mono">{formatTime(videoRef.current?.currentTime || 0)} / {formatTime(duration)}</span>
@@ -530,3 +525,5 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         </div>
     );
 }
+
+    
