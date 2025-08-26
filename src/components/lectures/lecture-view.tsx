@@ -178,7 +178,7 @@ const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }
         <div className="flex flex-col h-full bg-background">
              <div className="flex-shrink-0 sticky top-0 z-10 p-1 bg-background/80 backdrop-blur-sm border-b flex items-center justify-between gap-2">
                 <Button variant="ghost" size="sm" onClick={onBack}>
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Notes
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
                 <div className="flex items-center gap-1">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPageNumber(p => Math.max(p - 1, 1))} disabled={pageNumber <= 1}>
@@ -204,20 +204,22 @@ const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }
             </div>
             <div ref={containerRef} className="flex-grow bg-muted/20 overflow-auto">
                 <div className={cn("flex justify-center", fitMode === 'width' && "p-4")}>
-                    <Document
-                        file={proxiedUrl}
-                        onLoadSuccess={onDocumentLoadSuccess}
-                        onLoadError={onDocumentLoadError}
-                        loading={<Skeleton className='h-[80vh] w-[60vw]'/>}
-                        className={cn("flex justify-center", fitMode === 'zoom' && "p-4")}
-                    >
-                        <Page 
-                            pageNumber={pageNumber} 
-                            scale={fitMode === 'width' ? 1 : scale} 
-                            width={fitMode === 'width' ? containerWidth : undefined}
-                            renderTextLayer={true} 
-                        />
-                    </Document>
+                    <div className={cn(fitMode === 'zoom' ? 'overflow-auto p-4' : '')}>
+                        <Document
+                            file={proxiedUrl}
+                            onLoadSuccess={onDocumentLoadSuccess}
+                            onLoadError={onDocumentLoadError}
+                            loading={<Skeleton className='h-[80vh] w-[60vw]'/>}
+                            className="flex justify-center"
+                        >
+                            <Page 
+                                pageNumber={pageNumber} 
+                                scale={fitMode === 'width' ? 1 : scale} 
+                                width={fitMode === 'width' ? containerWidth : undefined}
+                                renderTextLayer={true} 
+                            />
+                        </Document>
+                    </div>
                 </div>
             </div>
         </div>
@@ -374,25 +376,33 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
     )
 }
 
-const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.ReactNode, initialWidth: number, onResize: (width: number) => void }) => {
-    const [width, setWidth] = useState(initialWidth);
-    const isResizing = useRef(false);
+const ResizablePanel = ({ children, onResize }: { children: React.ReactNode, onResize: (width: number) => void }) => {
     const panelRef = useRef<HTMLDivElement>(null);
-  
+    const isResizing = useRef(false);
+    const initialPos = useRef({ x: 0, width: 0 });
+
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
-      e.preventDefault();
-      isResizing.current = true;
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
+        if (!panelRef.current) return;
+        e.preventDefault();
+        isResizing.current = true;
+        initialPos.current = {
+            x: e.clientX,
+            width: panelRef.current.offsetWidth
+        };
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
     }, []);
-  
+
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            if (!isResizing.current || !panelRef.current) return;
-            const newWidth = e.clientX - panelRef.current.getBoundingClientRect().left;
+            if (!isResizing.current) return;
+            const dx = e.clientX - initialPos.current.x;
+            const newWidth = initialPos.current.width - dx; // Subtract because we drag left to shrink
             const boundedWidth = Math.max(300, Math.min(newWidth, window.innerWidth - 400));
-            setWidth(boundedWidth);
-            onResize(boundedWidth);
+            if (panelRef.current) {
+                panelRef.current.style.flexBasis = `${boundedWidth}px`;
+                onResize(boundedWidth);
+            }
         };
 
         const handleMouseUp = () => {
@@ -409,17 +419,17 @@ const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.
             window.removeEventListener('mouseup', handleMouseUp);
         };
     }, [onResize]);
-  
+
     return (
-      <div ref={panelRef} className="relative h-full bg-card" style={{ flexBasis: `${width}px`, flexShrink: 0, flexGrow: 0 }}>
-        <div
-          onMouseDown={handleMouseDown}
-          className="absolute right-0 top-0 h-full w-2 cursor-col-resize z-10 bg-muted/50 hover:bg-accent transition-colors"
-        />
-        {children}
-      </div>
+        <div ref={panelRef} className="relative h-full bg-card" style={{ flexBasis: '400px', flexShrink: 0, flexGrow: 0 }}>
+            <div
+                onMouseDown={handleMouseDown}
+                className="absolute left-0 top-0 h-full w-2 cursor-col-resize z-10 bg-muted/50 hover:bg-accent transition-colors"
+            />
+            {children}
+        </div>
     );
-  };
+};
 
 
 export default function LectureView({ lecture }: { lecture: Lecture }) {
@@ -444,22 +454,16 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
     }, [toggleClassMode]);
 
     useEffect(() => {
-        // This effect ensures that when the component unmounts (e.g., navigating away),
-        // class mode is turned off if it was active.
         return () => {
             if (isClassMode) {
-                // Since we can't call the context's toggle function directly in cleanup
-                // because of stale closures, we can set a flag or handle it differently if needed.
-                // For now, this is a bit tricky. A better approach might be to manage this in a layout effect
-                // or have the toggle function be stable via useCallback.
-                // The current implementation in the context should be sufficient.
+                toggleClassMode();
             }
         };
-    }, [isClassMode]);
+    }, [isClassMode, toggleClassMode]);
 
 
     return (
-        <div className="relative min-h-screen">
+        <div className="relative">
              <div className="mb-4 flex justify-end">
                 <Button variant="outline" onClick={handleToggleClassMode}>
                     {isClassMode ? <X className="mr-2"/> : <View className="mr-2"/>}
@@ -518,7 +522,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                 </div>
 
                 {isClassMode && (
-                    <ResizablePanel initialWidth={400} onResize={setRightPanelWidth}>
+                    <ResizablePanel onResize={setRightPanelWidth}>
                         <NotesSection lecture={lecture} isClassMode={isClassMode} />
                     </ResizablePanel>
                 )}
