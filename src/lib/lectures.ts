@@ -132,7 +132,12 @@ export const uploadLectureNote = (
         const storagePath = `lectures/${sanitizedTitle}/${uuidv4()}-${file.name}`;
         const storageRef = ref(storage, storagePath);
         
-        const uploadTask = uploadBytesResumable(storageRef, file);
+        // Define metadata to make the file public
+        const metadata = {
+            contentType: 'application/pdf',
+        };
+
+        const uploadTask = uploadBytesResumable(storageRef, file, metadata);
 
         uploadTask.on('state_changed',
             (snapshot: UploadTaskSnapshot) => {
@@ -145,7 +150,12 @@ export const uploadLectureNote = (
             },
             async () => {
                 try {
-                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    // Construct the public URL manually.
+                    // This creates a permanent, non-tokenized URL.
+                    const bucket = uploadTask.snapshot.ref.bucket;
+                    const path = uploadTask.snapshot.ref.fullPath;
+                    const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media`;
+                    
                     const notesRef = collection(db, 'lectures', lectureId, 'notes');
                     await addDoc(notesRef, {
                         name: file.name,
