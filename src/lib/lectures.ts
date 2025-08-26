@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { db, storage } from './firebase';
@@ -8,6 +9,7 @@ import {
   addDoc,
   serverTimestamp,
   doc,
+  deleteDoc,
 } from 'firebase/firestore';
 import {
   ref,
@@ -25,12 +27,14 @@ import type { Lecture, LectureNote } from './types';
  * @param lectureId The ID of the lecture document.
  * @param lectureTitle The title of the lecture, used for the storage path.
  * @param file The file object from an input element.
+ * @param onProgress A callback function to report upload progress.
  * @returns A promise that resolves when the entire process is complete.
  */
 export const uploadLectureNote = async (
   lectureId: string,
   lectureTitle: string,
-  file: File
+  file: File,
+  onProgress: (progress: number) => void
 ): Promise<void> => {
   if (!file) {
     throw new Error('File is required for upload.');
@@ -47,31 +51,23 @@ export const uploadLectureNote = async (
     uploadTask.on(
       'state_changed',
       (snapshot) => {
-        // Can be used to display progress, but we are keeping it simple for now.
         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log('Upload is ' + progress + '% done');
+        onProgress(progress);
       },
       (error) => {
-        // Handle unsuccessful uploads
         console.error('Upload failed:', error);
         reject(error);
       },
       async () => {
-        // Handle successful uploads on complete
         try {
-          console.log('Upload complete, getting download URL...');
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          console.log('File available at', downloadURL);
-
-          // Add note metadata to Firestore
           const notesRef = collection(db, 'lectures', lectureId, 'notes');
           await addDoc(notesRef, {
             name: file.name,
             url: downloadURL,
-            type: 'pdf', // Assuming only PDFs for now
+            type: 'pdf',
             uploadedAt: serverTimestamp(),
           });
-          console.log('Firestore document created.');
           resolve();
         } catch (error) {
           console.error('Failed to get download URL or write to Firestore:', error);
@@ -81,6 +77,23 @@ export const uploadLectureNote = async (
     );
   });
 };
+
+/**
+ * Deletes a note document from Firestore.
+ * This does NOT delete the file from Firebase Storage.
+ * @param lectureId The ID of the lecture containing the note.
+ * @param noteId The ID of the note document to delete.
+ */
+export const deleteLectureNote = async (lectureId: string, noteId: string): Promise<void> => {
+    try {
+        const noteRef = doc(db, 'lectures', lectureId, 'notes', noteId);
+        await deleteDoc(noteRef);
+    } catch (error) {
+        console.error(`Error deleting note ${noteId} from lecture ${lectureId}:`, error);
+        throw error;
+    }
+}
+
 
 /**
  * Fetches all notes for a specific lecture.

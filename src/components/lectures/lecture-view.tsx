@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
-import { addLectureFeedback, getLectureNotes, uploadLectureNote } from '@/lib/lectures';
+import { addLectureFeedback, getLectureNotes, uploadLectureNote, deleteLectureNote } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Download, Notebook, AlertCircle } from 'lucide-react';
+import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Trash2, Notebook, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import CustomVideoPlayer from './custom-video-player';
 import Image from 'next/image';
@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/auth-context';
+import FloatingPdfViewer from './floating-pdf-viewer';
 
 
 const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
@@ -177,12 +178,9 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         }
         
         setIsUploading(true);
-        setUploadProgress(0);
         
         try {
-           await uploadLectureNote(lecture.id, lecture.title, file, (progress) => {
-               setUploadProgress(progress);
-           });
+           await uploadLectureNote(lecture.id, lecture.title, file, setUploadProgress);
            
            toast({ title: "Success", description: "Your note has been uploaded." });
            await fetchNotes(); // Re-fetch notes to show the new one
@@ -191,6 +189,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
             toast({ title: "Upload Failed", description: errorMessage, variant: "destructive" });
         } finally {
             setIsUploading(false);
+            setUploadProgress(0);
             if(fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
@@ -201,8 +200,25 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         pauseLocking(30000); // Pause lock for 30 seconds to allow file selection
         fileInputRef.current?.click();
     }
+    
+    const handleDeleteNote = async (noteId: string) => {
+        // Confirmation dialog to prevent accidental deletion
+        if (!window.confirm("Are you sure you want to delete this note? This cannot be undone.")) {
+            return;
+        }
+
+        try {
+            await deleteLectureNote(lecture.id, noteId);
+            toast({ title: "Note Deleted", description: "The note has been removed successfully." });
+            fetchNotes(); // Re-fetch to update the list
+        } catch (error) {
+            toast({ title: "Error", description: "Failed to delete the note.", variant: "destructive" });
+        }
+    };
 
     const NoteItem = ({ note }: { note: LectureNote }) => {
+        const isUserUploaded = !note.name.startsWith("Sample"); // Simple check
+
         if (note.type === 'link') {
             return (
                 <a
@@ -212,19 +228,26 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                     className="flex w-full items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left"
                 >
                     <LinkIcon className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span className="font-medium text-sm truncate">{note.name}</span>
+                    <span className="font-medium text-sm truncate flex-grow">{note.name}</span>
                 </a>
             );
         }
 
         return (
-            <button
-                onClick={() => onSelectPdf(note.url)}
-                className="flex w-full items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left"
-            >
-                <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-                <span className="font-medium text-sm truncate">{note.name}</span>
-            </button>
+            <div className="flex items-center gap-2">
+                <button
+                    onClick={() => onSelectPdf(note.url)}
+                    className="flex w-full items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left flex-grow"
+                >
+                    <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                    <span className="font-medium text-sm truncate">{note.name}</span>
+                </button>
+                {isUserUploaded && (
+                     <Button variant="ghost" size="icon" className="flex-shrink-0" onClick={() => handleDeleteNote(note.id)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                )}
+            </div>
         );
     };
 
@@ -295,78 +318,58 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
 
 
 export default function LectureView({ lecture }: { lecture: Lecture }) {
-    const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
-
-    const handleDownloadVideo = () => {
-        const link = document.createElement('a');
-        link.href = lecture.videoUrl;
-        link.setAttribute('download', `${lecture.title}.mp4`);
-        link.setAttribute('target', '_blank');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <div className="lg:col-span-2 space-y-6">
-                <Card className="overflow-hidden border-0 shadow-none">
-                    <CustomVideoPlayer 
-                        src={lecture.videoUrl}
-                        poster={lecture.thumbnailUrl}
-                    />
-                </Card>
-
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>{lecture.title}</CardTitle>
-                        <CardDescription>{lecture.channel} • {lecture.subject}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <p>{lecture.description}</p>
-                        </div>
-                        <div className="flex gap-4 mt-4">
-                             <Button onClick={handleDownloadVideo}>
-                                <Download className="mr-2 h-4 w-4" /> Download Video
-                            </Button>
-                             <FeedbackDialog lecture={lecture} />
-                        </div>
-                    </CardContent>
-                </Card>
+        <div className="relative min-h-screen">
+             {pdfUrl && (
+                <FloatingPdfViewer
+                    src={pdfUrl}
+                    onClose={() => setPdfUrl(null)}
+                />
+            )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Have a Doubt?</CardTitle>
-                    </CardHeader>
-                     <CardContent>
-                        <DoubtSection lecture={lecture} />
-                    </CardContent>
-                </Card>
-            </div>
+                <div className="lg:col-span-2 space-y-6">
+                    <Card className="overflow-hidden border-0 shadow-none">
+                        <CustomVideoPlayer 
+                            src={lecture.videoUrl}
+                            poster={lecture.thumbnailUrl}
+                        />
+                    </Card>
 
-            <div className="lg:col-span-1">
-                 <Card className="sticky top-20">
-                    <CardContent className="p-4">
-                        {selectedPdfUrl ? (
-                            <iframe 
-                                src={selectedPdfUrl} 
-                                className="w-full h-[75vh] rounded-md border"
-                                title="PDF Viewer"
-                            ></iframe>
-                        ) : (
-                             <div className="w-full h-[75vh] flex flex-col items-center justify-center text-center p-4 bg-muted/50 rounded-md">
-                                <Notebook className="h-16 w-16 text-muted-foreground mb-4"/>
-                                <h3 className="text-lg font-semibold">Notes Viewer</h3>
-                                <p className="text-sm text-muted-foreground">Select a PDF from the list below to view it here.</p>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>{lecture.title}</CardTitle>
+                            <CardDescription>{lecture.channel} • {lecture.subject}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                                <p>{lecture.description}</p>
                             </div>
-                        )}
-                         <div className="mt-4">
-                           <NotesSection lecture={lecture} onSelectPdf={setSelectedPdfUrl} />
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                    
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Have a Doubt?</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <DoubtSection lecture={lecture} />
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="lg:col-span-1">
+                    <Card className="sticky top-20">
+                        <CardContent className="p-4">
+                            <NotesSection lecture={lecture} onSelectPdf={setPdfUrl} />
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+             <div className="fixed bottom-8 right-8 z-50">
+                <FeedbackDialog lecture={lecture} />
             </div>
         </div>
     )
