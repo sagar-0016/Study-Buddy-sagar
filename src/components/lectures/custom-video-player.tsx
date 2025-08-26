@@ -109,31 +109,18 @@ const NotesSidebar = ({
     size, 
     onClose, 
     onPositionChange, 
-    onResize,
+    onResizeStart,
 }: {
     notes: LectureNote[],
     position: SidebarPosition,
     size: number,
     onClose: () => void,
     onPositionChange: (pos: SidebarPosition) => void,
-    onResize: (newSize: number) => void,
+    onResizeStart: (e: MouseEvent<HTMLButtonElement>) => void,
 }) => {
-    const [isResizing, setIsResizing] = useState(false);
     const sidebarRef = useRef<HTMLDivElement>(null);
-    const resizeStartPos = useRef(0);
-    const initialSize = useRef(0);
     const [viewingPdf, setViewingPdf] = useState<string | null>(null);
 
-    const handleResizeStart = (e: MouseEvent<HTMLButtonElement>) => {
-        e.stopPropagation();
-        e.preventDefault();
-        setIsResizing(true);
-        resizeStartPos.current = position === 'right' ? e.clientX : e.clientY;
-        initialSize.current = size;
-        document.body.style.cursor = position === 'right' ? 'ew-resize' : 'ns-resize';
-        document.body.style.userSelect = 'none';
-    };
-    
     const handleSelectNote = (note: LectureNote) => {
         if (note.type === 'pdf') {
             setViewingPdf(note.url);
@@ -141,42 +128,6 @@ const NotesSidebar = ({
             window.open(note.url, '_blank', 'noopener,noreferrer');
         }
     };
-
-
-    useEffect(() => {
-        const handleGlobalMouseMove = (e: globalThis.MouseEvent) => {
-            if (!isResizing || !sidebarRef.current) return;
-            
-            let newSize;
-            if (position === 'right') {
-                const delta = e.clientX - resizeStartPos.current;
-                newSize = initialSize.current - delta;
-            } else { // bottom
-                const delta = e.clientY - resizeStartPos.current;
-                newSize = initialSize.current - delta;
-            }
-
-            const playerBounds = sidebarRef.current.parentElement?.getBoundingClientRect();
-            if (!playerBounds) return;
-            
-            const maxSize = position === 'right' ? playerBounds.width - 200 : playerBounds.height - 150;
-            const minSize = 200;
-            onResize(Math.max(minSize, Math.min(newSize, maxSize)));
-        };
-
-        const handleGlobalMouseUp = () => {
-            setIsResizing(false);
-            document.body.style.cursor = 'default';
-            document.body.style.userSelect = 'auto';
-        };
-
-        window.addEventListener('mousemove', handleGlobalMouseMove);
-        window.addEventListener('mouseup', handleGlobalMouseUp);
-        return () => {
-            window.removeEventListener('mousemove', handleGlobalMouseMove);
-            window.removeEventListener('mouseup', handleGlobalMouseUp);
-        };
-    }, [isResizing, position, onResize]);
     
     const renderContent = () => {
         if (viewingPdf) {
@@ -212,7 +163,7 @@ const NotesSidebar = ({
                     ))}
                 </div>
                 <button
-                    onMouseDown={handleResizeStart}
+                    onMouseDown={onResizeStart}
                     className={cn(
                         "absolute bg-muted hover:bg-accent transition-colors z-10",
                         position === 'right' ? "top-0 left-0 h-full w-1.5 cursor-ew-resize" : "top-0 left-0 w-full h-1.5 cursor-ns-resize"
@@ -252,10 +203,15 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
     const [showControls, setShowControls] = useState(true);
     const [quality, setQuality] = useState<Quality>('hd');
     
-    // States for the new sidebar
+    // States for the notes sidebar
     const [isNotesSidebarOpen, setIsNotesSidebarOpen] = useState(false);
     const [sidebarPosition, setSidebarPosition] = useState<SidebarPosition>('right');
-    const [sidebarSize, setSidebarSize] = useState(400); // Initial width or height
+    const [sidebarSize, setSidebarSize] = useState(400);
+
+    // State for resizing logic
+    const [isResizing, setIsResizing] = useState(false);
+    const resizeStartPos = useRef(0);
+    const initialSize = useRef(0);
 
     let controlsTimeout: NodeJS.Timeout;
 
@@ -368,6 +324,51 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         }, 3000);
     };
 
+    const handleResizeStart = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setIsResizing(true);
+        resizeStartPos.current = sidebarPosition === 'right' ? e.clientX : e.clientY;
+        initialSize.current = sidebarSize;
+        document.body.style.cursor = sidebarPosition === 'right' ? 'ew-resize' : 'ns-resize';
+        document.body.style.userSelect = 'none';
+    };
+
+    useEffect(() => {
+        const handleGlobalMouseMove = (e: globalThis.MouseEvent) => {
+            if (!isResizing || !playerRef.current) return;
+            
+            let newSize;
+            if (sidebarPosition === 'right') {
+                const delta = e.clientX - resizeStartPos.current;
+                newSize = initialSize.current - delta;
+            } else { // bottom
+                const delta = e.clientY - resizeStartPos.current;
+                newSize = initialSize.current - delta;
+            }
+
+            const playerBounds = playerRef.current.getBoundingClientRect();
+            if (!playerBounds) return;
+            
+            const maxSize = sidebarPosition === 'right' ? playerBounds.width - 200 : playerBounds.height - 150;
+            const minSize = 200;
+            setSidebarSize(Math.max(minSize, Math.min(newSize, maxSize)));
+        };
+
+        const handleGlobalMouseUp = () => {
+            setIsResizing(false);
+            document.body.style.cursor = 'default';
+            document.body.style.userSelect = 'auto';
+        };
+
+        window.addEventListener('mousemove', handleGlobalMouseMove);
+        window.addEventListener('mouseup', handleGlobalMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleGlobalMouseMove);
+            window.removeEventListener('mouseup', handleGlobalMouseUp);
+        };
+    }, [isResizing, sidebarPosition]);
+
     useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
@@ -446,7 +447,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
                     size={sidebarSize}
                     onClose={() => setIsNotesSidebarOpen(false)}
                     onPositionChange={setSidebarPosition}
-                    onResize={setSidebarSize}
+                    onResizeStart={handleResizeStart}
                 />
             )}
 
