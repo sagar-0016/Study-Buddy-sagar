@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
-import { addLectureFeedback, getLectureNotes, uploadLectureNote } from '@/lib/lectures';
+import { addLectureFeedback, getLectureNotes } from '@/lib/lectures';
+import { uploadNoteAction } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Download, Notebook, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -150,7 +151,6 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
     const { pauseLocking } = useAuth();
@@ -177,20 +177,19 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         }
         
         setIsUploading(true);
-        setUploadProgress(0);
         
         try {
-           await uploadLectureNote(lecture.id, lecture.title, file, (progress) => {
-               setUploadProgress(progress);
-           });
+           const formData = new FormData();
+           formData.append('file', file);
+           await uploadNoteAction(lecture.id, lecture.title, formData);
+           
            toast({ title: "Success", description: "Your note has been uploaded." });
-           await fetchNotes();
+           await fetchNotes(); // Re-fetch notes to show the new one
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Could not upload your note.";
             toast({ title: "Upload Failed", description: errorMessage, variant: "destructive" });
         } finally {
             setIsUploading(false);
-            setUploadProgress(0);
             if(fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
@@ -237,8 +236,9 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                 <div className="mt-4">
                      <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full">
-                                <Upload className="mr-2 h-4 w-4" /> Upload PDF
+                            <Button variant="outline" className="w-full" disabled={isUploading}>
+                                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                {isUploading ? 'Uploading...' : 'Upload PDF'}
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
@@ -267,12 +267,6 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                         onChange={handleFileUpload} 
                         disabled={isUploading}
                     />
-                     {isUploading && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Uploading... ({uploadProgress}%)</span>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
