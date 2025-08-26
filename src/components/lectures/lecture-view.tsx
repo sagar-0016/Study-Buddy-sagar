@@ -446,16 +446,19 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         toggleClassMode();
     };
 
-     // This effect ensures class mode is turned off when navigating away from a lecture page
+    const unmountCallback = useRef(toggleClassMode);
+
+    useEffect(() => {
+        unmountCallback.current = toggleClassMode;
+    }, [toggleClassMode]);
+
     useEffect(() => {
         return () => {
             if (isClassMode) {
-                // This will run when the component unmounts
-                toggleClassMode();
+                unmountCallback.current();
             }
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isClassMode]);
 
 
     return (
