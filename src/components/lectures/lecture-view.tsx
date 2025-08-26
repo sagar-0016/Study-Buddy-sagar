@@ -143,7 +143,7 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
     )
 }
 
-const NotesSection = ({ lecture }: { lecture: Lecture }) => {
+const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode: boolean }) => {
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
@@ -229,7 +229,7 @@ const NotesSection = ({ lecture }: { lecture: Lecture }) => {
                     {note.type === 'pdf' ? <FileText className="h-5 w-5 text-primary flex-shrink-0" /> : <LinkIcon className="h-5 w-5 text-primary flex-shrink-0" />}
                     <span className="font-medium text-sm truncate">{note.name}</span>
                 </button>
-                {isUserUploaded && (
+                {!isClassMode && isUserUploaded && (
                      <Button variant="ghost" size="icon" className="flex-shrink-0" onClick={() => handleDeleteNote(note.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
@@ -261,25 +261,27 @@ const NotesSection = ({ lecture }: { lecture: Lecture }) => {
                         )}
                     </div>
 
-                    <div className="pt-6 border-t">
-                        <h3 className="text-lg font-semibold">Your Notes</h3>
-                        <p className="text-sm text-muted-foreground">Upload your own PDF notes for this lecture.</p>
-                        <div className="mt-4">
-                            <Button variant="outline" className="w-full" onClick={triggerFileInput} disabled={isUploading}>
-                                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                                {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : 'Upload PDF'}
-                            </Button>
-                            <input 
-                                id="pdf-upload" 
-                                ref={fileInputRef}
-                                type="file" 
-                                className="sr-only" 
-                                accept=".pdf" 
-                                onChange={handleFileUpload} 
-                                disabled={isUploading}
-                            />
+                    {!isClassMode && (
+                         <div className="pt-6 border-t">
+                            <h3 className="text-lg font-semibold">Your Notes</h3>
+                            <p className="text-sm text-muted-foreground">Upload your own PDF notes for this lecture.</p>
+                            <div className="mt-4">
+                                <Button variant="outline" className="w-full" onClick={triggerFileInput} disabled={isUploading}>
+                                    {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                    {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : 'Upload PDF'}
+                                </Button>
+                                <input 
+                                    id="pdf-upload" 
+                                    ref={fileInputRef}
+                                    type="file" 
+                                    className="sr-only" 
+                                    accept=".pdf" 
+                                    onChange={handleFileUpload} 
+                                    disabled={isUploading}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </CardContent>
         </Card>
@@ -291,38 +293,42 @@ const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.
     const isResizing = useRef(false);
     const panelRef = useRef<HTMLDivElement>(null);
   
-    const handleMouseDown = (e: React.MouseEvent) => {
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
       e.preventDefault();
       isResizing.current = true;
-    };
-  
-    const handleMouseUp = () => {
-      isResizing.current = false;
-    };
-  
-    const handleMouseMove = useCallback((e: MouseEvent) => {
-      if (isResizing.current && panelRef.current) {
-        const newWidth = panelRef.current.parentElement!.clientWidth - e.clientX;
-        const boundedWidth = Math.max(300, Math.min(newWidth, panelRef.current.parentElement!.clientWidth - 400));
-        setWidth(boundedWidth);
-        onResize(boundedWidth);
-      }
-    }, [onResize]);
+      // No need to add listeners here, they are managed by useEffect
+    }, []);
   
     useEffect(() => {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
-      };
-    }, [handleMouseMove]);
+        const handleMouseMove = (e: MouseEvent) => {
+            if (isResizing.current && panelRef.current?.parentElement) {
+              const newWidth = panelRef.current.parentElement.getBoundingClientRect().right - e.clientX;
+              const boundedWidth = Math.max(300, Math.min(newWidth, panelRef.current.parentElement.clientWidth - 400));
+              setWidth(boundedWidth);
+              onResize(boundedWidth);
+            }
+        };
+
+        const handleMouseUp = () => {
+            isResizing.current = false;
+        };
+
+        if (isResizing.current) { // Add listeners only when resizing
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+        }
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [handleMouseDown, onResize]);
   
     return (
       <div ref={panelRef} className="relative h-full" style={{ flexBasis: `${width}px`, flexShrink: 0, flexGrow: 0 }}>
         <div
           onMouseDown={handleMouseDown}
-          className="absolute left-0 top-0 h-full w-2 cursor-col-resize z-10"
+          className="absolute left-0 top-0 h-full w-2 cursor-col-resize z-10 bg-muted/50 hover:bg-accent transition-colors"
         />
         {children}
       </div>
@@ -345,15 +351,12 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
     useEffect(() => {
         fetchNotes();
-        // Ensure class mode is turned off when leaving the page
         return () => {
             if(isClassMode) {
                 toggleClassMode();
             }
         };
-    }, [lecture.id]); // Re-fetch notes if lecture changes
-
-    const rightPanelStyle = isClassMode ? { flexBasis: `${rightPanelWidth}px` } : {};
+    }, [lecture.id, isClassMode, toggleClassMode]);
 
     return (
         <div className="relative min-h-screen">
@@ -366,67 +369,58 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
             
             <div className={cn("mt-12", isClassMode && "flex gap-2 h-[calc(100vh-120px)]")}>
                 
-                <div className={cn("space-y-6", isClassMode ? "flex-1 flex flex-col" : "lg:col-span-2")}>
-                    <Card className={cn("overflow-hidden border-0 shadow-none", isClassMode && "flex-1")}>
-                        {isLoadingNotes ? (
-                             <Skeleton className="w-full aspect-video" />
-                        ) : (
-                            <CustomVideoPlayer 
-                                src={lecture.videoUrl}
-                                sdSrc={lecture.sdVideoUrl}
-                                poster={lecture.thumbnailUrl}
-                                notes={notes}
-                            />
-                        )}
-                    </Card>
+                <div className={cn("space-y-6", isClassMode ? "flex-1 flex flex-col" : "lg:grid lg:grid-cols-3 lg:gap-6")}>
+                    <div className={cn(isClassMode ? "flex-1" : "lg:col-span-2")}>
+                        <Card className={cn("overflow-hidden", isClassMode ? "h-full border-0 shadow-none" : "")}>
+                            {isLoadingNotes ? (
+                                <Skeleton className="w-full aspect-video" />
+                            ) : (
+                                <CustomVideoPlayer 
+                                    src={lecture.videoUrl}
+                                    sdSrc={lecture.sdVideoUrl}
+                                    poster={lecture.thumbnailUrl}
+                                    notes={notes}
+                                />
+                            )}
+                        </Card>
+                    </div>
 
                     {!isClassMode && (
-                        <>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{lecture.title}</CardTitle>
-                                <CardDescription>{lecture.channel} • {lecture.subject}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="prose prose-sm dark:prose-invert max-w-none">
-                                    <p>{lecture.description}</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Have a Doubt?</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <DoubtSection lecture={lecture} />
-                            </CardContent>
-                        </Card>
-                        </>
+                        <div className="lg:col-span-1 space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>{lecture.title}</CardTitle>
+                                    <CardDescription>{lecture.channel} • {lecture.subject}</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                                        <p>{lecture.description}</p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                            
+                             <Card>
+                                <CardHeader>
+                                    <CardTitle>Have a Doubt?</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <DoubtSection lecture={lecture} />
+                                </CardContent>
+                            </Card>
+
+                            <Card className="sticky top-20">
+                                <CardContent className="p-4">
+                                    <NotesSection lecture={lecture} isClassMode={isClassMode} />
+                                </CardContent>
+                            </Card>
+                        </div>
                     )}
                 </div>
 
-                <div className={cn(isClassMode ? "h-full" : "hidden", "lg:col-span-1")}>
-                   {isClassMode ? (
-                        <ResizablePanel initialWidth={400} onResize={setRightPanelWidth}>
-                            <NotesSection lecture={lecture} />
-                        </ResizablePanel>
-                   ) : (
-                    <Card className="sticky top-20">
-                        <CardContent className="p-4">
-                            <NotesSection lecture={lecture} />
-                        </CardContent>
-                    </Card>
-                   )}
-                </div>
-                 {!isClassMode && (
-                    <div className="lg:col-span-1">
-                        <Card className="sticky top-20">
-                            <CardContent className="p-4">
-                                <NotesSection lecture={lecture} />
-                            </CardContent>
-                        </Card>
-                    </div>
+                {isClassMode && (
+                    <ResizablePanel initialWidth={400} onResize={setRightPanelWidth}>
+                        <NotesSection lecture={lecture} isClassMode={isClassMode} />
+                    </ResizablePanel>
                 )}
             </div>
 
