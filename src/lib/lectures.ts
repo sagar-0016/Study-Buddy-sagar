@@ -115,7 +115,7 @@ export const getLectureNotes = async (lectureId: string): Promise<LectureNote[]>
 
 /**
  * Uploads a PDF note to Firebase Storage, reports progress, and adds its reference to Firestore.
- * This function now correctly wraps the upload task in a Promise.
+ * This function is wrapped in a Promise to correctly handle the asynchronous upload events.
  * @param lectureId The ID of the lecture document.
  * @param lectureTitle The title of the lecture, used for the folder path.
  * @param file The PDF file to upload.
@@ -153,7 +153,7 @@ export const uploadLectureNote = (
                         type: 'pdf',
                         uploadedAt: serverTimestamp()
                     });
-                    onProgress(100); // Ensure it hits 100% on completion
+                    onProgress(100); 
                     resolve();
                 } catch (firestoreError) {
                     console.error(`Error adding note to Firestore for lecture ${lectureId}:`, firestoreError);
