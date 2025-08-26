@@ -127,6 +127,14 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
         }
     }, []);
 
+    const handleSelectPdf = (url: string) => {
+        // Exit fullscreen if active before showing PDF
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        }
+        onSelectPdf(url);
+    };
+
     const handleSeek = useCallback((amount: number) => {
         if (videoRef.current) {
             videoRef.current.currentTime += amount;
@@ -223,7 +231,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
                 <div className="flex justify-end">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="secondary" size="sm">
+                            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 hover:text-white">
                                 <Notebook className="mr-2 h-4 w-4" />
                                 Notes
                             </Button>
@@ -237,7 +245,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
                                         <DropdownMenuItem key={note.id} onSelect={(e) => {
                                             e.preventDefault();
                                             if (note.type === 'pdf') {
-                                                onSelectPdf(note.url)
+                                                handleSelectPdf(note.url)
                                             } else {
                                                 window.open(note.url, '_blank')
                                             }
