@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getLectures } from '@/lib/lectures';
+import { getLectures } from '@/lib/lecture-data';
 import type { Lecture } from '@/lib/types';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

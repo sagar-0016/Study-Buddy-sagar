@@ -1,7 +1,7 @@
 
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getLectureById } from '@/lib/lectures';
+import { getLectureById } from '@/lib/lecture-data';
 import LectureView from '@/components/lectures/lecture-view';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
