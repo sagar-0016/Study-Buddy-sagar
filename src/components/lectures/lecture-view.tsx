@@ -203,23 +203,21 @@ const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }
                 </div>
             </div>
             <div ref={containerRef} className="flex-grow bg-muted/20 overflow-auto">
-                <div className={cn("flex justify-center", fitMode === 'width' && "p-4")}>
-                    <div className={cn(fitMode === 'zoom' ? 'overflow-auto p-4' : '')}>
-                        <Document
-                            file={proxiedUrl}
-                            onLoadSuccess={onDocumentLoadSuccess}
-                            onLoadError={onDocumentLoadError}
-                            loading={<Skeleton className='h-[80vh] w-[60vw]'/>}
-                            className="flex justify-center"
-                        >
-                            <Page 
-                                pageNumber={pageNumber} 
-                                scale={fitMode === 'width' ? 1 : scale} 
-                                width={fitMode === 'width' ? containerWidth : undefined}
-                                renderTextLayer={true} 
-                            />
-                        </Document>
-                    </div>
+                <div className={cn("flex justify-center", fitMode === 'zoom' && "overflow-auto h-full w-full")}>
+                    <Document
+                        file={proxiedUrl}
+                        onLoadSuccess={onDocumentLoadSuccess}
+                        onLoadError={onDocumentLoadError}
+                        loading={<Skeleton className='h-full w-full'/>}
+                        className="flex justify-center"
+                    >
+                        <Page 
+                            pageNumber={pageNumber} 
+                            scale={fitMode === 'width' ? undefined : scale} 
+                            width={fitMode === 'width' ? containerWidth : undefined}
+                            renderTextLayer={true} 
+                        />
+                    </Document>
                 </div>
             </div>
         </div>
@@ -376,33 +374,28 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
     )
 }
 
-const ResizablePanel = ({ children, onResize }: { children: React.ReactNode, onResize: (width: number) => void }) => {
-    const panelRef = useRef<HTMLDivElement>(null);
+const ResizablePanel = ({ children, width, setWidth }: { children: React.ReactNode, width: number, setWidth: (width: number) => void }) => {
     const isResizing = useRef(false);
     const initialPos = useRef({ x: 0, width: 0 });
 
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
-        if (!panelRef.current) return;
         e.preventDefault();
         isResizing.current = true;
         initialPos.current = {
             x: e.clientX,
-            width: panelRef.current.offsetWidth
+            width: width,
         };
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
-    }, []);
+    }, [width]);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!isResizing.current) return;
             const dx = e.clientX - initialPos.current.x;
-            const newWidth = initialPos.current.width - dx; // Subtract because we drag left to shrink
+            const newWidth = initialPos.current.width - dx;
             const boundedWidth = Math.max(300, Math.min(newWidth, window.innerWidth - 400));
-            if (panelRef.current) {
-                panelRef.current.style.flexBasis = `${boundedWidth}px`;
-                onResize(boundedWidth);
-            }
+            setWidth(boundedWidth);
         };
 
         const handleMouseUp = () => {
@@ -418,10 +411,10 @@ const ResizablePanel = ({ children, onResize }: { children: React.ReactNode, onR
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [onResize]);
+    }, [setWidth]);
 
     return (
-        <div ref={panelRef} className="relative h-full bg-card" style={{ flexBasis: '400px', flexShrink: 0, flexGrow: 0 }}>
+        <div className="relative h-full bg-card" style={{ width: `${width}px`, flexShrink: 0 }}>
             <div
                 onMouseDown={handleMouseDown}
                 className="absolute left-0 top-0 h-full w-2 cursor-col-resize z-10 bg-muted/50 hover:bg-accent transition-colors"
@@ -455,6 +448,8 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
     useEffect(() => {
         return () => {
+            // This is a cleanup function that runs when the component unmounts.
+            // If the user navigates away while in class mode, it will be turned off.
             if (isClassMode) {
                 toggleClassMode();
             }
@@ -522,7 +517,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                 </div>
 
                 {isClassMode && (
-                    <ResizablePanel onResize={setRightPanelWidth}>
+                    <ResizablePanel width={rightPanelWidth} setWidth={setRightPanelWidth}>
                         <NotesSection lecture={lecture} isClassMode={isClassMode} />
                     </ResizablePanel>
                 )}
