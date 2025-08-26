@@ -175,27 +175,29 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
             toast({ title: "Invalid File Type", description: "Please upload a PDF file.", variant: "destructive" });
             return;
         }
-
+        
         setIsUploading(true);
         setUploadProgress(0);
+        
         try {
             await uploadLectureNote(
                 lecture.id, 
                 lecture.title, 
                 file,
-                setUploadProgress // Pass the progress callback here
+                setUploadProgress
             );
             toast({ title: "Success", description: "Your note has been uploaded." });
-            await fetchNotes(); // Refresh the notes list
+            await fetchNotes();
         } catch (error) {
             toast({ title: "Upload Failed", description: "Could not upload your note.", variant: "destructive" });
         } finally {
             setIsUploading(false);
+            setUploadProgress(0);
         }
     };
     
     const triggerFileInput = () => {
-        pauseLocking(10000); // Pause lock for 10 seconds
+        pauseLocking(10000);
         fileInputRef.current?.click();
     }
 
@@ -281,11 +283,10 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
     const [selectedPdfUrl, setSelectedPdfUrl] = useState<string | null>(null);
 
     const handleDownloadVideo = () => {
-        // This creates a temporary link to trigger the browser's download functionality.
         const link = document.createElement('a');
         link.href = lecture.videoUrl;
-        link.setAttribute('download', `${lecture.title}.mp4`); // Suggest a filename
-        link.setAttribute('target', '_blank'); // Open in new tab as a fallback
+        link.setAttribute('download', `${lecture.title}.mp4`);
+        link.setAttribute('target', '_blank');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -294,7 +295,6 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Main Content: Video and Info */}
             <div className="lg:col-span-2 space-y-6">
                 <Card className="overflow-hidden border-0 shadow-none">
                     <CustomVideoPlayer 
@@ -331,7 +331,6 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                 </Card>
             </div>
 
-            {/* Sidebar: PDF Viewer and Notes List */}
             <div className="lg:col-span-1">
                  <Card className="sticky top-20">
                     <CardContent className="p-4">
