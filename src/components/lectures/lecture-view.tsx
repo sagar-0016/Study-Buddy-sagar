@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Lecture, LectureNote } from '@/lib/types';
@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
-import { addLectureFeedback, getLectureNotes } from '@/lib/lectures';
-import { uploadNoteAction } from '@/lib/actions';
+import { addLectureFeedback, getLectureNotes, uploadLectureNote } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Download, Notebook, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -179,9 +178,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         setIsUploading(true);
         
         try {
-           const formData = new FormData();
-           formData.append('file', file);
-           await uploadNoteAction(lecture.id, lecture.title, formData);
+           await uploadLectureNote(lecture.id, lecture.title, file);
            
            toast({ title: "Success", description: "Your note has been uploaded." });
            await fetchNotes(); // Re-fetch notes to show the new one
