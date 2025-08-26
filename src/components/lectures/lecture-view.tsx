@@ -10,12 +10,14 @@ import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
 import { uploadLectureNote, getLectureNotes, deleteLectureNote } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Trash2, Notebook, AlertCircle } from 'lucide-react';
+import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Trash2, Notebook, AlertCircle, View, X } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import CustomVideoPlayer from './custom-video-player';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useClassMode } from '@/context/class-mode-context';
+import { cn } from '@/lib/utils';
 
 const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
     const [doubtText, setDoubtText] = useState('');
@@ -212,7 +214,6 @@ const NotesSection = ({ lecture }: { lecture: Lecture }) => {
 
         const handleClick = () => {
             if (note.type === 'pdf') {
-                // The new player will handle opening PDFs
                  toast({title: "Please use the 'Notes' button on the video player to view this PDF."})
             } else {
                 window.open(note.url, '_blank', 'noopener,noreferrer');
@@ -238,55 +239,102 @@ const NotesSection = ({ lecture }: { lecture: Lecture }) => {
     };
 
     return (
-        <>
-            <div className="space-y-6">
-                <div>
-                    <h3 className="text-lg font-semibold">Lecture Notes</h3>
-                    <p className="text-sm text-muted-foreground">Official notes and resources for this lecture.</p>
-                    {isLoading ? (
-                        <div className="mt-4 space-y-2">
-                            <Skeleton className="h-10 w-full" />
-                            <Skeleton className="h-10 w-full" />
-                        </div>
-                    ) : notes.length > 0 ? (
-                        <div className="mt-4 space-y-2">
-                            {notes.map(note => (
-                                <NoteItem key={note.id} note={note} />
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="mt-4 text-sm text-muted-foreground italic">No official notes available for this lecture.</p>
-                    )}
-                </div>
+        <Card className="h-full">
+            <CardContent className="p-4">
+                <div className="space-y-6">
+                    <div>
+                        <h3 className="text-lg font-semibold">Lecture Notes</h3>
+                        <p className="text-sm text-muted-foreground">Official notes and resources for this lecture.</p>
+                        {isLoading ? (
+                            <div className="mt-4 space-y-2">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        ) : notes.length > 0 ? (
+                            <div className="mt-4 space-y-2">
+                                {notes.map(note => (
+                                    <NoteItem key={note.id} note={note} />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="mt-4 text-sm text-muted-foreground italic">No official notes available for this lecture.</p>
+                        )}
+                    </div>
 
-                <div className="pt-6 border-t">
-                    <h3 className="text-lg font-semibold">Your Notes</h3>
-                    <p className="text-sm text-muted-foreground">Upload your own PDF notes for this lecture.</p>
-                    <div className="mt-4">
-                        <Button variant="outline" className="w-full" onClick={triggerFileInput} disabled={isUploading}>
-                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                            {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : 'Upload PDF'}
-                        </Button>
-                        <input 
-                            id="pdf-upload" 
-                            ref={fileInputRef}
-                            type="file" 
-                            className="sr-only" 
-                            accept=".pdf" 
-                            onChange={handleFileUpload} 
-                            disabled={isUploading}
-                        />
+                    <div className="pt-6 border-t">
+                        <h3 className="text-lg font-semibold">Your Notes</h3>
+                        <p className="text-sm text-muted-foreground">Upload your own PDF notes for this lecture.</p>
+                        <div className="mt-4">
+                            <Button variant="outline" className="w-full" onClick={triggerFileInput} disabled={isUploading}>
+                                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : 'Upload PDF'}
+                            </Button>
+                            <input 
+                                id="pdf-upload" 
+                                ref={fileInputRef}
+                                type="file" 
+                                className="sr-only" 
+                                accept=".pdf" 
+                                onChange={handleFileUpload} 
+                                disabled={isUploading}
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
-        </>
+            </CardContent>
+        </Card>
     )
 }
 
+const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.ReactNode, initialWidth: number, onResize: (width: number) => void }) => {
+    const [width, setWidth] = useState(initialWidth);
+    const isResizing = useRef(false);
+    const panelRef = useRef<HTMLDivElement>(null);
+  
+    const handleMouseDown = (e: React.MouseEvent) => {
+      e.preventDefault();
+      isResizing.current = true;
+    };
+  
+    const handleMouseUp = () => {
+      isResizing.current = false;
+    };
+  
+    const handleMouseMove = useCallback((e: MouseEvent) => {
+      if (isResizing.current && panelRef.current) {
+        const newWidth = panelRef.current.parentElement!.clientWidth - e.clientX;
+        const boundedWidth = Math.max(300, Math.min(newWidth, panelRef.current.parentElement!.clientWidth - 400));
+        setWidth(boundedWidth);
+        onResize(boundedWidth);
+      }
+    }, [onResize]);
+  
+    useEffect(() => {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }, [handleMouseMove]);
+  
+    return (
+      <div ref={panelRef} className="relative h-full" style={{ flexBasis: `${width}px`, flexShrink: 0, flexGrow: 0 }}>
+        <div
+          onMouseDown={handleMouseDown}
+          className="absolute left-0 top-0 h-full w-2 cursor-col-resize z-10"
+        />
+        {children}
+      </div>
+    );
+  };
+
 
 export default function LectureView({ lecture }: { lecture: Lecture }) {
+    const { isClassMode, toggleClassMode } = useClassMode();
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoadingNotes, setIsLoadingNotes] = useState(true);
+    const [rightPanelWidth, setRightPanelWidth] = useState(400);
 
     const fetchNotes = useCallback(async () => {
         setIsLoadingNotes(true);
@@ -297,14 +345,29 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
     useEffect(() => {
         fetchNotes();
-    }, [fetchNotes]);
+        // Ensure class mode is turned off when leaving the page
+        return () => {
+            if(isClassMode) {
+                toggleClassMode();
+            }
+        };
+    }, [lecture.id]); // Re-fetch notes if lecture changes
+
+    const rightPanelStyle = isClassMode ? { flexBasis: `${rightPanelWidth}px` } : {};
 
     return (
         <div className="relative min-h-screen">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+             <div className="absolute top-0 right-0 z-20">
+                <Button variant="outline" onClick={toggleClassMode}>
+                    {isClassMode ? <X className="mr-2"/> : <View className="mr-2"/>}
+                    {isClassMode ? 'Exit' : 'Enter'} Class Mode
+                </Button>
+            </div>
+            
+            <div className={cn("mt-12", isClassMode && "flex gap-2 h-[calc(100vh-120px)]")}>
                 
-                <div className="lg:col-span-2 space-y-6">
-                    <Card className="overflow-hidden border-0 shadow-none">
+                <div className={cn("space-y-6", isClassMode ? "flex-1 flex flex-col" : "lg:col-span-2")}>
+                    <Card className={cn("overflow-hidden border-0 shadow-none", isClassMode && "flex-1")}>
                         {isLoadingNotes ? (
                              <Skeleton className="w-full aspect-video" />
                         ) : (
@@ -317,39 +380,61 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                         )}
                     </Card>
 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>{lecture.title}</CardTitle>
-                            <CardDescription>{lecture.channel} • {lecture.subject}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="prose prose-sm dark:prose-invert max-w-none">
-                                <p>{lecture.description}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Have a Doubt?</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <DoubtSection lecture={lecture} />
-                        </CardContent>
-                    </Card>
+                    {!isClassMode && (
+                        <>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>{lecture.title}</CardTitle>
+                                <CardDescription>{lecture.channel} • {lecture.subject}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                    <p>{lecture.description}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Have a Doubt?</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <DoubtSection lecture={lecture} />
+                            </CardContent>
+                        </Card>
+                        </>
+                    )}
                 </div>
 
-                <div className="lg:col-span-1">
+                <div className={cn(isClassMode ? "h-full" : "hidden", "lg:col-span-1")}>
+                   {isClassMode ? (
+                        <ResizablePanel initialWidth={400} onResize={setRightPanelWidth}>
+                            <NotesSection lecture={lecture} />
+                        </ResizablePanel>
+                   ) : (
                     <Card className="sticky top-20">
                         <CardContent className="p-4">
                             <NotesSection lecture={lecture} />
                         </CardContent>
                     </Card>
+                   )}
                 </div>
+                 {!isClassMode && (
+                    <div className="lg:col-span-1">
+                        <Card className="sticky top-20">
+                            <CardContent className="p-4">
+                                <NotesSection lecture={lecture} />
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
             </div>
-             <div className="fixed bottom-8 right-8 z-50">
-                <FeedbackDialog lecture={lecture} />
-            </div>
+
+            {!isClassMode && (
+                <div className="fixed bottom-8 right-8 z-50">
+                    <FeedbackDialog lecture={lecture} />
+                </div>
+            )}
         </div>
     )
 }

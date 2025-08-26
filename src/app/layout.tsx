@@ -1,6 +1,8 @@
+
 import type { Metadata } from 'next';
 import "./globals.css";
 import Providers from './providers';
+import { ClassModeProvider } from '@/context/class-mode-context';
 
 export const metadata: Metadata = {
   title: "Pranjal's Study Buddy",

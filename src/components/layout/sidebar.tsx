@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -29,6 +30,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { NavLink } from '@/lib/types';
+import { useClassMode } from "@/context/class-mode-context";
 
 export const navLinks: NavLink[] = [
   { href: "/", label: "Home", icon: Home },
@@ -91,23 +93,29 @@ function SidebarNav({ links, isCollapsed }: { links: NavLink[]; isCollapsed: boo
 
 
 export default function Sidebar() {
-  const isCollapsed = false; // Add logic to collapse sidebar if needed
+  const { isClassMode } = useClassMode();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 hidden w-[220px] flex-col border-r bg-glass md:flex lg:w-[280px]">
+    <aside className={cn(
+      "fixed inset-y-0 left-0 z-40 hidden flex-col border-r bg-glass transition-all duration-300 md:flex",
+      isClassMode ? "w-[72px]" : "w-[220px] lg:w-[280px]"
+    )}>
       <TooltipProvider>
-        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+        <div className={cn(
+          "flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6",
+          isClassMode && "justify-center"
+        )}>
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <GraduationCap className="h-6 w-6 text-primary" />
-              <span className="">Pranjal's Study Buddy</span>
+              {!isClassMode && <span className="">Pranjal's Study Buddy</span>}
             </Link>
           </div>
           <div className="flex flex-1 flex-col gap-y-2 overflow-y-auto">
-             <div className="flex-1">
-                <SidebarNav links={navLinks} isCollapsed={isCollapsed} />
+             <div className="flex-1 py-2">
+                <SidebarNav links={navLinks} isCollapsed={isClassMode} />
              </div>
-             <div className="mt-auto p-4">
-                <SidebarNav links={secondaryNavLinks} isCollapsed={isCollapsed} />
+             <div className="mt-auto p-4 border-t">
+                <SidebarNav links={secondaryNavLinks} isCollapsed={isClassMode} />
              </div>
           </div>
       </TooltipProvider>

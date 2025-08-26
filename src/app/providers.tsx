@@ -9,12 +9,14 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { AuthProvider, useAuth } from '@/context/auth-context';
 import { BackgroundProvider, useBackground } from '@/context/background-context';
+import { ClassModeProvider, useClassMode } from '@/context/class-mode-context';
 import LoginFlow from '@/components/auth/login-flow';
 import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
 import { useToast } from '@/hooks/use-toast';
 import { MessageSquareWarning, Loader2, X, Github } from 'lucide-react';
 import UnlockScreen from '@/components/auth/unlock-screen';
 import type { AccessLevel } from '@/context/auth-context';
+import { cn } from '@/lib/utils';
 
 
 function AppBackground() {
@@ -46,6 +48,7 @@ function AppBackground() {
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLocked, lockApp, unlockApp, isReloading } = useAuth();
+  const { isClassMode } = useClassMode();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -149,7 +152,10 @@ function AppContent({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-screen w-full">
       <Sidebar />
-      <div className="flex flex-1 flex-col md:pl-[220px] lg:pl-[280px]">
+      <div className={cn(
+        "flex flex-1 flex-col transition-all duration-300",
+        isClassMode ? "md:pl-[72px]" : "md:pl-[220px] lg:pl-[280px]"
+      )}>
         <Header />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
@@ -163,9 +169,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <BackgroundProvider>
-        <AppBackground />
-        <AppContent>{children}</AppContent>
-        <Toaster />
+        <ClassModeProvider>
+            <AppBackground />
+            <AppContent>{children}</AppContent>
+            <Toaster />
+        </ClassModeProvider>
       </BackgroundProvider>
     </AuthProvider>
   );
