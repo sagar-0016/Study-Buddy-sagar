@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
-import { addLectureFeedback, getLectureNotes } from '@/lib/lectures';
-import { uploadNoteAction } from '@/lib/actions';
+import { addLectureFeedback, getLectureNotes, uploadLectureNote } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Download, Notebook, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -151,6 +150,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
     const { pauseLocking } = useAuth();
@@ -177,27 +177,18 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         }
         
         setIsUploading(true);
+        setUploadProgress(0);
         
         try {
-            const formData = new FormData();
-            formData.append('lectureId', lecture.id);
-            formData.append('lectureTitle', lecture.title);
-            formData.append('file', file);
-
-            const result = await uploadNoteAction(formData);
-
-            if (result.success) {
-                toast({ title: "Success", description: "Your note has been uploaded." });
-                await fetchNotes(); // Re-fetch notes to show the new one
-            } else {
-                 throw new Error(result.error || "An unknown error occurred.");
-            }
-           
+           await uploadLectureNote(lecture.id, lecture.title, file, setUploadProgress);
+           toast({ title: "Success", description: "Your note has been uploaded." });
+           await fetchNotes(); // Re-fetch notes to show the new one
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Could not upload your note.";
             toast({ title: "Upload Failed", description: errorMessage, variant: "destructive" });
         } finally {
             setIsUploading(false);
+            setUploadProgress(0);
             if(fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
@@ -205,7 +196,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     };
     
     const triggerFileInput = () => {
-        pauseLocking(10000);
+        pauseLocking(30000); // Pause lock for 30 seconds to allow file selection
         fileInputRef.current?.click();
     }
 
@@ -252,7 +243,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                             <DialogHeader>
                                 <DialogTitle>Heads up!</DialogTitle>
                                 <DialogDescription>
-                                    For security reasons, after clicking "Proceed to Upload", you'll have 10 seconds to choose your file. The app will lock if it takes longer.
+                                    For security reasons, after clicking "Proceed to Upload", you'll have 30 seconds to choose your file. The app will lock if it takes longer.
                                 </DialogDescription>
                             </DialogHeader>
                              <DialogFooter>
@@ -277,7 +268,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                      {isUploading && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Uploading...</span>
+                            <span>Uploading... ({uploadProgress}%)</span>
                         </div>
                     )}
                 </div>

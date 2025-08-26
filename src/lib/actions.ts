@@ -14,7 +14,7 @@ import {
   type NewsInput,
   type NewsOutput,
 } from '@/ai/flows/news-flow';
-import { uploadPdfNote } from '@/lib/lectures';
+import { uploadLectureNote } from '@/lib/lectures';
 
 export async function getMotivationAction(input: MotivationInput) {
   const result = await getMotivationFlow(input);
@@ -43,7 +43,8 @@ export async function uploadNoteAction(formData: FormData): Promise<{ success: b
   }
 
   try {
-    await uploadPdfNote(lectureId, lectureTitle, file);
+    // This function doesn't take an onProgress callback because server actions can't stream progress back to the client yet.
+    await uploadLectureNote(lectureId, lectureTitle, file, () => {});
     return { success: true };
   } catch (error) {
     console.error("Upload action failed:", error);
