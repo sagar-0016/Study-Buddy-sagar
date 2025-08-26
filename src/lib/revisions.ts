@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { db, storage } from './firebase';
@@ -12,9 +13,11 @@ import {
   query,
   orderBy,
   increment,
+  writeBatch,
+  limit,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import type { RevisionTopic } from './types';
+import type { RevisionTopic, RecallEvent } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -112,7 +115,7 @@ export const updateRevisionTopic = async (topicId: string, data: Partial<Pick<Re
 
 
 /**
- * Updates the recall stats for a specific revision topic.
+ * Updates the recall stats for a specific revision topic, including history tracking and failure streak logic.
  * @param {string} topicId - The ID of the topic document to update.
  * @param {'success' | 'fail'} result - The outcome of the recall attempt.
  */
@@ -122,16 +125,50 @@ export const updateRecallStats = async (
 ): Promise<void> => {
     try {
         const topicRef = doc(db, 'revisions', topicId);
+        const historyRef = collection(topicRef, 'recall-history');
+
+        // Start a batch write
+        const batch = writeBatch(db);
+
+        // 1. Add the new recall event to the history sub-collection
+        const newHistoryDocRef = doc(historyRef); // Create a new doc ref in the sub-collection
+        batch.set(newHistoryDocRef, {
+            result: result,
+            timestamp: serverTimestamp(),
+        });
+        
+        let failIncrement = 1;
+
+        if (result === 'fail') {
+            // Check for failure streak
+            const historyQuery = query(historyRef, orderBy('timestamp', 'desc'), limit(3));
+            const historySnapshot = await getDocs(historyQuery);
+            const lastThreeResults = historySnapshot.docs.map(d => d.data().result);
+            
+            if (lastThreeResults.length === 3 && lastThreeResults.every(r => r === 'fail')) {
+                // Apply penalty for failure streak
+                failIncrement = 3 + 1;
+            }
+        }
+        
+        // 2. Prepare the update for the main topic document
         const updateData = {
             lastReviewed: serverTimestamp(),
-            ...(result === 'success' ? { recallSuccess: increment(1) } : { recallFails: increment(1) })
+            ...(result === 'success' 
+                ? { recallSuccess: increment(1) } 
+                : { recallFails: increment(failIncrement) })
         };
-        await updateDoc(topicRef, updateData);
+        batch.update(topicRef, updateData);
+
+        // 3. Commit the batch
+        await batch.commit();
+
     } catch(error) {
         console.error(`Error updating stats for topic ${topicId}:`, error);
         throw error;
     }
 };
+
 
 // --- Recall Session Logic ---
 

@@ -1,4 +1,5 @@
 
+
 import { DocumentData, Timestamp } from 'firebase/firestore';
 import type { AccessLevel } from '@/context/auth-context';
 
@@ -111,6 +112,12 @@ export interface RevisionTopic extends DocumentData {
   recallSuccess: number;
   recallFails: number;
   lastReviewed: Timestamp;
+}
+
+export interface RecallEvent extends DocumentData {
+    id: string;
+    result: 'success' | 'fail';
+    timestamp: Timestamp;
 }
 
 export type PyqProgress = {
