@@ -14,7 +14,9 @@ import type { Lecture, LectureNote } from './types';
 const uploadVideo = async (file: File): Promise<string> => {
     const fileId = uuidv4();
     const storageRef = ref(storage, `lectures/${fileId}-${file.name}`);
-    const snapshot = await uploadBytesResumable(storageRef, file);
+    const snapshot = await uploadBytesResumable(storageRef, file, {
+        contentType: 'video/mp4' // Set appropriate content type
+    });
     const downloadURL = await getDownloadURL(snapshot.ref);
     return downloadURL;
 }
@@ -117,19 +119,17 @@ export const getLectureNotes = async (lectureId: string): Promise<LectureNote[]>
 /**
  * Uploads a PDF note to Firebase Storage, adds its reference to Firestore, and reports progress.
  * @param lectureId The ID of the lecture document.
- * @param lectureTitle The title of the lecture, used for the folder path.
  * @param file The PDF file to upload.
  * @param onProgress A callback function to report upload progress (percentage).
  */
 export const uploadLectureNote = (
     lectureId: string,
-    lectureTitle: string,
     file: File,
     onProgress: (percentage: number) => void
 ): Promise<void> => {
     return new Promise((resolve, reject) => {
-        const sanitizedTitle = lectureTitle.replace(/[^a-zA-Z0-9]/g, '_');
-        const storagePath = `lectures/${sanitizedTitle}/notes/${uuidv4()}-${file.name}`;
+        // Correct path for storing notes under a specific lecture ID
+        const storagePath = `lectures/${lectureId}/notes/${uuidv4()}-${file.name}`;
         const storageRef = ref(storage, storagePath);
         
         const uploadTask = uploadBytesResumable(storageRef, file, {
