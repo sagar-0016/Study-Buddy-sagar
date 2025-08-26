@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search, XCircle, Image as ImageIcon } from 'lucide-react';
+import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search, XCircle, Image as ImageIcon, BrainCircuit } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
@@ -480,27 +480,56 @@ export default function RevisionCentre() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="text-left">
-                <h2 className="text-2xl font-bold tracking-tight">Start a Recall Session</h2>
-                <p className="text-muted-foreground">Select how many topics you want to revise right now.</p>
+        <div className="space-y-8">
+            <div className="space-y-6">
+                <div className="text-left">
+                    <h2 className="text-2xl font-bold tracking-tight">Start a Recall Session</h2>
+                    <p className="text-muted-foreground">Select how many topics you want to revise right now.</p>
+                </div>
+                <div className="flex flex-col items-start gap-4">
+                    <Select value={sessionSize} onValueChange={setSessionSize}>
+                        <SelectTrigger className="w-full max-w-[240px]">
+                            <SelectValue placeholder="Session Size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="5">5 Cards</SelectItem>
+                            <SelectItem value="10">10 Cards</SelectItem>
+                            <SelectItem value="20">20 Cards</SelectItem>
+                        </SelectContent>
+                    </Select>
+                     <Button size="lg" onClick={handleStartSession} disabled={isStartingSession}>
+                        {isStartingSession ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Play className="mr-2 h-5 w-5" />}
+                         Start Session
+                    </Button>
+                </div>
             </div>
-            <div className="flex flex-col items-start gap-4">
-                <Select value={sessionSize} onValueChange={setSessionSize}>
-                    <SelectTrigger className="w-full max-w-[240px]">
-                        <SelectValue placeholder="Session Size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="5">5 Cards</SelectItem>
-                        <SelectItem value="10">10 Cards</SelectItem>
-                        <SelectItem value="20">20 Cards</SelectItem>
-                    </SelectContent>
-                </Select>
-                 <Button size="lg" onClick={handleStartSession} disabled={isStartingSession}>
-                    {isStartingSession ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Play className="mr-2 h-5 w-5" />}
-                     Start Session
-                </Button>
-            </div>
+
+            <Card className="bg-muted/30">
+                <CardHeader className="flex-row items-center gap-4 space-y-0">
+                     <div className="p-3 bg-primary/10 rounded-full">
+                        <BrainCircuit className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle>How does it work?</CardTitle>
+                </CardHeader>
+                <CardContent className="text-muted-foreground text-sm space-y-2">
+                    <p>
+                        This isn't just a random shuffle. The app uses a smart algorithm based on the principle of
+                        <strong className="text-foreground"> spaced repetition</strong>.
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1">
+                        <li>
+                            <strong className="text-foreground">Prioritizes Weaker Topics:</strong> It shows you topics you've failed to recall more often, keeping them fresh in your mind.
+                        </li>
+                        <li>
+                             <strong className="text-foreground">Mixes in Mastered Topics:</strong> It occasionally brings back topics you know well to reinforce long-term memory.
+                        </li>
+                         <li>
+                             <strong className="text-foreground">Keeps it Fresh:</strong> The selection is randomized to keep you on your toes and prevent rote memorization.
+                        </li>
+                    </ul>
+                    <p className="pt-2">This method is scientifically proven to be more effective for long-term memory than just re-reading notes!</p>
+                </CardContent>
+            </Card>
         </div>
     )
   }
