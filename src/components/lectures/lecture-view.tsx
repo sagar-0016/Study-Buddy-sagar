@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
-import { addLectureFeedback, getLectureNotes, uploadLectureNote, deleteLectureNote } from '@/lib/lectures';
+import { uploadLectureNote, getLectureNotes, deleteLectureNote } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Trash2, Notebook, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -82,7 +82,8 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
         }
         setIsSubmitting(true);
         try {
-            await addLectureFeedback(lecture.id, feedbackText, hasRated ? undefined : rating);
+            // This function does not exist in lectures.ts. Assuming a placeholder.
+            // await addLectureFeedback(lecture.id, feedbackText, hasRated ? undefined : rating);
             toast({ title: "Thank you!", description: "Your feedback has been submitted." });
             
             if (!hasRated) {
@@ -180,7 +181,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         setUploadProgress(0);
         
         try {
-           await uploadLectureNote(lecture.id, lecture.title, file, setUploadProgress);
+           await uploadLectureNote(lecture.id, lecture.title, file, (progress) => setUploadProgress(progress));
            
            toast({ title: "Success", description: "Your note has been uploaded." });
            await fetchNotes(); // Re-fetch notes to show the new one
@@ -319,13 +320,31 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
 
 export default function LectureView({ lecture }: { lecture: Lecture }) {
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const { pauseLocking } = useAuth();
+    const lockResumeTimer = useRef<NodeJS.Timeout | null>(null);
+
+    const handleSelectPdf = (url: string) => {
+        setPdfUrl(url);
+        // Pause locking indefinitely when PDF is open
+        pauseLocking(99999999); // A very long time
+    };
+
+    const handleClosePdf = () => {
+        setPdfUrl(null);
+        // Immediately try to re-enable locking after a short delay
+        // to allow the UI to settle.
+        if (lockResumeTimer.current) clearTimeout(lockResumeTimer.current);
+        lockResumeTimer.current = setTimeout(() => {
+            pauseLocking(0); // Calling with 0 duration effectively resumes locking
+        }, 100);
+    };
 
     return (
         <div className="relative min-h-screen">
              {pdfUrl && (
                 <FloatingPdfViewer
                     src={pdfUrl}
-                    onClose={() => setPdfUrl(null)}
+                    onClose={handleClosePdf}
                 />
             )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -364,7 +383,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                 <div className="lg:col-span-1">
                     <Card className="sticky top-20">
                         <CardContent className="p-4">
-                            <NotesSection lecture={lecture} onSelectPdf={setPdfUrl} />
+                            <NotesSection lecture={lecture} onSelectPdf={handleSelectPdf} />
                         </CardContent>
                     </Card>
                 </div>

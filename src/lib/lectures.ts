@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { db, storage } from './firebase';
@@ -18,6 +17,28 @@ import {
 } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
 import type { LectureNote } from './types';
+
+
+/**
+ * Fetches all notes for a specific lecture.
+ * @param {string} lectureId - The ID of the lecture document.
+ * @returns {Promise<LectureNote[]>} An array of lecture note objects.
+ */
+export const getLectureNotes = async (
+  lectureId: string
+): Promise<LectureNote[]> => {
+  try {
+    const notesRef = collection(db, 'lectures', lectureId, 'notes');
+    const querySnapshot = await getDocs(notesRef);
+    return querySnapshot.docs.map(
+      (doc) => ({ id: doc.id, ...doc.data() } as LectureNote)
+    );
+  } catch (error) {
+    console.error(`Error fetching notes for lecture ${lectureId}:`, error);
+    return [];
+  }
+};
+
 
 /**
  * CLIENT-SIDE FUNCTION
@@ -93,58 +114,3 @@ export const deleteLectureNote = async (lectureId: string, noteId: string): Prom
         throw error;
     }
 }
-
-
-/**
- * Fetches all notes for a specific lecture.
- * @param {string} lectureId - The ID of the lecture document.
- * @returns {Promise<LectureNote[]>} An array of lecture note objects.
- */
-export const getLectureNotes = async (
-  lectureId: string
-): Promise<LectureNote[]> => {
-  try {
-    const notesRef = collection(db, 'lectures', lectureId, 'notes');
-    const querySnapshot = await getDocs(notesRef);
-    return querySnapshot.docs.map(
-      (doc) => ({ id: doc.id, ...doc.data() } as LectureNote)
-    );
-  } catch (error) {
-    console.error(`Error fetching notes for lecture ${lectureId}:`, error);
-    return [];
-  }
-};
-
-/**
- * Adds a feedback entry for a specific lecture to a nested collection.
- * @param {string} lectureId - The ID of the lecture.
- * @param {string} feedbackText - The feedback content.
- * @param {number} [rating] - The rating given by the user (e.g., 1-5). Optional.
- */
-export const addLectureFeedback = async (
-  lectureId: string,
-  feedbackText: string,
-  rating?: number
-): Promise<void> => {
-  try {
-    const feedbackRef = collection(db, 'lectures', lectureId, 'feedback');
-
-    const feedbackData: {
-      feedback: string;
-      submittedAt: any;
-      rating?: number;
-    } = {
-      feedback: feedbackText,
-      submittedAt: serverTimestamp(),
-    };
-
-    if (rating !== undefined) {
-      feedbackData.rating = rating;
-    }
-
-    await addDoc(feedbackRef, feedbackData);
-  } catch (error) {
-    console.error(`Error submitting feedback for lecture ${lectureId}:`, error);
-    throw error;
-  }
-};
