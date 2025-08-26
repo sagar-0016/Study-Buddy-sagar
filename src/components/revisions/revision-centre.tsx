@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -26,6 +27,7 @@ import { cn } from '@/lib/utils';
 import Confetti from 'react-confetti';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MasteryLegend, masteryLevels } from './mastery-legend';
+import type { AccessLevel } from '@/context/auth-context';
 
 
 const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () => void, children: React.ReactNode }) => {
@@ -223,15 +225,17 @@ const MasteryDot = ({ success, fails }: { success: number, fails: number }) => {
     const total = success + fails;
     let level = 1;
 
-    if (total >= 3) {
-        const successRate = success / total;
-        if (successRate >= 0.85) level = 7;
-        else if (successRate >= 0.7) level = 6;
-        else if (successRate >= 0.5) level = 5;
-        else if (successRate >= 0.3) level = 4;
-        else level = 3;
+    if (total >= 1) {
+        const successRate = total > 0 ? success / total : 0;
+        if (successRate < 0.25) level = 2; // Critical
+        else if (successRate < 0.4) level = 3; // Needs Work
+        else if (successRate < 0.6) level = 4; // Inconsistent
+        else if (successRate < 0.75) level = 5; // Getting There
+        else if (successRate < 0.9) level = 6; // Solid
+        else level = 7; // Mastered
     }
     
+    // If mastered but not reviewed recently, can slightly lower the level visually, but for now this is fine.
     const masteryInfo = masteryLevels.find(l => l.level === level) || masteryLevels[0];
 
     return (
@@ -439,6 +443,12 @@ export default function RevisionCentre() {
   const [sessionSize, setSessionSize] = useState("10");
   const [isLoading, setIsLoading] = useState(true);
   const [isStartingSession, setIsStartingSession] = useState(false);
+  const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(null);
+
+  useEffect(() => {
+    const level = typeof window !== 'undefined' ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
+    setAccessLevel(level);
+  }, []);
 
   const fetchTopics = useCallback(async () => {
     setIsLoading(true);
@@ -523,7 +533,16 @@ export default function RevisionCentre() {
                              <strong className="text-foreground">Keeps it Fresh:</strong> The selection is randomized to keep you on your toes and prevent rote memorization.
                         </li>
                     </ul>
-                    <p className="pt-2">This method is scientifically proven to be more effective for long-term memory than just re-reading notes!</p>
+                    {accessLevel === 'full' && (
+                        <div className="pt-4 text-xs italic space-y-2">
+                             <p>"This method is scientifically proven to be more effective for long-term memory than just re-reading notes!"</p>
+                             <p>That seems like quite a claim, doesn't it?</p>
+                             <p>
+                                I don't know, I'm just an app writing what my owner told me to. But I believe he really wants you to have the best possible tools to become <b className="font-bold not-italic">The Best</b>. Actively recalling topics from all over your syllabus is like a warmup for your brain before a big test—it strengthens your ability to pull out information when you need it most.
+                             </p>
+                             <p className="font-semibold not-italic text-right w-full pt-2">All the Best!</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
