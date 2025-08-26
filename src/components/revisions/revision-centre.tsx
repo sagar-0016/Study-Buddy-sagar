@@ -353,7 +353,7 @@ const RevisionSession = ({ topics, onEndSession }: { topics: RevisionTopic[], on
 }
 
 
-const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onTopicUpdated: () => void }) => {
+const BrowseTopics = ({ topics, onTopicUpdated, showResetPrompt, onConfirmReset }: { topics: RevisionTopic[], onTopicUpdated: () => void, showResetPrompt: boolean, onConfirmReset: () => Promise<void> }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('All');
 
@@ -407,6 +407,8 @@ const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onT
                 </div>
             </div>
             
+            {showResetPrompt && <ResetProgressPrompt onConfirm={onConfirmReset} />}
+
             {filteredTopics.length > 0 ? (
                 <div className="space-y-3">
                     {filteredTopics.map(topic => (
@@ -452,7 +454,7 @@ const ResetProgressPrompt = ({ onConfirm }: { onConfirm: () => Promise<void> }) 
             <AlertTitle>Reset Sample Progress?</AlertTitle>
             <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <p>This is sample data. Press confirm to reset the progress and let's build it according to you.</p>
-                 <Button onClick={handleConfirm} disabled={isResetting} className="mt-2 sm:mt-0">
+                 <Button onClick={handleConfirm} disabled={isResetting} className="mt-2 sm:mt-0 flex-shrink-0">
                     {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
                     Confirm
                 </Button>
@@ -504,7 +506,7 @@ export default function RevisionCentre() {
         await checkAndResetRevisionProgress(true); // Now execute reset
         toast({ title: 'Progress Reset', description: 'Your revision progress has been reset.' });
         setShowResetPrompt(false);
-        await fetchTopics(); // Refresh the topic list to show zeroed scores
+        await fetchTopics(); // Refresh the topic list to show zeroed-out scores
     } catch(error) {
         toast({ title: 'Error', description: 'Could not reset progress.', variant: 'destructive'});
     }
@@ -536,8 +538,6 @@ export default function RevisionCentre() {
 
     return (
         <div className="space-y-8">
-            {showResetPrompt && <ResetProgressPrompt onConfirm={handleConfirmReset} />}
-
             <div className="space-y-6">
                 <div className="text-left">
                     <h2 className="text-2xl font-bold tracking-tight">Start a Recall Session</h2>
@@ -615,7 +615,12 @@ export default function RevisionCentre() {
                 {renderRecallSetup()}
             </TabsContent>
             <TabsContent value="browse">
-                <BrowseTopics topics={allTopics} onTopicUpdated={fetchTopics} />
+                <BrowseTopics 
+                    topics={allTopics} 
+                    onTopicUpdated={fetchTopics}
+                    showResetPrompt={showResetPrompt}
+                    onConfirmReset={handleConfirmReset}
+                />
             </TabsContent>
         </Tabs>
       )
