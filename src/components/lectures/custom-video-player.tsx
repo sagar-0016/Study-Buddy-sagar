@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback, MouseEvent } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { 
-    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings, Notebook, FileText, Link as LinkIcon, X, Move, CornerDownRight, ArrowRightFromLine, ArrowDownFromLine
+    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings, Notebook, FileText, Link as LinkIcon, X, Move, CornerDownRight, ArrowRightFromLine, ArrowDownFromLine, Loader2, Minus, Plus, ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { 
     DropdownMenu, 
@@ -20,19 +20,88 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { LectureNote } from '@/lib/types';
-import FloatingPdfViewer from './floating-pdf-viewer'; // Keep this for now, we will replace its usage
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '../ui/skeleton';
+
+// Configure pdfjs worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
 
 interface CustomVideoPlayerProps {
     src: string;
     sdSrc?: string;
     poster: string;
     notes: LectureNote[];
-    onSelectPdf: (url: string) => void;
 }
 
 type Quality = 'hd' | 'sd';
 type SidebarPosition = 'right' | 'bottom';
 
+const PdfViewer = ({ url, onClose }: { url: string, onClose: () => void }) => {
+    const [numPages, setNumPages] = useState<number | null>(null);
+    const [pageNumber, setPageNumber] = useState(1);
+    const [scale, setScale] = useState(1.5);
+    const { toast } = useToast();
+
+    function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+        setNumPages(numPages);
+        setPageNumber(1);
+    }
+
+    function onDocumentLoadError(error: Error) {
+        toast({
+            title: "PDF Load Error",
+            description: `Failed to load PDF: ${error.message}`,
+            variant: "destructive",
+        })
+        console.error('Error while loading document!', error);
+    }
+    
+    const proxiedUrl = `/api/proxy-pdf?url=${encodeURIComponent(url)}`;
+
+    return (
+        <div className="flex flex-col h-full bg-background">
+             <div className="flex-shrink-0 sticky top-0 z-10 p-1 bg-background/80 backdrop-blur-sm border-b flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={onClose}>
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Notes
+                    </Button>
+                </div>
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => setPageNumber(p => Math.max(p - 1, 1))} disabled={pageNumber <= 1}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs font-medium">Page {pageNumber} of {numPages || '...'}</span>
+                    <Button variant="ghost" size="icon" onClick={() => setPageNumber(p => Math.min(p + 1, numPages || 1))} disabled={!numPages || pageNumber >= numPages}>
+                        <ArrowRight className="h-4 w-4" />
+                    </Button>
+                     <div className="w-px h-6 bg-border mx-1"></div>
+                    <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.max(s - 0.2, 0.5))} disabled={scale <= 0.5}>
+                        <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs font-medium">{Math.round(scale * 100)}%</span>
+                    <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(s + 0.2, 3))} disabled={scale >= 3}>
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+            <div className="flex-grow p-4 flex justify-center bg-muted/20 overflow-auto">
+                <Document
+                    file={proxiedUrl}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={onDocumentLoadError}
+                    loading={<Skeleton className='h-full w-full'/>}
+                    className="flex justify-center"
+                >
+                    <Page pageNumber={pageNumber} scale={scale} renderTextLayer={true} />
+                </Document>
+            </div>
+        </div>
+    )
+}
 
 const NotesSidebar = ({ 
     notes, 
@@ -41,7 +110,6 @@ const NotesSidebar = ({
     onClose, 
     onPositionChange, 
     onResize,
-    onSelectNote
 }: {
     notes: LectureNote[],
     position: SidebarPosition,
@@ -49,12 +117,12 @@ const NotesSidebar = ({
     onClose: () => void,
     onPositionChange: (pos: SidebarPosition) => void,
     onResize: (newSize: number) => void,
-    onSelectNote: (note: LectureNote) => void
 }) => {
     const [isResizing, setIsResizing] = useState(false);
     const sidebarRef = useRef<HTMLDivElement>(null);
     const resizeStartPos = useRef(0);
     const initialSize = useRef(0);
+    const [viewingPdf, setViewingPdf] = useState<string | null>(null);
 
     const handleResizeStart = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
@@ -64,6 +132,15 @@ const NotesSidebar = ({
         document.body.style.cursor = position === 'right' ? 'ew-resize' : 'ns-resize';
         document.body.style.userSelect = 'none';
     };
+    
+    const handleSelectNote = (note: LectureNote) => {
+        if (note.type === 'pdf') {
+            setViewingPdf(note.url);
+        } else {
+            window.open(note.url, '_blank', 'noopener,noreferrer');
+        }
+    };
+
 
     useEffect(() => {
         const handleGlobalMouseMove = (e: globalThis.MouseEvent) => {
@@ -89,12 +166,56 @@ const NotesSidebar = ({
             window.removeEventListener('mouseup', handleGlobalMouseUp);
         };
     }, [isResizing, position, onResize]);
+    
+    const renderContent = () => {
+        if (viewingPdf) {
+            return <PdfViewer url={viewingPdf} onClose={() => setViewingPdf(null)} />;
+        }
+
+        return (
+            <>
+                <div className="flex items-center justify-between p-1 border-b border-border text-xs">
+                    <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onPositionChange('right')}>
+                            <ArrowRightFromLine className={cn("h-4 w-4", position === 'right' && "text-primary")} />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onPositionChange('bottom')}>
+                            <ArrowDownFromLine className={cn("h-4 w-4", position === 'bottom' && "text-primary")} />
+                        </Button>
+                    </div>
+                    <span className="font-semibold">Notes</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+                <div className="flex-grow overflow-y-auto p-2 space-y-2">
+                    {notes.map(note => (
+                        <button
+                            key={note.id}
+                            onClick={() => handleSelectNote(note)}
+                            className="flex w-full items-center gap-3 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left"
+                        >
+                            {note.type === 'pdf' ? <FileText className="h-5 w-5 text-primary flex-shrink-0" /> : <LinkIcon className="h-5 w-5 text-primary flex-shrink-0" />}
+                            <span className="font-medium text-sm truncate">{note.name}</span>
+                        </button>
+                    ))}
+                </div>
+                <button
+                    onMouseDown={handleResizeStart}
+                    className={cn(
+                        "absolute bg-muted hover:bg-accent transition-colors",
+                        position === 'right' ? "top-0 left-0 h-full w-1.5 cursor-ew-resize" : "top-0 left-0 w-full h-1.5 cursor-ns-resize"
+                    )}
+                />
+            </>
+        )
+    }
 
     return (
         <div
             ref={sidebarRef}
             className={cn(
-                "absolute z-20 bg-background/90 backdrop-blur-sm flex flex-col text-foreground",
+                "absolute z-20 bg-background/90 backdrop-blur-sm flex flex-col text-foreground overflow-hidden",
                 position === 'right' ? 'top-0 right-0 h-full' : 'bottom-0 left-0 w-full'
             )}
             style={{
@@ -102,44 +223,12 @@ const NotesSidebar = ({
                 height: position === 'bottom' ? `${size}px` : '100%'
             }}
         >
-            <div className="flex items-center justify-between p-1 border-b border-border text-xs">
-                <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onPositionChange('right')}>
-                        <ArrowRightFromLine className={cn("h-4 w-4", position === 'right' && "text-primary")} />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onPositionChange('bottom')}>
-                        <ArrowDownFromLine className={cn("h-4 w-4", position === 'bottom' && "text-primary")} />
-                    </Button>
-                </div>
-                <span className="font-semibold">Notes</span>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
-                    <X className="h-4 w-4" />
-                </Button>
-            </div>
-            <div className="flex-grow overflow-y-auto p-2 space-y-2">
-                {notes.map(note => (
-                    <button
-                        key={note.id}
-                        onClick={() => onSelectNote(note)}
-                        className="flex w-full items-center gap-3 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left"
-                    >
-                        {note.type === 'pdf' ? <FileText className="h-5 w-5 text-primary flex-shrink-0" /> : <LinkIcon className="h-5 w-5 text-primary flex-shrink-0" />}
-                        <span className="font-medium text-sm truncate">{note.name}</span>
-                    </button>
-                ))}
-            </div>
-            <button
-                onMouseDown={handleResizeStart}
-                className={cn(
-                    "absolute bg-muted hover:bg-accent transition-colors",
-                    position === 'right' ? "top-0 left-0 h-full w-1.5 cursor-ew-resize" : "top-0 left-0 w-full h-1.5 cursor-ns-resize"
-                )}
-            />
+           {renderContent()}
         </div>
     );
 };
 
-export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectPdf }: CustomVideoPlayerProps) {
+export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomVideoPlayerProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const playerRef = useRef<HTMLDivElement>(null);
     const timeRef = useRef<number>(0);
@@ -157,7 +246,6 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
     const [isNotesSidebarOpen, setIsNotesSidebarOpen] = useState(false);
     const [sidebarPosition, setSidebarPosition] = useState<SidebarPosition>('right');
     const [sidebarSize, setSidebarSize] = useState(400); // Initial width or height
-    const [selectedNoteForViewer, setSelectedNoteForViewer] = useState<LectureNote | null>(null);
 
     let controlsTimeout: NodeJS.Timeout;
 
@@ -241,17 +329,6 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
             document.exitFullscreen();
         }
     }, []);
-
-    const handleSelectNoteInSidebar = (note: LectureNote) => {
-        if (note.type === 'pdf') {
-            onSelectPdf(note.url);
-            // This will open the external floating viewer from the parent
-            // We no longer embed the viewer here to keep it simple and robust
-        } else {
-            window.open(note.url, '_blank');
-        }
-    };
-
 
     const handleSeek = useCallback((amount: number) => {
         if (videoRef.current) {
@@ -364,7 +441,6 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
                     onClose={() => setIsNotesSidebarOpen(false)}
                     onPositionChange={setSidebarPosition}
                     onResize={setSidebarSize}
-                    onSelectNote={handleSelectNoteInSidebar}
                 />
             )}
 

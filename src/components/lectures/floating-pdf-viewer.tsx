@@ -91,7 +91,7 @@ const DraggableResizableDiv = ({ children, onClose, title }: DraggableResizableD
                 height: `${size.height}px`,
             }}
         >
-            <div className="drag-handle flex items-center justify-between p-1 border-b cursor-grab bg-muted/50 rounded-t-lg">
+            <div onMouseDown={handleDragStart} className="drag-handle flex items-center justify-between p-1 border-b cursor-grab bg-muted/50 rounded-t-lg">
                 <span className="font-semibold text-sm pl-2 truncate drag-handle">{title}</span>
                 <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8" onClick={onClose}>
                     <X className="h-4 w-4" />

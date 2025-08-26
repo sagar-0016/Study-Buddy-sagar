@@ -16,9 +16,6 @@ import CustomVideoPlayer from './custom-video-player';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import FloatingPdfViewer from './floating-pdf-viewer';
-
 
 const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
     const [doubtText, setDoubtText] = useState('');
@@ -150,7 +147,6 @@ const NotesSection = ({ lecture }: { lecture: Lecture }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const { toast } = useToast();
 
     const fetchNotes = useCallback(async () => {
@@ -216,7 +212,8 @@ const NotesSection = ({ lecture }: { lecture: Lecture }) => {
 
         const handleClick = () => {
             if (note.type === 'pdf') {
-                setPdfUrl(note.url)
+                // The new player will handle opening PDFs
+                 toast({title: "Please use the 'Notes' button on the video player to view this PDF."})
             } else {
                 window.open(note.url, '_blank', 'noopener,noreferrer');
             }
@@ -242,7 +239,6 @@ const NotesSection = ({ lecture }: { lecture: Lecture }) => {
 
     return (
         <>
-            {pdfUrl && <FloatingPdfViewer src={pdfUrl} onClose={() => setPdfUrl(null)} />}
             <div className="space-y-6">
                 <div>
                     <h3 className="text-lg font-semibold">Lecture Notes</h3>
@@ -291,7 +287,6 @@ const NotesSection = ({ lecture }: { lecture: Lecture }) => {
 export default function LectureView({ lecture }: { lecture: Lecture }) {
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoadingNotes, setIsLoadingNotes] = useState(true);
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
     const fetchNotes = useCallback(async () => {
         setIsLoadingNotes(true);
@@ -306,12 +301,6 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
     return (
         <div className="relative min-h-screen">
-             {pdfUrl && (
-                <FloatingPdfViewer
-                    src={pdfUrl}
-                    onClose={() => setPdfUrl(null)}
-                />
-            )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 <div className="lg:col-span-2 space-y-6">
@@ -324,7 +313,6 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                                 sdSrc={lecture.sdVideoUrl}
                                 poster={lecture.thumbnailUrl}
                                 notes={notes}
-                                onSelectPdf={setPdfUrl}
                             />
                         )}
                     </Card>
