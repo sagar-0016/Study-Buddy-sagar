@@ -17,7 +17,6 @@ import Image from 'next/image';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/context/auth-context';
 import FloatingPdfViewer from './floating-pdf-viewer';
 
 
@@ -154,8 +153,6 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
-    const { pauseLocking } = useAuth();
-
 
     const fetchNotes = useCallback(async () => {
         setIsLoading(true);
@@ -198,7 +195,6 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     };
     
     const triggerFileInput = () => {
-        pauseLocking(30000); // Pause lock for 30 seconds to allow file selection
         fileInputRef.current?.click();
     }
     
@@ -278,30 +274,10 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                 <h3 className="text-lg font-semibold">Your Notes</h3>
                 <p className="text-sm text-muted-foreground">Upload your own PDF notes for this lecture.</p>
                 <div className="mt-4">
-                     <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full" disabled={isUploading}>
-                                {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                                {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : 'Upload PDF'}
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Heads up!</DialogTitle>
-                                <DialogDescription>
-                                    For security reasons, after clicking "Proceed to Upload", you'll have 30 seconds to choose your file. The app will lock if it takes longer.
-                                </DialogDescription>
-                            </DialogHeader>
-                             <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button type="button" variant="secondary">Cancel</Button>
-                                </DialogClose>
-                                <DialogClose asChild>
-                                    <Button onClick={triggerFileInput}>Proceed to Upload</Button>
-                                </DialogClose>
-                            </DialogFooter>
-                        </DialogContent>
-                     </Dialog>
+                     <Button variant="outline" className="w-full" onClick={triggerFileInput} disabled={isUploading}>
+                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                        {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : 'Upload PDF'}
+                     </Button>
                      <input 
                         id="pdf-upload" 
                         ref={fileInputRef}
@@ -320,31 +296,13 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
 
 export default function LectureView({ lecture }: { lecture: Lecture }) {
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-    const { pauseLocking } = useAuth();
-    const lockResumeTimer = useRef<NodeJS.Timeout | null>(null);
-
-    const handleSelectPdf = (url: string) => {
-        setPdfUrl(url);
-        // Pause locking indefinitely when PDF is open
-        pauseLocking(99999999); // A very long time
-    };
-
-    const handleClosePdf = () => {
-        setPdfUrl(null);
-        // Immediately try to re-enable locking after a short delay
-        // to allow the UI to settle.
-        if (lockResumeTimer.current) clearTimeout(lockResumeTimer.current);
-        lockResumeTimer.current = setTimeout(() => {
-            pauseLocking(0); // Calling with 0 duration effectively resumes locking
-        }, 100);
-    };
 
     return (
         <div className="relative min-h-screen">
              {pdfUrl && (
                 <FloatingPdfViewer
                     src={pdfUrl}
-                    onClose={handleClosePdf}
+                    onClose={() => setPdfUrl(null)}
                 />
             )}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -383,7 +341,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                 <div className="lg:col-span-1">
                     <Card className="sticky top-20">
                         <CardContent className="p-4">
-                            <NotesSection lecture={lecture} onSelectPdf={handleSelectPdf} />
+                            <NotesSection lecture={lecture} onSelectPdf={setPdfUrl} />
                         </CardContent>
                     </Card>
                 </div>

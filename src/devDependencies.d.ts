@@ -30,3 +30,9 @@ declare module '@postlight/mercury-parser' {
   const MercuryParser: Mercury;
   export = MercuryParser;
 }
+
+declare module 'react-pdf' {
+    export const Document: React.ComponentType<any>;
+    export const Page: React.ComponentType<any>;
+    export const pdfjs: any;
+}

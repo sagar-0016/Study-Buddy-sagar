@@ -3,7 +3,16 @@
 
 import { useState, useRef, useEffect, MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, CornerDownRight } from 'lucide-react';
+import { X, CornerDownRight, Loader2, Minus, Plus, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '../ui/skeleton';
+
+// Configure pdfjs worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+
 
 interface FloatingPdfViewerProps {
   src: string;
@@ -21,12 +30,11 @@ const DraggableResizableDiv = ({ children, onClose }: { children: React.ReactNod
   const divRef = useRef<HTMLDivElement>(null);
 
   const handleDragStart = (e: MouseEvent<HTMLDivElement>) => {
-    // Only drag if the target is the header itself
     if ((e.target as HTMLElement).classList.contains('drag-handle')) {
         setIsDragging(true);
         dragStartPos.current = {
-        x: e.clientX - position.x,
-        y: e.clientY - position.y,
+            x: e.clientX - position.x,
+            y: e.clientY - position.y,
         };
     }
   };
@@ -34,35 +42,8 @@ const DraggableResizableDiv = ({ children, onClose }: { children: React.ReactNod
   const handleResizeStart = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     setIsResizing(true);
-    resizeStartPos.current = {
-      x: e.clientX,
-      y: e.clientY,
-    };
+    resizeStartPos.current = { x: e.clientX, y: e.clientY };
     initialSize.current = size;
-  };
-
-  const handleMouseMove = (e: globalThis.MouseEvent) => {
-    if (isDragging) {
-      setPosition({
-        x: e.clientX - dragStartPos.current.x,
-        y: e.clientY - dragStartPos.current.y,
-      });
-    }
-    if (isResizing) {
-      setSize({
-        width: Math.max(300, initialSize.current.width + dx),
-        height: Math.max(400, initialSize.current.height + dy),
-      });
-    }
-  };
-  
-  const dx = isResizing ? event.clientX - resizeStartPos.current.x : 0;
-  const dy = isResizing ? event.clientY - resizeStartPos.current.y : 0;
-
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setIsResizing(false);
   };
 
   useEffect(() => {
@@ -83,11 +64,16 @@ const DraggableResizableDiv = ({ children, onClose }: { children: React.ReactNod
         }
     };
     
+    const handleGlobalMouseUp = () => {
+        setIsDragging(false);
+        setIsResizing(false);
+    };
+
     window.addEventListener('mousemove', handleGlobalMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
     return () => {
       window.removeEventListener('mousemove', handleGlobalMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
     };
   }, [isDragging, isResizing]);
 
@@ -100,15 +86,17 @@ const DraggableResizableDiv = ({ children, onClose }: { children: React.ReactNod
         top: `${position.y}px`,
         width: `${size.width}px`,
         height: `${size.height}px`,
+        minWidth: '300px',
+        minHeight: '400px'
       }}
     >
-      <div className="drag-handle flex items-center justify-between p-2 border-b cursor-grab" onMouseDown={handleDragStart}>
+      <div className="drag-handle flex items-center justify-between p-1 border-b cursor-grab bg-muted/50 rounded-t-lg" onMouseDown={handleDragStart}>
         <span className="font-semibold text-sm pl-2 drag-handle">PDF Viewer</span>
-        <Button variant="ghost" size="icon" className="cursor-pointer" onClick={onClose}>
+        <Button variant="ghost" size="icon" className="cursor-pointer h-8 w-8" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
       </div>
-      <div className="flex-grow overflow-hidden">
+      <div className="flex-grow overflow-auto">
         {children}
       </div>
       <button
@@ -122,16 +110,68 @@ const DraggableResizableDiv = ({ children, onClose }: { children: React.ReactNod
 };
 
 export default function FloatingPdfViewer({ src, onClose }: FloatingPdfViewerProps) {
+  const [numPages, setNumPages] = useState<number | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [scale, setScale] = useState(1.5);
+  const { toast } = useToast();
+
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    setNumPages(numPages);
+    setPageNumber(1);
+  }
+
+  function onDocumentLoadError(error: Error) {
+    toast({
+        title: "PDF Load Error",
+        description: `Failed to load PDF: ${error.message}`,
+        variant: "destructive",
+    })
+    console.error('Error while loading document!', error);
+  }
+
+  const goToPrevPage = () => setPageNumber(prev => Math.max(prev - 1, 1));
+  const goToNextPage = () => setPageNumber(prev => Math.min(prev + 1, numPages || 1));
+  const zoomIn = () => setScale(prev => Math.min(prev + 0.2, 3));
+  const zoomOut = () => setScale(prev => Math.max(prev - 0.2, 0.5));
+
+  const loadingSkeleton = (
+    <div className='p-4 space-y-2'>
+        <Skeleton className='h-8 w-full'/>
+        <Skeleton className='h-[70vh] w-full'/>
+    </div>
+  )
+
   return (
     <div className="fixed inset-0 bg-black/30 z-40 backdrop-blur-sm">
         <DraggableResizableDiv onClose={onClose}>
-            <object
-                data={src}
-                type="application/pdf"
-                className="w-full h-full"
-            >
-                <p>Your browser does not support PDFs. You can <a href={src} download>download the PDF</a> instead.</p>
-            </object>
+            <div className="flex-shrink-0 sticky top-0 z-10 p-1 bg-background/80 backdrop-blur-sm border-b flex items-center justify-center gap-2">
+                <Button variant="ghost" size="icon" onClick={goToPrevPage} disabled={pageNumber <= 1}>
+                    <ArrowLeft />
+                </Button>
+                <span>Page {pageNumber} of {numPages || '...'}</span>
+                <Button variant="ghost" size="icon" onClick={goToNextPage} disabled={!numPages || pageNumber >= numPages}>
+                    <ArrowRight />
+                </Button>
+                <div className="w-px h-6 bg-border mx-2"></div>
+                 <Button variant="ghost" size="icon" onClick={zoomOut} disabled={scale <= 0.5}>
+                    <Minus />
+                </Button>
+                <span>{Math.round(scale * 100)}%</span>
+                <Button variant="ghost" size="icon" onClick={zoomIn} disabled={scale >= 3}>
+                    <Plus />
+                </Button>
+            </div>
+            <div className="p-4 flex justify-center bg-muted/20">
+                <Document
+                    file={src}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={onDocumentLoadError}
+                    loading={loadingSkeleton}
+                    className="flex justify-center"
+                >
+                    <Page pageNumber={pageNumber} scale={scale} renderTextLayer={true} />
+                </Document>
+            </div>
         </DraggableResizableDiv>
     </div>
   );
