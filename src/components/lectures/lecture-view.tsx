@@ -150,6 +150,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
     const { pauseLocking } = useAuth();
@@ -176,9 +177,12 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         }
         
         setIsUploading(true);
+        setUploadProgress(0);
         
         try {
-           await uploadLectureNote(lecture.id, lecture.title, file);
+           await uploadLectureNote(lecture.id, lecture.title, file, (progress) => {
+               setUploadProgress(progress);
+           });
            
            toast({ title: "Success", description: "Your note has been uploaded." });
            await fetchNotes(); // Re-fetch notes to show the new one
@@ -198,6 +202,32 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         fileInputRef.current?.click();
     }
 
+    const NoteItem = ({ note }: { note: LectureNote }) => {
+        if (note.type === 'link') {
+            return (
+                <a
+                    href={note.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left"
+                >
+                    <LinkIcon className="h-5 w-5 text-primary flex-shrink-0" />
+                    <span className="font-medium text-sm truncate">{note.name}</span>
+                </a>
+            );
+        }
+
+        return (
+            <button
+                onClick={() => onSelectPdf(note.url)}
+                className="flex w-full items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left"
+            >
+                <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                <span className="font-medium text-sm truncate">{note.name}</span>
+            </button>
+        );
+    };
+
 
     return (
         <div className="space-y-6">
@@ -212,14 +242,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                 ) : notes.length > 0 ? (
                      <div className="mt-4 space-y-2">
                         {notes.map(note => (
-                            <button
-                                key={note.id}
-                                onClick={() => note.type === 'pdf' ? onSelectPdf(note.url) : window.open(note.url, '_blank')}
-                                className="flex w-full items-center gap-3 p-3 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left"
-                            >
-                                {note.type === 'pdf' ? <FileText className="h-5 w-5 text-primary flex-shrink-0" /> : <LinkIcon className="h-5 w-5 text-primary flex-shrink-0" />}
-                                <span className="font-medium text-sm truncate">{note.name}</span>
-                            </button>
+                            <NoteItem key={note.id} note={note} />
                         ))}
                     </div>
                 ) : (
@@ -235,7 +258,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                         <DialogTrigger asChild>
                             <Button variant="outline" className="w-full" disabled={isUploading}>
                                 {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                                {isUploading ? 'Uploading...' : 'Upload PDF'}
+                                {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : 'Upload PDF'}
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
