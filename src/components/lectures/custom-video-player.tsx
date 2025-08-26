@@ -126,6 +126,7 @@ const NotesSidebar = ({
 
     const handleResizeStart = (e: MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
+        e.preventDefault();
         setIsResizing(true);
         resizeStartPos.current = position === 'right' ? e.clientX : e.clientY;
         initialSize.current = size;
@@ -144,13 +145,23 @@ const NotesSidebar = ({
 
     useEffect(() => {
         const handleGlobalMouseMove = (e: globalThis.MouseEvent) => {
-            if (isResizing) {
-                const delta = position === 'right' 
-                    ? resizeStartPos.current - e.clientX
-                    : resizeStartPos.current - e.clientY;
-                const newSize = initialSize.current + delta;
-                onResize(newSize);
+            if (!isResizing || !sidebarRef.current) return;
+            
+            let newSize;
+            if (position === 'right') {
+                const delta = e.clientX - resizeStartPos.current;
+                newSize = initialSize.current - delta;
+            } else { // bottom
+                const delta = e.clientY - resizeStartPos.current;
+                newSize = initialSize.current - delta;
             }
+
+            const playerBounds = sidebarRef.current.parentElement?.getBoundingClientRect();
+            if (!playerBounds) return;
+            
+            const maxSize = position === 'right' ? playerBounds.width - 200 : playerBounds.height - 150;
+            const minSize = 200;
+            onResize(Math.max(minSize, Math.min(newSize, maxSize)));
         };
 
         const handleGlobalMouseUp = () => {
@@ -203,7 +214,7 @@ const NotesSidebar = ({
                 <button
                     onMouseDown={handleResizeStart}
                     className={cn(
-                        "absolute bg-muted hover:bg-accent transition-colors",
+                        "absolute bg-muted hover:bg-accent transition-colors z-10",
                         position === 'right' ? "top-0 left-0 h-full w-1.5 cursor-ew-resize" : "top-0 left-0 w-full h-1.5 cursor-ns-resize"
                     )}
                 />
@@ -233,7 +244,6 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
     const playerRef = useRef<HTMLDivElement>(null);
     const timeRef = useRef<number>(0);
     const [isPlaying, setIsPlaying] = useState(false);
-    const [volume, setVolume] = useState(1);
     const [isMuted, setIsMuted] = useState(false);
     const [progress, setProgress] = useState(0);
     const [duration, setDuration] = useState(0);
@@ -269,11 +279,6 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         if (videoRef.current) {
             videoRef.current.muted = !isMuted;
             setIsMuted(!isMuted);
-            // If unmuting and volume was 0, set it to a default value
-            if (!videoRef.current.muted && videoRef.current.volume === 0) {
-                 videoRef.current.volume = 0.75;
-                 setVolume(0.75);
-            }
         }
     };
 
@@ -357,7 +362,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         setShowControls(true);
         clearTimeout(controlsTimeout);
         controlsTimeout = setTimeout(() => {
-            if (isPlaying && !isNotesSidebarOpen) { // Don't hide controls if sidebar is open
+            if (isPlaying && !isNotesSidebarOpen) {
                  setShowControls(false);
             }
         }, 3000);
@@ -370,16 +375,16 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         video.addEventListener('play', () => setIsPlaying(true));
         video.addEventListener('pause', () => setIsPlaying(false));
         video.addEventListener('ended', () => setIsPlaying(false));
-        video.addEventListener('volumechange', () => {
-            if (videoRef.current) {
-                setVolume(videoRef.current.volume);
-                setIsMuted(videoRef.current.muted);
-            }
-        });
         
         const player = playerRef.current;
         if (player) {
-            const fullscreenChangeHandler = () => setIsFullscreen(!!document.fullscreenElement);
+            const fullscreenChangeHandler = () => {
+                const isFs = !!document.fullscreenElement;
+                setIsFullscreen(isFs);
+                if (!isFs) {
+                    setIsNotesSidebarOpen(false); // Close sidebar on exiting fullscreen
+                }
+            }
             document.addEventListener('fullscreenchange', fullscreenChangeHandler);
             player.addEventListener('keydown', handleKeyDown);
 
@@ -393,7 +398,6 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
             video.removeEventListener('play', () => setIsPlaying(true));
             video.removeEventListener('pause', () => setIsPlaying(false));
             video.removeEventListener('ended', () => setIsPlaying(false));
-            video.removeEventListener('volumechange', () => {});
         }
     }, [handleKeyDown]);
 
@@ -464,7 +468,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
                     
                      <div className="flex items-center gap-2">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleMute}>
-                           {isMuted || volume === 0 ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                           {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
                         </Button>
                     </div>
 
@@ -525,5 +529,3 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
         </div>
     );
 }
-
-    
