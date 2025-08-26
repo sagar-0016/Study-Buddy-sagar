@@ -22,7 +22,7 @@ const TaskItem = ({ task, isActive, isUpcoming = false, accessLevel }: { task: S
         return 'text-muted-foreground';
     }
     
-    const taskDescription = accessLevel === 'limited' ? task.formal : task.informal;
+    const taskDescription = accessLevel === 'full' ? task.informal : task.formal;
 
     return (
         <div className={`p-4 rounded-lg transition-all duration-300 ${getVariantClasses()}`}>
@@ -57,7 +57,7 @@ export default function CurrentTask() {
   const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(null);
 
   useEffect(() => {
-    const level = localStorage.getItem('study-buddy-access-level') as AccessLevel | null;
+    const level = typeof window !== 'undefined' ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
     setAccessLevel(level);
   }, []);
 
@@ -170,7 +170,7 @@ export default function CurrentTask() {
                 <div className="p-4 bg-accent/10 rounded-lg text-foreground border-l-4 border-accent">
                     <div className="flex items-start">
                         <Moon className="h-5 w-5 mr-3 mt-1 text-accent flex-shrink-0" />
-                        <p className="italic">"{lateNightMessage}"</p>
+                        <p className="italic whitespace-pre-wrap">"{lateNightMessage}"</p>
                     </div>
                 </div>
 
