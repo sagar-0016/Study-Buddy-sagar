@@ -144,12 +144,13 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
     )
 }
 
-const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf: (url: string) => void }) => {
+const NotesSection = ({ lecture }: { lecture: Lecture }) => {
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const { toast } = useToast();
 
     const fetchNotes = useCallback(async () => {
@@ -215,7 +216,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
 
         const handleClick = () => {
             if (note.type === 'pdf') {
-                onSelectPdf(note.url);
+                setPdfUrl(note.url)
             } else {
                 window.open(note.url, '_blank', 'noopener,noreferrer');
             }
@@ -240,54 +241,57 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     };
 
     return (
-        <div className="space-y-6">
-            <div>
-                <h3 className="text-lg font-semibold">Lecture Notes</h3>
-                <p className="text-sm text-muted-foreground">Official notes and resources for this lecture.</p>
-                {isLoading ? (
-                    <div className="mt-4 space-y-2">
-                        <Skeleton className="h-10 w-full" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                ) : notes.length > 0 ? (
-                     <div className="mt-4 space-y-2">
-                        {notes.map(note => (
-                            <NoteItem key={note.id} note={note} />
-                        ))}
-                    </div>
-                ) : (
-                    <p className="mt-4 text-sm text-muted-foreground italic">No official notes available for this lecture.</p>
-                )}
-            </div>
+        <>
+            {pdfUrl && <FloatingPdfViewer src={pdfUrl} onClose={() => setPdfUrl(null)} />}
+            <div className="space-y-6">
+                <div>
+                    <h3 className="text-lg font-semibold">Lecture Notes</h3>
+                    <p className="text-sm text-muted-foreground">Official notes and resources for this lecture.</p>
+                    {isLoading ? (
+                        <div className="mt-4 space-y-2">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                    ) : notes.length > 0 ? (
+                        <div className="mt-4 space-y-2">
+                            {notes.map(note => (
+                                <NoteItem key={note.id} note={note} />
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="mt-4 text-sm text-muted-foreground italic">No official notes available for this lecture.</p>
+                    )}
+                </div>
 
-            <div className="pt-6 border-t">
-                <h3 className="text-lg font-semibold">Your Notes</h3>
-                <p className="text-sm text-muted-foreground">Upload your own PDF notes for this lecture.</p>
-                <div className="mt-4">
-                     <Button variant="outline" className="w-full" onClick={triggerFileInput} disabled={isUploading}>
-                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                        {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : 'Upload PDF'}
-                     </Button>
-                     <input 
-                        id="pdf-upload" 
-                        ref={fileInputRef}
-                        type="file" 
-                        className="sr-only" 
-                        accept=".pdf" 
-                        onChange={handleFileUpload} 
-                        disabled={isUploading}
-                    />
+                <div className="pt-6 border-t">
+                    <h3 className="text-lg font-semibold">Your Notes</h3>
+                    <p className="text-sm text-muted-foreground">Upload your own PDF notes for this lecture.</p>
+                    <div className="mt-4">
+                        <Button variant="outline" className="w-full" onClick={triggerFileInput} disabled={isUploading}>
+                            {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                            {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : 'Upload PDF'}
+                        </Button>
+                        <input 
+                            id="pdf-upload" 
+                            ref={fileInputRef}
+                            type="file" 
+                            className="sr-only" 
+                            accept=".pdf" 
+                            onChange={handleFileUpload} 
+                            disabled={isUploading}
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     )
 }
 
 
 export default function LectureView({ lecture }: { lecture: Lecture }) {
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoadingNotes, setIsLoadingNotes] = useState(true);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
     const fetchNotes = useCallback(async () => {
         setIsLoadingNotes(true);
@@ -350,7 +354,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                 <div className="lg:col-span-1">
                     <Card className="sticky top-20">
                         <CardContent className="p-4">
-                            <NotesSection lecture={lecture} onSelectPdf={setPdfUrl} />
+                            <NotesSection lecture={lecture} />
                         </CardContent>
                     </Card>
                 </div>

@@ -1,11 +1,11 @@
 
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, MouseEvent } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { 
-    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings, Notebook, FileText, Link as LinkIcon
+    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings, Notebook, FileText, Link as LinkIcon, X, Move, CornerDownRight, ArrowRightFromLine, ArrowDownFromLine
 } from 'lucide-react';
 import { 
     DropdownMenu, 
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { LectureNote } from '@/lib/types';
+import FloatingPdfViewer from './floating-pdf-viewer'; // Keep this for now, we will replace its usage
 
 interface CustomVideoPlayerProps {
     src: string;
@@ -30,6 +31,113 @@ interface CustomVideoPlayerProps {
 }
 
 type Quality = 'hd' | 'sd';
+type SidebarPosition = 'right' | 'bottom';
+
+
+const NotesSidebar = ({ 
+    notes, 
+    position, 
+    size, 
+    onClose, 
+    onPositionChange, 
+    onResize,
+    onSelectNote
+}: {
+    notes: LectureNote[],
+    position: SidebarPosition,
+    size: number,
+    onClose: () => void,
+    onPositionChange: (pos: SidebarPosition) => void,
+    onResize: (newSize: number) => void,
+    onSelectNote: (note: LectureNote) => void
+}) => {
+    const [isResizing, setIsResizing] = useState(false);
+    const sidebarRef = useRef<HTMLDivElement>(null);
+    const resizeStartPos = useRef(0);
+    const initialSize = useRef(0);
+
+    const handleResizeStart = (e: MouseEvent<HTMLButtonElement>) => {
+        e.stopPropagation();
+        setIsResizing(true);
+        resizeStartPos.current = position === 'right' ? e.clientX : e.clientY;
+        initialSize.current = size;
+        document.body.style.cursor = position === 'right' ? 'ew-resize' : 'ns-resize';
+        document.body.style.userSelect = 'none';
+    };
+
+    useEffect(() => {
+        const handleGlobalMouseMove = (e: globalThis.MouseEvent) => {
+            if (isResizing) {
+                const delta = position === 'right' 
+                    ? resizeStartPos.current - e.clientX
+                    : resizeStartPos.current - e.clientY;
+                const newSize = initialSize.current + delta;
+                onResize(newSize);
+            }
+        };
+
+        const handleGlobalMouseUp = () => {
+            setIsResizing(false);
+            document.body.style.cursor = 'default';
+            document.body.style.userSelect = 'auto';
+        };
+
+        window.addEventListener('mousemove', handleGlobalMouseMove);
+        window.addEventListener('mouseup', handleGlobalMouseUp);
+        return () => {
+            window.removeEventListener('mousemove', handleGlobalMouseMove);
+            window.removeEventListener('mouseup', handleGlobalMouseUp);
+        };
+    }, [isResizing, position, onResize]);
+
+    return (
+        <div
+            ref={sidebarRef}
+            className={cn(
+                "absolute z-20 bg-background/90 backdrop-blur-sm flex flex-col text-foreground",
+                position === 'right' ? 'top-0 right-0 h-full' : 'bottom-0 left-0 w-full'
+            )}
+            style={{
+                width: position === 'right' ? `${size}px` : '100%',
+                height: position === 'bottom' ? `${size}px` : '100%'
+            }}
+        >
+            <div className="flex items-center justify-between p-1 border-b border-border text-xs">
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onPositionChange('right')}>
+                        <ArrowRightFromLine className={cn("h-4 w-4", position === 'right' && "text-primary")} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onPositionChange('bottom')}>
+                        <ArrowDownFromLine className={cn("h-4 w-4", position === 'bottom' && "text-primary")} />
+                    </Button>
+                </div>
+                <span className="font-semibold">Notes</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose}>
+                    <X className="h-4 w-4" />
+                </Button>
+            </div>
+            <div className="flex-grow overflow-y-auto p-2 space-y-2">
+                {notes.map(note => (
+                    <button
+                        key={note.id}
+                        onClick={() => onSelectNote(note)}
+                        className="flex w-full items-center gap-3 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors text-left"
+                    >
+                        {note.type === 'pdf' ? <FileText className="h-5 w-5 text-primary flex-shrink-0" /> : <LinkIcon className="h-5 w-5 text-primary flex-shrink-0" />}
+                        <span className="font-medium text-sm truncate">{note.name}</span>
+                    </button>
+                ))}
+            </div>
+            <button
+                onMouseDown={handleResizeStart}
+                className={cn(
+                    "absolute bg-muted hover:bg-accent transition-colors",
+                    position === 'right' ? "top-0 left-0 h-full w-1.5 cursor-ew-resize" : "top-0 left-0 w-full h-1.5 cursor-ns-resize"
+                )}
+            />
+        </div>
+    );
+};
 
 export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectPdf }: CustomVideoPlayerProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -44,6 +152,13 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showControls, setShowControls] = useState(true);
     const [quality, setQuality] = useState<Quality>('hd');
+    
+    // States for the new sidebar
+    const [isNotesSidebarOpen, setIsNotesSidebarOpen] = useState(false);
+    const [sidebarPosition, setSidebarPosition] = useState<SidebarPosition>('right');
+    const [sidebarSize, setSidebarSize] = useState(400); // Initial width or height
+    const [selectedNoteForViewer, setSelectedNoteForViewer] = useState<LectureNote | null>(null);
+
     let controlsTimeout: NodeJS.Timeout;
 
     const formatTime = (time: number) => {
@@ -127,13 +242,16 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
         }
     }, []);
 
-    const handleSelectPdf = (url: string) => {
-        // Exit fullscreen if active before showing PDF
-        if (document.fullscreenElement) {
-            document.exitFullscreen();
+    const handleSelectNoteInSidebar = (note: LectureNote) => {
+        if (note.type === 'pdf') {
+            onSelectPdf(note.url);
+            // This will open the external floating viewer from the parent
+            // We no longer embed the viewer here to keep it simple and robust
+        } else {
+            window.open(note.url, '_blank');
         }
-        onSelectPdf(url);
     };
+
 
     const handleSeek = useCallback((amount: number) => {
         if (videoRef.current) {
@@ -169,7 +287,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
         setShowControls(true);
         clearTimeout(controlsTimeout);
         controlsTimeout = setTimeout(() => {
-            if (isPlaying) {
+            if (isPlaying && !isNotesSidebarOpen) { // Don't hide controls if sidebar is open
                  setShowControls(false);
             }
         }, 3000);
@@ -185,18 +303,20 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
         
         const player = playerRef.current;
         if (player) {
-            player.addEventListener('fullscreenchange', () => setIsFullscreen(!!document.fullscreenElement));
+            const fullscreenChangeHandler = () => setIsFullscreen(!!document.fullscreenElement);
+            player.addEventListener('fullscreenchange', fullscreenChangeHandler);
             player.addEventListener('keydown', handleKeyDown);
+
+            return () => {
+                player.removeEventListener('fullscreenchange', fullscreenChangeHandler);
+                player.removeEventListener('keydown', handleKeyDown);
+            };
         }
 
         return () => {
             video.removeEventListener('play', () => setIsPlaying(true));
             video.removeEventListener('pause', () => setIsPlaying(false));
             video.removeEventListener('ended', () => setIsPlaying(false));
-            if (player) {
-                player.removeEventListener('fullscreenchange', () => setIsFullscreen(!!document.fullscreenElement));
-                player.removeEventListener('keydown', handleKeyDown);
-            }
         }
     }, [handleKeyDown]);
 
@@ -227,41 +347,26 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
                 </Button>
             </div>
             
-             <div className={cn("absolute top-0 left-0 right-0 p-4 transition-opacity duration-300", showControls ? 'opacity-100' : 'opacity-0')}>
+             <div className={cn("absolute top-0 left-0 right-0 p-4 transition-opacity duration-300 z-10", showControls ? 'opacity-100' : 'opacity-0')}>
                 <div className="flex justify-end">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 hover:text-white">
-                                <Notebook className="mr-2 h-4 w-4" />
-                                Notes
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuPortal container={playerRef.current}>
-                            <DropdownMenuContent>
-                                <DropdownMenuLabel>Lecture Materials</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {notes.length > 0 ? (
-                                    notes.map(note => (
-                                        <DropdownMenuItem key={note.id} onSelect={(e) => {
-                                            e.preventDefault();
-                                            if (note.type === 'pdf') {
-                                                handleSelectPdf(note.url)
-                                            } else {
-                                                window.open(note.url, '_blank')
-                                            }
-                                        }}>
-                                            {note.type === 'pdf' ? <FileText className="mr-2 h-4 w-4" /> : <LinkIcon className="mr-2 h-4 w-4" />}
-                                            {note.name}
-                                        </DropdownMenuItem>
-                                    ))
-                                ) : (
-                                    <DropdownMenuItem disabled>No notes available</DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenuPortal>
-                    </DropdownMenu>
+                     <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 hover:text-white" onClick={() => setIsNotesSidebarOpen(prev => !prev)}>
+                        <Notebook className="mr-2 h-4 w-4" />
+                        Notes
+                    </Button>
                 </div>
             </div>
+            
+            {isNotesSidebarOpen && (
+                <NotesSidebar
+                    notes={notes}
+                    position={sidebarPosition}
+                    size={sidebarSize}
+                    onClose={() => setIsNotesSidebarOpen(false)}
+                    onPositionChange={setSidebarPosition}
+                    onResize={setSidebarSize}
+                    onSelectNote={handleSelectNoteInSidebar}
+                />
+            )}
 
             <div className={cn("absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent transition-opacity duration-300", 
                  showControls ? 'opacity-100' : 'opacity-0'
@@ -308,7 +413,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="font-mono">{playbackRate}x</Button>
                         </DropdownMenuTrigger>
-                         <DropdownMenuPortal container={playerRef.current}>
+                         <DropdownMenuPortal container={playerRef.current ?? undefined}>
                             <DropdownMenuContent>
                                 <DropdownMenuLabel>Playback Speed</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
@@ -328,7 +433,7 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes, onSelectP
                                     <Settings className="h-5 w-5" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuPortal container={playerRef.current}>
+                            <DropdownMenuPortal container={playerRef.current ?? undefined}>
                                 <DropdownMenuContent>
                                     <DropdownMenuLabel>Quality</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
