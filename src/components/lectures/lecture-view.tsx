@@ -150,6 +150,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
     const { pauseLocking } = useAuth();
@@ -176,12 +177,14 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         }
         
         setIsUploading(true);
+        setUploadProgress(0);
         
         try {
             await uploadLectureNote(
                 lecture.id, 
                 lecture.title, 
-                file
+                file,
+                (progress) => setUploadProgress(progress)
             );
             toast({ title: "Success", description: "Your note has been uploaded." });
             await fetchNotes(); // Re-fetch notes to show the new one
@@ -189,6 +192,10 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
             toast({ title: "Upload Failed", description: "Could not upload your note.", variant: "destructive" });
         } finally {
             setIsUploading(false);
+            setUploadProgress(0);
+            if(fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
         }
     };
     
@@ -265,7 +272,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                      {isUploading && (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Uploading...</span>
+                            <span>Uploading... ({uploadProgress}%)</span>
                         </div>
                     )}
                 </div>
