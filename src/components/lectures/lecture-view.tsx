@@ -183,7 +183,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
                 lecture.id, 
                 lecture.title, 
                 file,
-                (progress) => setUploadProgress(progress) // Progress callback
+                setUploadProgress // Pass the progress callback here
             );
             toast({ title: "Success", description: "Your note has been uploaded." });
             await fetchNotes(); // Refresh the notes list
