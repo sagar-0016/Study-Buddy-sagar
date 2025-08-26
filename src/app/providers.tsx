@@ -80,9 +80,10 @@ function AppContent({ children }: { children: React.ReactNode }) {
       try {
         if (isAuthenticated) {
             const isOwnerDevice = localStorage.getItem('is-owner-device') === 'true';
+            const isProduction = window.location.href.includes("https://study-buddy-two-phi.vercel.app");
 
             // Only log if we're on the production URL AND it's not the owner's device
-            if (!isOwnerDevice && window.location.href.includes("https://study-buddy-two-phi.vercel.app")) {
+            if (!isOwnerDevice && isProduction) {
                 const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
                 await addDoc(collection(db, "opened"), {
                   time: new Date(),
@@ -101,7 +102,9 @@ function AppContent({ children }: { children: React.ReactNode }) {
             }
 
             const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | 'unknown';
-            if (accessLevel === 'full') {
+            
+            // Only check messages on production URL and for the full access user
+            if (accessLevel === 'full' && isProduction) {
                 const messages = await getUnreadMessages();
                 messages.forEach(async (msg) => {
                     toast({
