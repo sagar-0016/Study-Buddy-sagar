@@ -178,6 +178,7 @@ const NotesSection = ({ lecture, onSelectPdf }: { lecture: Lecture, onSelectPdf:
         }
         
         setIsUploading(true);
+        setUploadProgress(0);
         
         try {
            await uploadLectureNote(lecture.id, lecture.title, file, setUploadProgress);
