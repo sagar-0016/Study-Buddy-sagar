@@ -390,8 +390,9 @@ const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.
         const handleMouseMove = (e: MouseEvent) => {
             if (!isResizing.current || !panelRef.current?.parentElement) return;
 
-            const newWidth = panelRef.current.parentElement.getBoundingClientRect().right - e.clientX;
-            const boundedWidth = Math.max(300, Math.min(newWidth, panelRef.current.parentElement.clientWidth - 400));
+            const parentRect = panelRef.current.parentElement.getBoundingClientRect();
+            const newWidth = e.clientX - parentRect.left;
+            const boundedWidth = Math.max(300, Math.min(newWidth, parentRect.width - 400));
             setWidth(boundedWidth);
             onResize(boundedWidth);
         };
@@ -415,7 +416,7 @@ const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.
       <div ref={panelRef} className="relative h-full bg-card" style={{ flexBasis: `${width}px`, flexShrink: 0, flexGrow: 0 }}>
         <div
           onMouseDown={handleMouseDown}
-          className="absolute left-0 top-0 h-full w-2 cursor-col-resize z-10 bg-muted/50 hover:bg-accent transition-colors"
+          className="absolute right-0 top-0 h-full w-2 cursor-col-resize z-10 bg-muted/50 hover:bg-accent transition-colors"
         />
         {children}
       </div>
@@ -440,7 +441,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         fetchNotes();
     }, [fetchNotes, lecture.id]);
 
-    const unmountCallback = useRef(toggleClassMode);
+    const unmountCallback = useRef<() => void>();
 
     useEffect(() => {
         unmountCallback.current = toggleClassMode;
@@ -449,16 +450,13 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
     useEffect(() => {
         const handleUnload = () => {
              if (isClassMode) {
-                unmountCallback.current();
+                unmountCallback.current?.();
             }
         }
-        // This handles browser refresh or closing tab
         window.addEventListener('beforeunload', handleUnload);
-
         return () => {
-            // This cleanup handles component unmount (e.g., navigating away)
              if (isClassMode) {
-                unmountCallback.current();
+                unmountCallback.current?.();
             }
             window.removeEventListener('beforeunload', handleUnload);
         };
@@ -539,3 +537,5 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         </div>
     )
 }
+
+    
