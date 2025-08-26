@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
 import { uploadLectureNote, getLectureNotes, deleteLectureNote } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Trash2, Notebook, AlertCircle, View, X } from 'lucide-react';
+import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Trash2, Notebook, AlertCircle, View, X, Minus, Plus, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import CustomVideoPlayer from './custom-video-player';
 import Image from 'next/image';
@@ -18,6 +18,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useClassMode } from '@/context/class-mode-context';
 import { cn } from '@/lib/utils';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
     const [doubtText, setDoubtText] = useState('');
@@ -143,6 +148,67 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
     )
 }
 
+const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }) => {
+    const [numPages, setNumPages] = useState<number | null>(null);
+    const [pageNumber, setPageNumber] = useState(1);
+    const [scale, setScale] = useState(1.5);
+    const { toast } = useToast();
+
+    function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+        setNumPages(numPages);
+        setPageNumber(1);
+    }
+
+    function onDocumentLoadError(error: Error) {
+        toast({
+            title: "PDF Load Error",
+            description: `Failed to load PDF: ${error.message}`,
+            variant: "destructive",
+        })
+        console.error('Error while loading document!', error);
+    }
+    
+    const proxiedUrl = `/api/proxy-pdf?url=${encodeURIComponent(url)}`;
+
+    return (
+        <div className="flex flex-col h-full bg-background">
+             <div className="flex-shrink-0 sticky top-0 z-10 p-1 bg-background/80 backdrop-blur-sm border-b flex items-center justify-between gap-2">
+                <Button variant="ghost" size="sm" onClick={onBack}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Notes
+                </Button>
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPageNumber(p => Math.max(p - 1, 1))} disabled={pageNumber <= 1}>
+                        <ArrowLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs font-medium">Page {pageNumber} of {numPages || '...'}</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPageNumber(p => Math.min(p + 1, numPages || 1))} disabled={!numPages || pageNumber >= numPages}>
+                        <ArrowRight className="h-4 w-4" />
+                    </Button>
+                     <div className="w-px h-6 bg-border mx-1"></div>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setScale(s => Math.max(s - 0.2, 0.5))} disabled={scale <= 0.5}>
+                        <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs font-medium">{Math.round(scale * 100)}%</span>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setScale(s => Math.min(s + 0.2, 3))} disabled={scale >= 3}>
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+            <div className="flex-grow p-4 flex justify-center bg-muted/20 overflow-auto">
+                <Document
+                    file={proxiedUrl}
+                    onLoadSuccess={onDocumentLoadSuccess}
+                    onLoadError={onDocumentLoadError}
+                    loading={<Skeleton className='h-full w-full'/>}
+                    className="flex justify-center"
+                >
+                    <Page pageNumber={pageNumber} scale={scale} renderTextLayer={true} />
+                </Document>
+            </div>
+        </div>
+    )
+}
+
 const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode: boolean }) => {
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -150,6 +216,7 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
     const [uploadProgress, setUploadProgress] = useState(0);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+    const [viewingPdfUrl, setViewingPdfUrl] = useState<string | null>(null);
 
     const fetchNotes = useCallback(async () => {
         setIsLoading(true);
@@ -214,7 +281,11 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
 
         const handleClick = () => {
             if (note.type === 'pdf') {
-                 toast({title: "Please use the 'Notes' button on the video player to view this PDF."})
+                if (isClassMode) {
+                    setViewingPdfUrl(note.url);
+                } else {
+                    toast({title: "Please use the 'Notes' button on the video player to view this PDF."});
+                }
             } else {
                 window.open(note.url, '_blank', 'noopener,noreferrer');
             }
@@ -238,11 +309,15 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
         );
     };
 
+    if (viewingPdfUrl) {
+        return <EmbeddedPdfViewer url={viewingPdfUrl} onBack={() => setViewingPdfUrl(null)} />
+    }
+
     return (
-        <Card className="h-full">
-            <CardContent className="p-4">
-                <div className="space-y-6">
-                    <div>
+        <Card className={cn("h-full", isClassMode && "border-0 shadow-none rounded-none")}>
+            <CardContent className="p-4 h-full flex flex-col">
+                <div className="space-y-6 flex-grow flex flex-col">
+                    <div className="flex-grow">
                         <h3 className="text-lg font-semibold">Lecture Notes</h3>
                         <p className="text-sm text-muted-foreground">Official notes and resources for this lecture.</p>
                         {isLoading ? (
@@ -322,7 +397,7 @@ const ResizablePanel = ({ children, initialWidth, onResize }: { children: React.
     }, [onResize]);
   
     return (
-      <div ref={panelRef} className="relative h-full" style={{ flexBasis: `${width}px`, flexShrink: 0, flexGrow: 0 }}>
+      <div ref={panelRef} className="relative h-full bg-card" style={{ flexBasis: `${width}px`, flexShrink: 0, flexGrow: 0 }}>
         <div
           onMouseDown={handleMouseDown}
           className="absolute left-0 top-0 h-full w-2 cursor-col-resize z-10 bg-muted/50 hover:bg-accent transition-colors"
@@ -348,15 +423,18 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
     useEffect(() => {
         fetchNotes();
-        // This effect should only run when the component mounts and unmounts
-        // to handle the class mode state correctly when navigating away.
+    }, [fetchNotes, lecture.id]);
+
+     // This effect ensures class mode is turned off when navigating away from a lecture page
+    useEffect(() => {
         return () => {
             if (isClassMode) {
                 toggleClassMode();
             }
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lecture.id]);
+
 
     return (
         <div className="relative min-h-screen">
