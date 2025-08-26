@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback, MouseEvent } from 'react';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { 
-    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings, Notebook, FileText, Link as LinkIcon, X, Move, CornerDownRight, ArrowRightFromLine, ArrowDownFromLine, Loader2, Minus, Plus, ArrowLeft, ArrowRight
+    Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward, Settings, Notebook, FileText, Link as LinkIcon, X, CornerDownRight, ArrowRightFromLine, ArrowDownFromLine, Loader2, Minus, Plus, ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { 
     DropdownMenu, 
@@ -348,7 +348,6 @@ export default function CustomVideoPlayer({ src, sdSrc, poster, notes }: CustomV
             }
 
             const playerBounds = playerRef.current.getBoundingClientRect();
-            if (!playerBounds) return;
             
             const maxSize = sidebarPosition === 'right' ? playerBounds.width - 200 : playerBounds.height - 150;
             const minSize = 200;
