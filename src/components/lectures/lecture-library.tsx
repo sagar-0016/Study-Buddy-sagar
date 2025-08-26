@@ -34,7 +34,7 @@ const LectureCard = ({ lecture }: { lecture: Lecture }) => {
                 {lecture.subject}
             </Badge>
             <h3 className="font-semibold text-base line-clamp-2">{lecture.title}</h3>
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{lecture.description}</p>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-3 whitespace-pre-wrap">{lecture.description}</p>
             </CardContent>
             <CardFooter className="p-4 pt-0">
                 <p className="text-xs text-muted-foreground font-medium">{lecture.channel}</p>

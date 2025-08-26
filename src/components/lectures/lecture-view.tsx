@@ -203,23 +203,23 @@ const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }
                 </div>
             </div>
             <div ref={containerRef} className="flex-grow bg-muted/20 overflow-auto">
-                <div className="flex justify-center">
-                    <Document
-                        file={proxiedUrl}
-                        onLoadSuccess={onDocumentLoadSuccess}
-                        onLoadError={onDocumentLoadError}
-                        loading={<Skeleton className='h-full w-full'/>}
-                        className={cn("flex justify-center", fitMode === 'zoom' && "overflow-auto")}
-                    >
-                        <div className={cn(fitMode === 'zoom' && "overflow-auto h-full w-full flex justify-center")}>
-                             <Page 
+                <div className={cn("flex justify-center", fitMode === 'zoom' && "h-full")}>
+                    <div className={cn(fitMode === 'zoom' && "overflow-auto")}>
+                        <Document
+                            file={proxiedUrl}
+                            onLoadSuccess={onDocumentLoadSuccess}
+                            onLoadError={onDocumentLoadError}
+                            loading={<Skeleton className='h-full w-full'/>}
+                            className="flex justify-center"
+                        >
+                            <Page 
                                 pageNumber={pageNumber} 
                                 scale={fitMode === 'width' ? 1 : scale}
                                 width={fitMode === 'width' && containerWidth ? containerWidth - 20 : undefined}
                                 renderTextLayer={true} 
                             />
-                        </div>
-                    </Document>
+                        </Document>
+                    </div>
                 </div>
             </div>
         </div>
@@ -389,7 +389,8 @@ const ResizablePanel = ({ children, width, setWidth }: { children: React.ReactNo
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             if (!isResizing.current) return;
-            const newWidth = window.innerWidth - e.clientX;
+            // Correct logic: new width is based on mouse distance from right of screen
+            const newWidth = window.innerWidth - e.clientX; 
             const boundedWidth = Math.max(300, Math.min(newWidth, window.innerWidth - 400));
             setWidth(boundedWidth);
         };
@@ -443,14 +444,16 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
     }, [fetchNotes, lecture.id]);
 
     useEffect(() => {
-        // This effect runs only when the component unmounts.
-        // It ensures class mode is turned off if the user navigates away.
+        // This effect is now tied to isClassMode state.
+        // It runs a cleanup function ONLY when the component unmounts.
         return () => {
+            // When leaving the lecture page, ensure class mode is turned off.
             if (isClassMode) {
                 toggleClassMode();
             }
         };
-    }, []); // Empty dependency array means it runs on mount and cleans up on unmount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Empty dependency array ensures this runs only on mount and unmount.
 
     return (
         <div className="relative">
@@ -488,7 +491,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="prose prose-sm dark:prose-invert max-w-none">
-                                        <p>{lecture.description}</p>
+                                        <p className="whitespace-pre-wrap">{lecture.description}</p>
                                     </div>
                                 </CardContent>
                             </Card>

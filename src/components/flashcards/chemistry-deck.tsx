@@ -44,7 +44,7 @@ const DeckCard = ({ deck }: { deck: FlashcardDeck }) => {
         </CardHeader>
         <CardContent className="flex flex-col flex-grow">
             <CardTitle className="text-xl mb-2">{deck.title}</CardTitle>
-            <CardDescription className="flex-grow">{deck.description}</CardDescription>
+            <CardDescription className="flex-grow whitespace-pre-wrap">{deck.description}</CardDescription>
             {deck.difficulty && <DifficultyBadge difficulty={deck.difficulty} />}
         </CardContent>
     </Card>
