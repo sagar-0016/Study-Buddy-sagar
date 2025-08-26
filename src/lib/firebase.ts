@@ -9,7 +9,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBv26GpTGNi56cOHY23H4JWk_Q0iu7WRbg",
   authDomain: "study-buddy-7357a.firebaseapp.com",
   projectId: "study-buddy-7357a",
-  storageBucket: "study-buddy-7357a.appspot.com",
+  storageBucket: "study-buddy-7357a.firebasestorage.app",
   messagingSenderId: "286721031921",
   appId: "1:286721031921:web:bdebedc76dd6081dbfb350"
 };
@@ -21,4 +21,5 @@ const auth = getAuth(app);
 const storage = getStorage(app);
 
 export { app, db, auth, storage };
+
 
