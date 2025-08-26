@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, MouseEvent as ReactMouseEvent } from 'react';
 import type { Lecture, LectureNote } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -214,7 +214,7 @@ const EmbeddedPdfViewer = ({ url, onBack }: { url: string; onBack: () => void; }
                         <Page 
                             pageNumber={pageNumber} 
                             scale={fitMode === 'width' ? undefined : scale} 
-                            width={fitMode === 'width' ? containerWidth : undefined}
+                            width={fitMode === 'width' && containerWidth ? containerWidth : undefined}
                             renderTextLayer={true} 
                         />
                     </Document>
@@ -376,24 +376,20 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
 
 const ResizablePanel = ({ children, width, setWidth }: { children: React.ReactNode, width: number, setWidth: (width: number) => void }) => {
     const isResizing = useRef(false);
-    const initialPos = useRef({ x: 0, width: 0 });
+    const resizeHandleRef = useRef<HTMLDivElement>(null);
+    const panelRef = useRef<HTMLDivElement>(null);
 
-    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    const handleMouseDown = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
         e.preventDefault();
         isResizing.current = true;
-        initialPos.current = {
-            x: e.clientX,
-            width: width,
-        };
         document.body.style.cursor = 'col-resize';
         document.body.style.userSelect = 'none';
-    }, [width]);
+    }, []);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            if (!isResizing.current) return;
-            const dx = e.clientX - initialPos.current.x;
-            const newWidth = initialPos.current.width - dx;
+            if (!isResizing.current || !panelRef.current) return;
+            const newWidth = panelRef.current.getBoundingClientRect().right - e.clientX;
             const boundedWidth = Math.max(300, Math.min(newWidth, window.innerWidth - 400));
             setWidth(boundedWidth);
         };
@@ -414,8 +410,9 @@ const ResizablePanel = ({ children, width, setWidth }: { children: React.ReactNo
     }, [setWidth]);
 
     return (
-        <div className="relative h-full bg-card" style={{ width: `${width}px`, flexShrink: 0 }}>
+        <div ref={panelRef} className="relative h-full bg-card" style={{ width: `${width}px`, flexShrink: 0 }}>
             <div
+                ref={resizeHandleRef}
                 onMouseDown={handleMouseDown}
                 className="absolute left-0 top-0 h-full w-2 cursor-col-resize z-10 bg-muted/50 hover:bg-accent transition-colors"
             />
@@ -430,6 +427,9 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
     const [notes, setNotes] = useState<LectureNote[]>([]);
     const [isLoadingNotes, setIsLoadingNotes] = useState(true);
     const [rightPanelWidth, setRightPanelWidth] = useState(400);
+
+    const isClassModeRef = useRef(isClassMode);
+    isClassModeRef.current = isClassMode;
 
     const fetchNotes = useCallback(async () => {
         setIsLoadingNotes(true);
@@ -448,13 +448,11 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
 
     useEffect(() => {
         return () => {
-            // This is a cleanup function that runs when the component unmounts.
-            // If the user navigates away while in class mode, it will be turned off.
-            if (isClassMode) {
+            if (isClassModeRef.current) {
                 toggleClassMode();
             }
         };
-    }, [isClassMode, toggleClassMode]);
+    }, [toggleClassMode]);
 
 
     return (
