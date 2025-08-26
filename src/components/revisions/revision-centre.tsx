@@ -5,7 +5,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search, XCircle, Image as ImageIcon, BrainCircuit } from 'lucide-react';
+import { Plus, Loader2, Lightbulb, Check, X, Wand, RotateCw, Play, Edit, Search, XCircle, Image as ImageIcon, BrainCircuit, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { getRevisionTopics, addRevisionTopic, getRecallSessionTopics, updateRecallStats, updateRevisionTopic } from '@/lib/revisions';
+import { getRevisionTopics, addRevisionTopic, getRecallSessionTopics, updateRecallStats, updateRevisionTopic, checkAndResetRevisionProgress } from '@/lib/revisions';
 import type { RevisionTopic } from '@/lib/types';
 import {
   Select,
@@ -28,6 +28,7 @@ import Confetti from 'react-confetti';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MasteryLegend, masteryLevels } from './mastery-legend';
 import type { AccessLevel } from '@/context/auth-context';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 
 const AddRevisionTopicDialog = ({ onTopicAdded, children }: { onTopicAdded: () => void, children: React.ReactNode }) => {
@@ -436,6 +437,30 @@ const BrowseTopics = ({ topics, onTopicUpdated }: { topics: RevisionTopic[], onT
     )
 }
 
+const ResetProgressPrompt = ({ onConfirm }: { onConfirm: () => Promise<void> }) => {
+    const [isResetting, setIsResetting] = useState(false);
+
+    const handleConfirm = async () => {
+        setIsResetting(true);
+        await onConfirm();
+        setIsResetting(false);
+    }
+    
+    return (
+        <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>Reset Sample Progress?</AlertTitle>
+            <AlertDescription className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <p>This is sample data. Press confirm to reset the progress and let's build it according to you.</p>
+                 <Button onClick={handleConfirm} disabled={isResetting} className="mt-2 sm:mt-0">
+                    {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RotateCw className="mr-2 h-4 w-4" />}
+                    Confirm
+                </Button>
+            </AlertDescription>
+        </Alert>
+    )
+}
+
 
 export default function RevisionCentre() {
   const [allTopics, setAllTopics] = useState<RevisionTopic[]>([]);
@@ -444,11 +469,8 @@ export default function RevisionCentre() {
   const [isLoading, setIsLoading] = useState(true);
   const [isStartingSession, setIsStartingSession] = useState(false);
   const [accessLevel, setAccessLevel] = useState<AccessLevel | null>(null);
-
-  useEffect(() => {
-    const level = typeof window !== 'undefined' ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
-    setAccessLevel(level);
-  }, []);
+  const [showResetPrompt, setShowResetPrompt] = useState(false);
+  const { toast } = useToast();
 
   const fetchTopics = useCallback(async () => {
     setIsLoading(true);
@@ -458,8 +480,35 @@ export default function RevisionCentre() {
   }, [])
 
   useEffect(() => {
-    fetchTopics();
-  }, [fetchTopics]);
+    const level = typeof window !== 'undefined' ? localStorage.getItem('study-buddy-access-level') as AccessLevel | null : null;
+    setAccessLevel(level);
+
+    const performInitialCheck = async () => {
+        setIsLoading(true);
+        try {
+            const needsReset = await checkAndResetRevisionProgress(false); // Just check first
+            setShowResetPrompt(needsReset);
+            await fetchTopics();
+        } catch (error) {
+            console.error("Error during initial check:", error);
+            toast({ title: 'Error', description: 'Could not check revision status.', variant: 'destructive'});
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    performInitialCheck();
+  }, [fetchTopics, toast]);
+
+  const handleConfirmReset = async () => {
+    try {
+        await checkAndResetRevisionProgress(true); // Now execute reset
+        toast({ title: 'Progress Reset', description: 'Your revision progress has been reset.' });
+        setShowResetPrompt(false);
+        await fetchTopics(); // Refresh the topic list to show zeroed scores
+    } catch(error) {
+        toast({ title: 'Error', description: 'Could not reset progress.', variant: 'destructive'});
+    }
+  }
 
   const handleStartSession = async () => {
     setIsStartingSession(true);
@@ -487,6 +536,8 @@ export default function RevisionCentre() {
 
     return (
         <div className="space-y-8">
+            {showResetPrompt && <ResetProgressPrompt onConfirm={handleConfirmReset} />}
+
             <div className="space-y-6">
                 <div className="text-left">
                     <h2 className="text-2xl font-bold tracking-tight">Start a Recall Session</h2>

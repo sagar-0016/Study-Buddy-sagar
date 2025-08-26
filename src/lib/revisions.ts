@@ -15,6 +15,8 @@ import {
   increment,
   writeBatch,
   limit,
+  getDoc,
+  setDoc,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { RevisionTopic, RecallEvent } from './types';
@@ -43,9 +45,9 @@ export const getRevisionTopics = async (): Promise<RevisionTopic[]> => {
     const revisionsRef = collection(db, 'revisions');
     const querySnapshot = await getDocs(revisionsRef);
 
-    return querySnapshot.docs.map(
-      (doc) => ({ id: doc.id, ...doc.data() } as RevisionTopic)
-    );
+    return querySnapshot.docs
+      .filter(doc => doc.id !== 'reset') // Exclude the special 'reset' document
+      .map(doc => ({ id: doc.id, ...doc.data() } as RevisionTopic));
   } catch (error) {
     console.error('Error fetching revision topics:', error);
     return [];
@@ -271,4 +273,51 @@ export const getRevisionProgress = async (): Promise<{ mastered: number, total: 
         console.error("Error fetching revision progress:", error);
         return { mastered: 0, total: 0 };
     }
+}
+
+/**
+ * Resets the recallSuccess and recallFails counters for all topics in the revisions collection.
+ * This is used to clear sample data for a first-time user.
+ */
+export const resetAllRevisionProgress = async (): Promise<void> => {
+    const topics = await getRevisionTopics(); // This already excludes the 'reset' doc
+    if (topics.length === 0) {
+        console.log("No revision topics to reset.");
+        return;
+    }
+
+    const batch = writeBatch(db);
+
+    topics.forEach(topic => {
+        const topicRef = doc(db, 'revisions', topic.id);
+        batch.update(topicRef, {
+            recallSuccess: 0,
+            recallFails: 0,
+            lastReviewed: serverTimestamp()
+        });
+    });
+
+    await batch.commit();
+    console.log(`Reset progress for ${topics.length} revision topics.`);
+}
+
+/**
+ * Checks if the revision progress needs to be reset, and optionally performs the reset.
+ * @param executeReset - If true, performs the reset operation. If false, just checks.
+ * @returns A boolean indicating if a reset was needed (and not yet performed).
+ */
+export const checkAndResetRevisionProgress = async (executeReset: boolean): Promise<boolean> => {
+    const resetDocRef = doc(db, 'revisions', 'reset');
+    const resetDocSnap = await getDoc(resetDocRef);
+
+    if (!resetDocSnap.exists() || resetDocSnap.data()?.resetAttempted === false) {
+        if (executeReset) {
+            await resetAllRevisionProgress();
+            await setDoc(resetDocRef, { resetAttempted: true });
+            return false; // Reset was just performed
+        }
+        return true; // A reset is needed
+    }
+    
+    return false; // Reset has already been done
 }
