@@ -160,6 +160,8 @@ export interface Doubt extends DocumentData {
     id: string;
     text: string;
     subject: string;
+    lectureId?: string;
+    lectureTitle?: string;
     imageUrl?: string;
     isAddressed: boolean;
     isCleared: boolean;

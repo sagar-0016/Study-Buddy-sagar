@@ -45,15 +45,22 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
         if (!canSubmit) return;
         setIsSaving(true);
         try {
-            await addDoubt({
-                text,
-                subject,
-                imageFile: imageFile || undefined
-            });
-            toast({ title: "Success!", description: "Your doubt has been submitted." });
-            onDoubtAdded();
-            setIsOpen(false);
-            resetForm();
+            // Note: This adds a general doubt, not linked to a specific lecture.
+            // The addDoubt function in lib needs to handle this case, or a different function is needed.
+            // For now, we'll assume a general doubt doesn't require lectureId.
+            // This part might need adjustment based on final `addDoubt` signature.
+            console.warn("Submitting a general doubt without a lecture ID.");
+            
+            // Awaiting confirmation on how to handle general doubts vs lecture-specific ones.
+            // For now, this will likely fail if `addDoubt` requires `lectureId`.
+            
+            // toast({ title: "Success!", description: "Your doubt has been submitted." });
+            // onDoubtAdded();
+            // setIsOpen(false);
+            // resetForm();
+
+             toast({ title: "Coming Soon", description: "Adding general doubts is not yet supported. Please ask doubts from a specific lecture page.", variant: "destructive" });
+
         } catch (error) {
              toast({ title: "Error", description: "Could not submit your doubt.", variant: "destructive" });
         } finally {
@@ -68,7 +75,7 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
                 <DialogHeader>
                     <DialogTitle>Ask a New Doubt</DialogTitle>
                     <DialogDescription>
-                        Clearly describe your question. Attach an image if it helps.
+                        Clearly describe your question. Note: General doubts can be added here once functionality is complete. For now, please ask from a lecture page.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -97,7 +104,7 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                     <Button onClick={handleSubmit} disabled={isSaving || !canSubmit}>
+                     <Button onClick={handleSubmit} disabled={true}>
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                         Submit Doubt
                     </Button>
@@ -107,7 +114,7 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
     );
 };
 
-const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (id: string) => void }) => {
+const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (lectureId: string, doubtId: string) => void }) => {
     const getStatus = () => {
         if (doubt.isCleared) return { text: 'Cleared by you', icon: CheckCircle2, color: 'text-green-600' };
         if (doubt.isAddressed) return { text: 'Addressed', icon: AlertCircle, color: 'text-yellow-600' };
@@ -120,9 +127,16 @@ const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (id: string)
         <Card>
             <CardHeader>
                 <div className="flex justify-between items-start gap-4">
-                    <CardDescription>
-                        {formatDistanceToNow(doubt.createdAt.toDate(), { addSuffix: true })}
-                    </CardDescription>
+                    <div className='flex flex-col'>
+                        <CardDescription>
+                            {formatDistanceToNow(doubt.createdAt.toDate(), { addSuffix: true })}
+                        </CardDescription>
+                        {doubt.lectureTitle && (
+                             <CardDescription className='font-semibold italic'>
+                                From: {doubt.lectureTitle}
+                            </CardDescription>
+                        )}
+                    </div>
                     <div className="flex items-center gap-2">
                          <Badge variant={doubt.subject === 'Physics' ? 'default' : doubt.subject === 'Chemistry' ? 'destructive' : 'secondary'}>
                             {doubt.subject}
@@ -167,7 +181,7 @@ const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (id: string)
             </CardContent>
             {doubt.isAddressed && !doubt.isCleared && (
                  <CardFooter>
-                    <Button onClick={() => onCleared(doubt.id)}>
+                    <Button onClick={() => onCleared(doubt.lectureId!, doubt.id)}>
                         <CheckCircle2 className="mr-2 h-4 w-4" />
                         Mark as Cleared
                     </Button>
@@ -194,10 +208,14 @@ export default function DoubtCentre() {
         fetchDoubts();
     }, [fetchDoubts]);
     
-    const handleMarkCleared = async (id: string) => {
+    const handleMarkCleared = async (lectureId: string, doubtId: string) => {
         try {
-            await markDoubtAsCleared(id);
-            setDoubts(prev => prev.map(d => d.id === id ? { ...d, isCleared: true } : d));
+            if (!lectureId) {
+                 toast({ title: 'Error', description: 'Cannot find the associated lecture for this doubt.', variant: 'destructive' });
+                 return;
+            }
+            await markDoubtAsCleared(lectureId, doubtId);
+            setDoubts(prev => prev.map(d => d.id === doubtId ? { ...d, isCleared: true } : d));
             toast({ title: 'Success', description: 'Doubt marked as cleared.' });
         } catch(error) {
             toast({ title: 'Error', description: 'Could not update the doubt status.', variant: 'destructive' });
@@ -219,7 +237,7 @@ export default function DoubtCentre() {
                 <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[40vh]">
                     <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold">No Doubts Here</h3>
-                    <p className="text-muted-foreground">Looks like you're all clear! Ask a new question to get started.</p>
+                    <p className="text-muted-foreground">Looks like you're all clear! Ask a new question from a lecture page to get started.</p>
                 </div>
             );
         }
@@ -236,7 +254,8 @@ export default function DoubtCentre() {
     return (
          <div className="relative">
              {renderContent()}
-
+           {/* The floating action button for adding general doubts is temporarily disabled.
+               Re-enable when a system for handling general (non-lecture-specific) doubts is implemented.
             <div className="fixed bottom-8 right-8 z-50">
                <AddDoubtDialog onDoubtAdded={fetchDoubts}>
                     <Button className="rounded-full h-14 w-14 p-4 shadow-lg flex items-center justify-center">
@@ -245,6 +264,7 @@ export default function DoubtCentre() {
                     </Button>
                </AddDoubtDialog>
            </div>
+           */}
         </div>
     );
 }

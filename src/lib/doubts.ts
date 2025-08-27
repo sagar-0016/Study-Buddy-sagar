@@ -9,6 +9,7 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  collectionGroup,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import type { Doubt } from './types';
@@ -28,11 +29,13 @@ const uploadDoubtImage = async (file: File): Promise<string> => {
 }
 
 /**
- * Adds a new doubt to Firestore. Handles optional image upload.
+ * Adds a new doubt to a lecture's subcollection in Firestore. Handles optional image upload.
  * @param data - The data for the new doubt.
  * @returns The ID of the newly created document.
  */
 export const addDoubt = async (data: {
+  lectureId: string;
+  lectureTitle: string;
   text: string;
   subject: string;
   imageFile?: File;
@@ -41,6 +44,8 @@ export const addDoubt = async (data: {
     const payload: {
         text: string;
         subject: string;
+        lectureId: string;
+        lectureTitle: string;
         isAddressed: boolean;
         isCleared: boolean;
         createdAt: any;
@@ -48,6 +53,8 @@ export const addDoubt = async (data: {
     } = {
       text: data.text,
       subject: data.subject,
+      lectureId: data.lectureId,
+      lectureTitle: data.lectureTitle,
       isAddressed: false,
       isCleared: false,
       createdAt: serverTimestamp(),
@@ -57,7 +64,7 @@ export const addDoubt = async (data: {
         payload.imageUrl = await uploadDoubtImage(data.imageFile);
     }
 
-    const doubtsRef = collection(db, 'doubts');
+    const doubtsRef = collection(db, 'lectures', data.lectureId, 'doubts');
     const newDocRef = await addDoc(doubtsRef, payload);
     return newDocRef.id;
   } catch (error) {
@@ -67,13 +74,13 @@ export const addDoubt = async (data: {
 };
 
 /**
- * Fetches all doubts from Firestore, ordered by creation date.
+ * Fetches all doubts from all lecture subcollections using a collection group query.
  * @returns {Promise<Doubt[]>} An array of doubt objects.
  */
 export const getDoubts = async (): Promise<Doubt[]> => {
   try {
-    const doubtsRef = collection(db, 'doubts');
-    const q = query(doubtsRef, orderBy('createdAt', 'desc'));
+    const doubtsGroupRef = collectionGroup(db, 'doubts');
+    const q = query(doubtsGroupRef, orderBy('createdAt', 'desc'));
     const querySnapshot = await getDocs(q);
 
     return querySnapshot.docs.map(
@@ -87,11 +94,12 @@ export const getDoubts = async (): Promise<Doubt[]> => {
 
 /**
  * Marks a doubt as cleared by the user.
+ * @param {string} lectureId - The ID of the parent lecture document.
  * @param {string} doubtId - The ID of the doubt document to update.
  */
-export const markDoubtAsCleared = async (doubtId: string): Promise<void> => {
+export const markDoubtAsCleared = async (lectureId: string, doubtId: string): Promise<void> => {
     try {
-        const doubtRef = doc(db, 'doubts', doubtId);
+        const doubtRef = doc(db, 'lectures', lectureId, 'doubts', doubtId);
         await updateDoc(doubtRef, {
             isCleared: true,
         });

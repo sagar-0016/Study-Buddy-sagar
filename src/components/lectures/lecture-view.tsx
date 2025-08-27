@@ -35,8 +35,12 @@ const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
         if (!doubtText) return;
         setIsSubmitting(true);
         try {
-            const fullText = `Regarding the lecture "${lecture.title}":\n\n${doubtText}`;
-            await addDoubt({ text: fullText, subject: lecture.subject });
+            await addDoubt({
+                lectureId: lecture.id,
+                lectureTitle: lecture.title,
+                text: doubtText,
+                subject: lecture.subject
+            });
             toast({ title: "Success", description: "Your doubt has been submitted." });
             setDoubtText('');
         } catch (error) {
@@ -87,7 +91,7 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
         }
         setIsSubmitting(true);
         try {
-            await addLectureFeedback(lecture.id, { rating, text: feedbackText });
+            await addLectureFeedback(lecture.id, { rating: hasRated ? 0 : rating, text: feedbackText });
             toast({ title: "Thank you!", description: "Your feedback has been submitted." });
             
             if (!hasRated) {
