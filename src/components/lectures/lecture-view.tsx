@@ -23,6 +23,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { format } from 'date-fns';
+import { useAuth } from '@/context/auth-context';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -241,6 +242,7 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
     const [viewingPdfUrl, setViewingPdfUrl] = useState<string | null>(null);
+    const { pauseLocking } = useAuth();
 
     const fetchNotes = useCallback(async () => {
         setIsLoading(true);
@@ -283,6 +285,7 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
     };
     
     const triggerFileInput = () => {
+        pauseLocking(5000); // Pause for 5 seconds
         fileInputRef.current?.click();
     }
     
