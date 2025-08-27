@@ -122,43 +122,42 @@ export const fetchNewsArticles = ai.defineTool(
         let debugUrls: string[] = [];
         let fetchedArticles: any[] = [];
         
-        const services = {
-            gnews: () => fetchFromGNews(query, isGeneral, sortBy),
-            newsdata: () => fetchFromNewsData(query, isGeneral),
-        };
-        
-        const fetchFunction = sourceApi && sourceApi !== 'auto' ? services[sourceApi] : null;
-
         try {
+            const services = {
+                gnews: () => fetchFromGNews(query, isGeneral, sortBy),
+                newsdata: () => fetchFromNewsData(query, isGeneral),
+            };
+            
+            const fetchFunction = sourceApi && sourceApi !== 'auto' ? services[sourceApi] : null;
+
             if (fetchFunction) {
                 const { articles, url } = await fetchFunction();
                 fetchedArticles = articles;
                 debugUrls.push(url);
             } else {
                 // Auto fallback logic
-                try {
-                    if (!gnewsApiKey && !newsdataApiKey) {
-                        throw new Error("No news API keys are configured on the server. Please use AI-generated news.");
-                    }
+                if (!gnewsApiKey && !newsdataApiKey) {
+                    throw new Error("No news API keys are configured on the server. Please use AI-generated news.");
+                }
 
+                try {
                     if (gnewsApiKey) {
                         const { articles, url } = await fetchFromGNews(query, isGeneral, sortBy);
                         fetchedArticles = articles;
                         debugUrls.push(url);
                     } else {
-                         // Fallback to newsdata if gnews key is missing
                         const { articles, url } = await fetchFromNewsData(query, isGeneral);
                         fetchedArticles = articles;
                         debugUrls.push(url);
                     }
-                } catch (error) {
-                    if (error instanceof Error && error.message.includes("GNews")) {
-                         console.error('GNews API failed, falling back to NewsData.io:', error);
+                } catch (primaryError) {
+                     if (gnewsApiKey && newsdataApiKey && (primaryError as Error).message.includes("GNews")) {
+                         console.warn('GNews API failed, falling back to NewsData.io:', primaryError);
                         const { articles, url } = await fetchFromNewsData(query, isGeneral);
                         fetchedArticles = articles;
                         debugUrls.push(url);
                     } else {
-                       throw error; // Re-throw other errors (like NewsData failure)
+                        throw primaryError; // Re-throw if it's not a GNews error or if there's no fallback
                     }
                 }
             }
@@ -167,18 +166,20 @@ export const fetchNewsArticles = ai.defineTool(
                  return { articles: [], debugUrls };
             }
 
-            // Step 2: Parse each article for full content
             const enrichedArticles = await Promise.all(
-                fetchedArticles.map(async (article) => {
+                fetchedArticles.slice(0, 15).map(async (article) => {
                     if (!article.url) return { ...article, fullContent: article.summary };
                     
-                    const parsed = await fetchFullArticleContent({ url: article.url });
-                    
-                    return {
-                        ...article,
-                        // Use parsed content if available, otherwise fall back to summary
-                        fullContent: parsed.content || article.summary,
-                    };
+                    try {
+                        const parsed = await fetchFullArticleContent({ url: article.url });
+                        return {
+                            ...article,
+                            fullContent: parsed.content || article.summary,
+                        };
+                    } catch (parseError) {
+                        console.warn(`Could not parse article ${article.url}:`, parseError);
+                        return { ...article, fullContent: article.summary };
+                    }
                 })
             );
 
@@ -187,9 +188,9 @@ export const fetchNewsArticles = ai.defineTool(
         } catch (error) {
             console.error('Failed to fetch or parse news:', error);
             const articles = [{
-                headline: 'News Service Failed',
-                summary: `Could not fetch or parse news at this moment. Error: ${(error as Error).message}`,
-                fullContent: `There was an issue connecting to the news services or parsing the articles. Please check your internet connection or try again later. You can also switch to AI-generated news. ${(error as Error).message}`,
+                headline: 'News Service Unavailable',
+                summary: `Could not fetch live news at this moment. The external API may be down or the API key may be invalid. Error: ${(error as Error).message}`,
+                fullContent: `There was an issue connecting to the live news services. Please check the server logs for more details. You can also switch to AI-generated news. \n\nError details: ${(error as Error).message}`,
                 source: 'Study Buddy System',
                 url: '#',
                 imageUrl: undefined,
