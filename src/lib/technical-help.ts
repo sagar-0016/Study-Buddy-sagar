@@ -38,20 +38,27 @@ export const addTechnicalHelp = async (data: {
   imageFile?: File;
 }): Promise<string> => {
   try {
-    let imageUrl: string | undefined = undefined;
-    if (data.imageFile) {
-        imageUrl = await uploadHelpImage(data.imageFile);
-    }
-
-    const helpRef = collection(db, 'technical-help');
-    const newDocRef = await addDoc(helpRef, {
+     const payload: {
+        text: string;
+        category: string;
+        isAddressed: boolean;
+        isCleared: boolean;
+        createdAt: any;
+        imageUrl?: string;
+    } = {
       text: data.text,
       category: data.category,
-      imageUrl,
       isAddressed: false,
       isCleared: false,
       createdAt: serverTimestamp(),
-    });
+    };
+
+    if (data.imageFile) {
+        payload.imageUrl = await uploadHelpImage(data.imageFile);
+    }
+
+    const helpRef = collection(db, 'technical-help');
+    const newDocRef = await addDoc(helpRef, payload);
     return newDocRef.id;
   } catch (error) {
     console.error('Error adding technical help request:', error);

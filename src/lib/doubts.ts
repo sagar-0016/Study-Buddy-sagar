@@ -38,20 +38,27 @@ export const addDoubt = async (data: {
   imageFile?: File;
 }): Promise<string> => {
   try {
-    let imageUrl: string | undefined = undefined;
-    if (data.imageFile) {
-        imageUrl = await uploadDoubtImage(data.imageFile);
-    }
-
-    const doubtsRef = collection(db, 'doubts');
-    const newDocRef = await addDoc(doubtsRef, {
+    const payload: {
+        text: string;
+        subject: string;
+        isAddressed: boolean;
+        isCleared: boolean;
+        createdAt: any;
+        imageUrl?: string;
+    } = {
       text: data.text,
       subject: data.subject,
-      imageUrl,
       isAddressed: false,
       isCleared: false,
       createdAt: serverTimestamp(),
-    });
+    };
+
+    if (data.imageFile) {
+        payload.imageUrl = await uploadDoubtImage(data.imageFile);
+    }
+
+    const doubtsRef = collection(db, 'doubts');
+    const newDocRef = await addDoc(doubtsRef, payload);
     return newDocRef.id;
   } catch (error) {
     console.error('Error adding doubt:', error);
