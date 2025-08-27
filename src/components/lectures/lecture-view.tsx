@@ -445,7 +445,7 @@ const DescriptionSection = ({ lecture }: { lecture: Lecture }) => {
             )}
              {lecture.createdAt && (
                 <p className="text-xs text-muted-foreground mt-3">
-                    Uploaded on {format(lecture.createdAt.toDate(), "MMMM d, yyyy")}
+                    Uploaded on {format(new Date(lecture.createdAt), "MMMM d, yyyy")}
                 </p>
             )}
         </div>

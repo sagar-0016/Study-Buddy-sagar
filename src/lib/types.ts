@@ -139,7 +139,7 @@ export interface Lecture extends DocumentData {
   thumbnailUrl: string;
   channel: string;
   duration: string;
-  createdAt?: Timestamp;
+  createdAt?: string; // Changed from Timestamp
 }
 
 export interface LectureNote extends DocumentData {

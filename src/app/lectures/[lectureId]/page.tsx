@@ -6,6 +6,7 @@ import LectureView from '@/components/lectures/lecture-view';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import type { Lecture } from '@/lib/types';
 
 interface LecturePageProps {
   params: {
@@ -31,11 +32,19 @@ export async function generateMetadata({ params }: LecturePageProps): Promise<Me
 
 export default async function LecturePage({ params }: LecturePageProps) {
   const lectureId = params.lectureId;
-  const lecture = await getLectureById(lectureId);
+  const lectureData = await getLectureById(lectureId);
 
-  if (!lecture) {
+  if (!lectureData) {
     notFound();
   }
+
+  // Serialize the lecture data to make it a plain object
+  const lecture: Lecture = {
+    ...lectureData,
+    id: lectureData.id,
+    createdAt: lectureData.createdAt?.toDate().toISOString(), // Convert Timestamp to ISO string
+  };
+
 
   return (
     <div className="space-y-6">
