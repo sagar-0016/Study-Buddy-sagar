@@ -9,7 +9,7 @@ import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { MotivationMode } from "@/components/settings/settings-page";
-import { getRandomMotivationByMood, getTinkeringMessage, getThreateningMessage } from "@/lib/motivation";
+import { getRandomMotivationByMood, getTinkeringMessage, getThreateningMessage, markMotivationAsRead } from "@/lib/motivation";
 import { useToast } from "@/hooks/use-toast";
 import { logMood } from "@/lib/mood-tracker";
 
@@ -39,17 +39,10 @@ export default function MotivationCorner() {
     setMotivation("");
     setIsAiGenerated(false);
     setWarningLevel(null);
-
-    // Log the mood to Firestore immediately
-    try {
-      await logMood(moodLabel);
-    } catch (error) {
-      console.error("Failed to log mood:", error);
-      // We don't need to show a toast for a background task failure
-    }
     
     const accessLevel = localStorage.getItem('study-buddy-access-level') as 'full' | 'limited' | null;
     const now = Date.now();
+    const isProduction = window.location.href.includes("study-buddy-two-phi.vercel.app");
     
     // --- Guest User Logic ---
     if (accessLevel !== 'full') {
@@ -72,36 +65,46 @@ export default function MotivationCorner() {
     
     const attemptsInWindow = currentTimestamps.length;
     let newWarningLevel: 'orange' | 'red' | null = null;
-    let messagePromise: Promise<string>;
-
-    if (accessLevel === 'full' && attemptsInWindow >= THREATENING_THRESHOLD) {
-        newWarningLevel = 'red';
-        messagePromise = getThreateningMessage();
-    } else if (accessLevel === 'full' && attemptsInWindow >= TINKERING_THRESHOLD) {
-        newWarningLevel = 'orange';
-        messagePromise = getTinkeringMessage();
-    } else {
-        const useAi = motivationMode === 'ai' || (motivationMode === 'mixed' && Math.random() < 0.5);
-        if (useAi && accessLevel === 'full') {
-            setIsAiGenerated(true);
-            const result = await getMotivationAction({
-                senderName: "Saurabh",
-                recipientName: "Pranjal",
-                topic: "JEE Prep",
-                quizScore: 75,
-                currentMood: moodLabel,
-            });
-            messagePromise = Promise.resolve(result.motivation);
-        } else {
-            setIsAiGenerated(false);
-            messagePromise = getRandomMotivationByMood(moodLabel, accessLevel || 'limited');
-        }
-    }
-
+    let finalMessage: string;
+    
     try {
-      const message = await messagePromise;
-      setMotivation(message);
+      if (accessLevel === 'full' && attemptsInWindow >= THREATENING_THRESHOLD) {
+          newWarningLevel = 'red';
+          finalMessage = await getThreateningMessage();
+      } else if (accessLevel === 'full' && attemptsInWindow >= TINKERING_THRESHOLD) {
+          newWarningLevel = 'orange';
+          finalMessage = await getTinkeringMessage();
+      } else {
+          const useAi = motivationMode === 'ai' || (motivationMode === 'mixed' && Math.random() < 0.5);
+          if (useAi && accessLevel === 'full') {
+              setIsAiGenerated(true);
+              const result = await getMotivationAction({
+                  senderName: "Saurabh",
+                  recipientName: "Pranjal",
+                  topic: "JEE Prep",
+                  quizScore: 75,
+                  currentMood: moodLabel,
+              });
+              finalMessage = result.motivation;
+              // AI messages don't have a read status to update
+          } else {
+              setIsAiGenerated(false);
+              const messageData = await getRandomMotivationByMood(moodLabel, accessLevel || 'limited');
+              finalMessage = messageData.text;
+
+              // Mark as read only on production and if it's not a fallback message
+              if (isProduction && messageData.id !== 'fallback') {
+                  await markMotivationAsRead(messageData.collectionName, messageData.id);
+              }
+          }
+      }
+      
+      // Log the mood after fetching and updating the message
+      await logMood(moodLabel);
+
+      setMotivation(finalMessage);
       setWarningLevel(newWarningLevel);
+
     } catch (error) {
       console.error("Failed to get motivation:", error);
       setMotivation("Oops! Something went wrong. But you've got this, keep going!");
