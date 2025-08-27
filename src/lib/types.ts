@@ -139,6 +139,7 @@ export interface Lecture extends DocumentData {
   thumbnailUrl: string;
   channel: string;
   duration: string;
+  createdAt?: Timestamp;
 }
 
 export interface LectureNote extends DocumentData {
@@ -202,3 +203,5 @@ export interface FeatureTip extends DocumentData {
     id: string;
     text: string;
 }
+
+    

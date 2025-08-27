@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useRef, useCallback, MouseEvent as ReactMouseEvent } from 'react';
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
+import { format } from 'date-fns';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -425,6 +427,30 @@ const ResizablePanel = ({ children, width, setWidth }: { children: React.ReactNo
     );
 };
 
+const DescriptionSection = ({ lecture }: { lecture: Lecture }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    return (
+        <div>
+            <div className={cn("prose prose-sm dark:prose-invert max-w-none", !isExpanded && "line-clamp-2")}>
+                <p className="whitespace-pre-wrap">{lecture.description}</p>
+            </div>
+            {lecture.description.split('\n').length > 2 && (
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="text-sm font-semibold text-primary hover:underline mt-2"
+                >
+                    {isExpanded ? 'Show less' : 'Show more'}
+                </button>
+            )}
+             {lecture.createdAt && (
+                <p className="text-xs text-muted-foreground mt-3">
+                    Uploaded on {format(lecture.createdAt.toDate(), "MMMM d, yyyy")}
+                </p>
+            )}
+        </div>
+    )
+}
 
 export default function LectureView({ lecture }: { lecture: Lecture }) {
     const { isClassMode, toggleClassMode } = useClassMode();
@@ -490,9 +516,7 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
                                     <CardDescription>{lecture.channel} • {lecture.subject}</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                                        <p className="whitespace-pre-wrap">{lecture.description}</p>
-                                    </div>
+                                    <DescriptionSection lecture={lecture} />
                                 </CardContent>
                             </Card>
                             
@@ -529,3 +553,5 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         </div>
     )
 }
+
+    
