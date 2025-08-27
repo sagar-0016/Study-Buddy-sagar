@@ -51,7 +51,9 @@ const getSummaryContent = (article: any): string => {
 
 // Fetcher for GNews
 const fetchFromGNews = async (query: string, isGeneral: boolean, sortBy: 'latest' | 'relevant'): Promise<{ articles: any[], url: string }> => {
-    if (!gnewsApiKey) throw new Error("GNews API key is missing.");
+    if (!gnewsApiKey) {
+        throw new Error("GNews API key is not configured on the server. Please use AI-generated news.");
+    }
     let finalQuery = query;
     if (isGeneral) {
         // GNews uses NOT operator for exclusion.
@@ -82,7 +84,9 @@ const fetchFromGNews = async (query: string, isGeneral: boolean, sortBy: 'latest
 
 // Fetcher for NewsData.io
 const fetchFromNewsData = async (query: string, isGeneral: boolean): Promise<{ articles: any[], url: string }> => {
-    if (!newsdataApiKey) throw new Error("NewsData.io API key is missing.");
+    if (!newsdataApiKey) {
+        throw new Error("NewsData.io API key is not configured on the server. Please use AI-generated news.");
+    }
     let finalQuery = query;
     if (isGeneral) {
         // NewsData.io also uses NOT operator.
@@ -133,17 +137,29 @@ export const fetchNewsArticles = ai.defineTool(
             } else {
                 // Auto fallback logic
                 try {
-                    const gnewsQuery = isGeneral ? `${query} NOT politics NOT entertainment NOT celebrity NOT gossip NOT crime NOT sports NOT movies` : query;
-                    const gnewsUrl = `https://gnews.io/api/v4/search?q=${encodeURIComponent(gnewsQuery)}&lang=en&country=in&sortby=${sortBy === 'latest' ? 'publishedAt' : 'relevance'}&apikey=${gnewsApiKey}`;
-                    debugUrls.push(gnewsUrl); // Add GNews URL for debugging regardless of outcome
-                    
-                    const { articles } = await fetchFromGNews(query, isGeneral, sortBy);
-                    fetchedArticles = articles;
+                    if (!gnewsApiKey && !newsdataApiKey) {
+                        throw new Error("No news API keys are configured on the server. Please use AI-generated news.");
+                    }
+
+                    if (gnewsApiKey) {
+                        const { articles, url } = await fetchFromGNews(query, isGeneral, sortBy);
+                        fetchedArticles = articles;
+                        debugUrls.push(url);
+                    } else {
+                         // Fallback to newsdata if gnews key is missing
+                        const { articles, url } = await fetchFromNewsData(query, isGeneral);
+                        fetchedArticles = articles;
+                        debugUrls.push(url);
+                    }
                 } catch (error) {
-                    console.error('GNews API failed, falling back to NewsData.io:', error);
-                    const { articles, url } = await fetchFromNewsData(query, isGeneral);
-                    fetchedArticles = articles;
-                    debugUrls.push(url);
+                    if (error instanceof Error && error.message.includes("GNews")) {
+                         console.error('GNews API failed, falling back to NewsData.io:', error);
+                        const { articles, url } = await fetchFromNewsData(query, isGeneral);
+                        fetchedArticles = articles;
+                        debugUrls.push(url);
+                    } else {
+                       throw error; // Re-throw other errors (like NewsData failure)
+                    }
                 }
             }
 
@@ -173,7 +189,7 @@ export const fetchNewsArticles = ai.defineTool(
             const articles = [{
                 headline: 'News Service Failed',
                 summary: `Could not fetch or parse news at this moment. Error: ${(error as Error).message}`,
-                fullContent: `There was an issue connecting to the news services or parsing the articles. Please check your internet connection or try again later. You can also switch to AI-generated news.`,
+                fullContent: `There was an issue connecting to the news services or parsing the articles. Please check your internet connection or try again later. You can also switch to AI-generated news. ${(error as Error).message}`,
                 source: 'Study Buddy System',
                 url: '#',
                 imageUrl: undefined,
