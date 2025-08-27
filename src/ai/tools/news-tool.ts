@@ -142,22 +142,27 @@ export const fetchNewsArticles = ai.defineTool(
 
                 try {
                     if (gnewsApiKey) {
+                        console.log('Primary API: Trying GNews...');
                         const { articles, url } = await fetchFromGNews(query, isGeneral, sortBy);
                         fetchedArticles = articles;
                         debugUrls.push(url);
-                    } else {
+                    } else if (newsdataApiKey) {
+                        // If GNews key is absent, go directly to NewsData
+                        console.log('Primary API: GNews key missing, trying NewsData.io...');
                         const { articles, url } = await fetchFromNewsData(query, isGeneral);
                         fetchedArticles = articles;
                         debugUrls.push(url);
                     }
                 } catch (primaryError) {
-                     if (gnewsApiKey && newsdataApiKey && (primaryError as Error).message.includes("GNews")) {
+                     // Fallback to NewsData.io only if GNews was attempted and failed, and NewsData key exists
+                     if (gnewsApiKey && newsdataApiKey) {
                          console.warn('GNews API failed, falling back to NewsData.io:', primaryError);
                         const { articles, url } = await fetchFromNewsData(query, isGeneral);
                         fetchedArticles = articles;
                         debugUrls.push(url);
                     } else {
-                        throw primaryError; // Re-throw if it's not a GNews error or if there's no fallback
+                        // If no fallback is possible, re-throw the original error
+                        throw primaryError;
                     }
                 }
             }
@@ -186,10 +191,10 @@ export const fetchNewsArticles = ai.defineTool(
             return { articles: enrichedArticles, debugUrls };
 
         } catch (error) {
-            console.error('Failed to fetch or parse news:', error);
+            console.error('Failed to fetch or parse news from all available sources:', error);
             const articles = [{
                 headline: 'News Service Unavailable',
-                summary: `Could not fetch live news at this moment. The external API may be down or the API key may be invalid. Error: ${(error as Error).message}`,
+                summary: `Could not fetch live news at this moment. The external APIs may be down or the API keys may be invalid. Error: ${(error as Error).message}`,
                 fullContent: `There was an issue connecting to the live news services. Please check the server logs for more details. You can also switch to AI-generated news. \n\nError details: ${(error as Error).message}`,
                 source: 'Study Buddy System',
                 url: '#',
