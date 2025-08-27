@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { addDoubt } from '@/lib/doubts';
-import { uploadLectureNote, getLectureNotes, deleteLectureNote } from '@/lib/lectures';
+import { uploadLectureNote, getLectureNotes, deleteLectureNote, addLectureFeedback } from '@/lib/lectures';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send, Star, FileText, Upload, Link as LinkIcon, Info, Image as ImageIcon, MessageCircleQuestion, MessageSquarePlus, Trash2, Notebook, AlertCircle, View, X, Minus, Plus, ArrowLeft, ArrowRight, Maximize, ZoomIn } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -87,6 +87,7 @@ const FeedbackDialog = ({ lecture }: { lecture: Lecture }) => {
         }
         setIsSubmitting(true);
         try {
+            await addLectureFeedback(lecture.id, { rating, text: feedbackText });
             toast({ title: "Thank you!", description: "Your feedback has been submitted." });
             
             if (!hasRated) {
@@ -553,5 +554,3 @@ export default function LectureView({ lecture }: { lecture: Lecture }) {
         </div>
     )
 }
-
-    

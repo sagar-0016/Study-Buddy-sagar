@@ -149,6 +149,13 @@ export interface LectureNote extends DocumentData {
     type: 'pdf' | 'link';
 }
 
+export interface LectureFeedback extends DocumentData {
+    id: string;
+    rating: number;
+    text: string;
+    submittedAt: Timestamp;
+}
+
 export interface Doubt extends DocumentData {
     id: string;
     text: string;
@@ -203,5 +210,3 @@ export interface FeatureTip extends DocumentData {
     id: string;
     text: string;
 }
-
-    

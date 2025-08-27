@@ -16,7 +16,7 @@ import {
   getDownloadURL,
 } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
-import type { LectureNote } from './types';
+import type { LectureNote, LectureFeedback } from './types';
 
 
 /**
@@ -114,3 +114,25 @@ export const deleteLectureNote = async (lectureId: string, noteId: string): Prom
         throw error;
     }
 }
+
+
+/**
+ * Adds feedback for a specific lecture to a 'feedback' subcollection.
+ * @param lectureId The ID of the lecture document.
+ * @param feedbackData The feedback data, including rating and text.
+ */
+export const addLectureFeedback = async (
+  lectureId: string,
+  feedbackData: { rating: number; text: string }
+): Promise<void> => {
+  try {
+    const feedbackRef = collection(db, 'lectures', lectureId, 'feedback');
+    await addDoc(feedbackRef, {
+      ...feedbackData,
+      submittedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error(`Error adding feedback for lecture ${lectureId}:`, error);
+    throw error;
+  }
+};
