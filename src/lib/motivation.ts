@@ -28,7 +28,7 @@ export const markMotivationAsRead = async (collectionName: string, messageId: st
 
 /**
  * Fetches a random motivational message from a specified collection based on mood and access level.
- * It prioritizes unread messages and resets them if all are read.
+ * It prioritizes unread messages. If all messages have been read, it will pick any message from the collection.
  * @param mood - The mood to fetch a message for (e.g., 'motivated', 'focused', 'worried').
  * @param accessLevel - The user's access level, which determines the message collection.
  * @returns A random message object from the collection, including its ID and collection name.
@@ -57,23 +57,13 @@ export const getRandomMotivationByMood = async (
     try {
         const messagesRef = collection(db, collectionName);
         
-        // Query for unread messages first
+        // 1. Query for unread messages first
         const unreadQuery = query(messagesRef, where('read', '!=', true));
         let querySnapshot = await getDocs(unreadQuery);
 
-        // If no unread messages, reset all and re-fetch
+        // 2. If no unread messages, query for ALL messages in the collection
         if (querySnapshot.empty) {
-            const allDocsSnapshot = await getDocs(messagesRef);
-            if(allDocsSnapshot.empty) return fallbackMessage;
-
-            const batch = writeBatch(db);
-            allDocsSnapshot.docs.forEach(doc => {
-                batch.update(doc.ref, { read: false });
-            });
-            await batch.commit();
-            console.log(`Reset read status for all messages in ${collectionName}.`);
-
-            // Re-fetch after resetting
+            console.log(`No unread messages in ${collectionName}, fetching from all messages.`);
             querySnapshot = await getDocs(messagesRef);
         }
 
@@ -83,7 +73,10 @@ export const getRandomMotivationByMood = async (
             collectionName: collectionName
         }));
 
-        if (messages.length === 0) return fallbackMessage;
+        if (messages.length === 0) {
+            console.warn(`Firestore collection '${collectionName}' is empty or does not exist.`);
+            return fallbackMessage;
+        }
 
         const randomIndex = Math.floor(Math.random() * messages.length);
         return messages[randomIndex];
