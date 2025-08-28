@@ -13,7 +13,7 @@
     --popover: 0 0% 100% / 0.7; /* Frosted glass effect */
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 120 55% 55%; /* Richer, more saturated green */
+    --primary: 120 65% 45%; /* Darker, more saturated green */
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 120 50% 92% / 0.7;
@@ -22,7 +22,7 @@
     --muted: 120 50% 92% / 0.7;
     --muted-foreground: 224 7.1% 44.1%;
 
-    --accent: 120 55% 45%; /* Darker Green */
+    --accent: 120 65% 35%; /* Even Darker Green for accents */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
@@ -30,7 +30,7 @@
 
     --border: 120 50% 88% / 0.8;
     --input: 120 50% 88% / 0.7;
-    --ring: 120 55% 55%;
+    --ring: 120 65% 45%;
 
     --radius: 0.5rem;
 
