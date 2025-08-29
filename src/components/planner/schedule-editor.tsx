@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
+import { doc, updateDoc, deleteField, collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,30 @@ const shuffleArray = (array: any[]) => {
     [array[currentIndex], array[randomIndex]] = [array[currentIndex], array[randomIndex]];
   }
   return array;
+};
+
+const logScheduleChange = async (
+    type: DayType,
+    changeType: 'added' | 'edited' | 'deleted',
+    taskTime: string,
+    taskContent: string,
+    previousTaskContent?: string
+) => {
+    try {
+        const logData: any = {
+            type,
+            changeType,
+            taskTime,
+            taskContent,
+            timestamp: serverTimestamp(),
+        };
+        if (previousTaskContent) {
+            logData.previousTaskContent = previousTaskContent;
+        }
+        await addDoc(collection(db, 'schedules-changes'), logData);
+    } catch (error) {
+        console.error("Failed to log schedule change:", error);
+    }
 };
 
 const ScheduleList = ({
@@ -145,22 +169,19 @@ const ScheduleList = ({
         const scheduleDocRef = doc(db, "schedules", type);
         const updates: { [key: string]: any } = {};
 
-        // If the time has changed, we need to remove the old entry and add a new one.
         if (selectedTask.time !== editedTime) {
             updates[`tasks.${selectedTask.time}`] = deleteField();
         }
         
-        // Add/update the new/current time entry.
-        // We assume the informal task can be derived from the formal one for simplicity,
-        // or we could add another input field for it. Here, we'll just use the formal one for both.
         updates[`tasks.${editedTime}`] = {
             formal: editedTask,
-            informal: editedTask // Or add a field to edit this
+            informal: editedTask
         };
 
         await updateDoc(scheduleDocRef, updates);
+        await logScheduleChange(type, 'edited', editedTime, editedTask, selectedTask.formal);
 
-        // Fetch the updated schedule to re-render
+
         const updatedScheduleData = await getSchedule(type);
         if (updatedScheduleData) onUpdate(updatedScheduleData);
 
@@ -185,6 +206,8 @@ const ScheduleList = ({
             [`tasks.${selectedTask.time}`]: deleteField()
         });
         
+        await logScheduleChange(type, 'deleted', selectedTask.time, selectedTask.formal);
+        
         const updatedScheduleData = await getSchedule(type);
         if (updatedScheduleData) onUpdate(updatedScheduleData);
         
@@ -208,9 +231,11 @@ const ScheduleList = ({
         await updateDoc(scheduleDocRef, {
             [`tasks.${newTime}`]: {
                 formal: newTask,
-                informal: newTask // Simplified for new tasks
+                informal: newTask
             }
         });
+
+        await logScheduleChange(type, 'added', newTime, newTask);
 
         const updatedScheduleData = await getSchedule(type);
         if (updatedScheduleData) onUpdate(updatedScheduleData);
