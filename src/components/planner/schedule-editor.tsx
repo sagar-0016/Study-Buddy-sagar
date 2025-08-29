@@ -24,8 +24,6 @@ import { Pencil, Loader2, PlusCircle, Lock, Unlock, MessageSquareHeart, Trash2 }
 import { getDisciplineMessages, getSchedule } from "@/lib/schedule";
 import { Separator } from "@/components/ui/separator";
 import { isDirectEditEnabled } from "@/lib/settings";
-import { format } from "date-fns";
-
 
 // Helper to shuffle an array
 const shuffleArray = (array: any[]) => {
@@ -46,13 +44,11 @@ const logScheduleChange = async (
     previousTaskContent?: string
 ) => {
     try {
-        // Create a detailed, unique document ID as requested
-        const now = new Date();
-        const docId = `${format(now, "yyyy-MM-dd_HH-mm-ss")}-${taskTime.replace(':', '')}-${type}`;
+        const docId = `${taskTime.replace(':', '')}-${type}`;
         const logDocRef = doc(db, 'schedules-changes', docId);
 
         const logData: any = {
-            type,
+            scheduleType: type,
             changeType,
             taskTime,
             taskContent,
@@ -61,7 +57,8 @@ const logScheduleChange = async (
         if (previousTaskContent) {
             logData.previousTaskContent = previousTaskContent;
         }
-        await setDoc(logDocRef, logData);
+        // Use setDoc to create or overwrite the document with the specific ID
+        await setDoc(logDocRef, logData, { merge: true });
     } catch (error) {
         console.error("Failed to log schedule change:", error);
     }
