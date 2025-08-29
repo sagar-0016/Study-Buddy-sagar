@@ -1,3 +1,4 @@
+
 # Prompt for "JEE PrepTrack" Admin Dashboard App
 
 ## 1. High-Level Goal
@@ -25,7 +26,7 @@ Create dedicated sections for managing all the educational content within the ap
 - **Flashcard Manager:**
   - View all flashcard decks.
   - Edit deck properties (title, description, icon, status, difficulty).
-  - **Crucially:** Be able to click into a deck to view, add, edit, and delete the individual flashcards (question/answer pairs) within that deck's nested `cards` collection.
+  - **Crucially:** Be able to click into a deck to view, add, edit, and delete the individual flashcards (question/answer pairs) within that deck's nested `cards` subcollection.
 - **Question Banks:**
   - A unified interface, perhaps with tabs, to manage both "Practice Questions" and "Tricky Questions".
   - Add/Edit/Delete questions, including their text, type (multiple choice/text), options, correct answer, and subject.
@@ -36,25 +37,28 @@ Create dedicated sections for managing all the educational content within the ap
   - Add, edit, and delete the brainstorming questions and their associated guidelines.
 - **Lecture Library Manager:**
   - Add, edit, and delete lecture videos. Fields to manage: `title`, `description`, `subject`, `videoUrl`, `thumbnailUrl`, `channel`, and `duration`.
+  - Ability to view and manage uploaded PDF notes in the `notes` subcollection for each lecture.
 - **Motivational Content Manager:**
   - Use tabs or separate pages to manage:
     - **Tips:** (from the `tips` collection)
     - **One-Liners:** (from the `one-liners` collection)
-    - **Mood-Based Messages:** (from `motivation-motivated`, `motivation-focused`, `motivation-worried` collections)
+    - **Mood-Based Messages:** (from `motivation-motivated`, `motivation-focused`, `motivation-worried` collections and their `-formal` counterparts)
     - **Discipline Messages:** (from the `discipline` collection)
 
 ### 2.3. User Interaction Management
 Provide interfaces to review and act upon user submissions.
 
-- **Doubt Centre:**
-  - View a list of all submitted doubts, sorted by date.
+- **Doubt Centre (Lecture Specific):**
+  - View a list of all submitted doubts by querying the `doubts` subcollection across all `lectures`.
   - See the question, subject, and any attached image.
   - **Provide a text area to write a `adressedText`.**
   - A button to **"Mark as Addressed"**, which sets the `isAddressed` boolean to `true` in Firestore. This signals to the user in the main app that their doubt has been seen.
 - **Technical Help Desk:**
-  - Similar to the Doubt Centre, view all technical help requests.
+  - Similar to the Doubt Centre, view all technical help requests from the top-level `technical-help` collection.
   - **Provide a text area to write a `adressedText`.**
   - A button to **"Mark as Addressed"** to update the `isAddressed` flag.
+- **Lecture Feedback Viewer:**
+  - Ability to go into a specific lecture and view all feedback (ratings and comments) from the `feedback` subcollection.
 - **Brainstorming Submissions:**
   - View all submissions from the `brainstorming-submissions` collection.
   - Display the original question and the user's submitted thoughts.
@@ -103,13 +107,17 @@ This section details the Firestore collections the admin panel will need to inte
   - **Documents:** Auto-ID documents for each lecture.
   - **Purpose:** Stores video lecture metadata.
   - **Fields:** `title`, `description`, `subject`, `videoUrl`, `thumbnailUrl`, `channel`, `duration`.
-  - **Admin Action:** Full CRUD.
+  - **Admin Action:** Full CRUD on lectures.
+  - **Subcollections:**
+    - **`notes`:** Stores user-uploaded and sample notes. Documents have `name`, `url`, `type`. Admin can view/delete.
+    - **`doubts`:** Stores questions specific to this lecture. Documents have `text`, `subject`, `imageUrl`, `createdAt`, `isAddressed`, `isCleared`, `adressedText`. Admin can respond and mark as addressed.
+    - **`feedback`:** Stores user feedback. Documents have `rating`, `text`, `submittedAt`. Admin can view.
 
-- **`doubts`**, **`technical-help`**:
+- **`technical-help`**:
   - **Documents:** Auto-ID documents for each user submission.
-  - **Purpose:** Stores user-submitted issues.
-  - **Fields:** `text`, `subject`/`category`, `imageUrl`, `createdAt`, `isAddressed` (boolean), `isCleared` (boolean), `adressedText` (string, optional).
-  - **Admin Action:** Read-only for content, but can **update** the `isAddressed` field from `false` to `true` and **add/edit** the `adressedText` field.
+  - **Purpose:** Stores user-submitted technical issues.
+  - **Fields:** `text`, `category`, `imageUrl`, `createdAt`, `isAddressed` (boolean), `isCleared` (boolean), `adressedText` (string, optional).
+  - **Admin Action:** Read-only for content, but can **update** the `isAddressed` field and **add/edit** the `adressedText` field.
 
 - **`brainstorming-submissions`**:
   - **Documents:** Auto-ID documents.
@@ -118,7 +126,7 @@ This section details the Firestore collections the admin panel will need to inte
   - **Admin Action:** Read-only.
 
 - **Motivational Collections**:
-  - **Collections:** `tips`, `one-liners`, `discipline`, `motivation-motivated`, `motivation-focused`, `motivation-worried`, `tinkering-messages`, `threatening-messages`.
+  - **Collections:** `tips`, `one-liners`, `discipline`, `motivation-motivated`, `motivation-focused`, `motivation-worried`, `tinkering-messages`, `threatening-messages`, and the `-formal` variants.
   - **Documents:** Auto-ID documents in each.
-  - **Fields:** `text` or `message` (string).
+  - **Fields:** `text` or `message` (string), and `read` (boolean).
   - **Admin Action:** Full CRUD on the messages within these collections.
