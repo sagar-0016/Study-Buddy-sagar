@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { doc, updateDoc, deleteField, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, deleteField, collection, setDoc, serverTimestamp } from "firebase/firestore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import { Pencil, Loader2, PlusCircle, Lock, Unlock, MessageSquareHeart, Trash2 }
 import { getDisciplineMessages, getSchedule } from "@/lib/schedule";
 import { Separator } from "@/components/ui/separator";
 import { isDirectEditEnabled } from "@/lib/settings";
+import { format } from "date-fns";
+
 
 // Helper to shuffle an array
 const shuffleArray = (array: any[]) => {
@@ -44,6 +46,11 @@ const logScheduleChange = async (
     previousTaskContent?: string
 ) => {
     try {
+        // Create a detailed, unique document ID as requested
+        const now = new Date();
+        const docId = `${format(now, "yyyy-MM-dd_HH-mm-ss")}-${taskTime.replace(':', '')}-${type}`;
+        const logDocRef = doc(db, 'schedules-changes', docId);
+
         const logData: any = {
             type,
             changeType,
@@ -54,7 +61,7 @@ const logScheduleChange = async (
         if (previousTaskContent) {
             logData.previousTaskContent = previousTaskContent;
         }
-        await addDoc(collection(db, 'schedules-changes'), logData);
+        await setDoc(logDocRef, logData);
     } catch (error) {
         console.error("Failed to log schedule change:", error);
     }
