@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -44,7 +45,7 @@ const logScheduleChange = async (
     previousTaskContent?: string
 ) => {
     try {
-        const docId = `${taskTime.replace(':', '')}-${type}`;
+        const docId = `${taskTime}-${type}`;
         const logDocRef = doc(db, 'schedules-changes', docId);
 
         const logData: any = {
