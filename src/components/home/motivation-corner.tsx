@@ -100,7 +100,7 @@ export default function MotivationCorner() {
       }
       
       // Log the mood after fetching and updating the message
-      await logMood(moodLabel);
+      await logMood(moodLabel, finalMessage);
 
       setMotivation(finalMessage);
       setWarningLevel(newWarningLevel);
