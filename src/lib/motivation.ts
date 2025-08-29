@@ -105,11 +105,11 @@ export const getThreateningMessage = async (): Promise<string> => {
 
 
 /**
- * Fetches a random message from the 'worried-messages-streak' collection for when the user is persistently worried.
+ * Fetches a random message from the 'worried-messages' collection for when the user is persistently worried.
  * @returns A random message string.
  */
 export const getWorriedStreakMessage = async (): Promise<string> => {
-    return getRandomMessageFromCollection('worried-messages-streak', "It seems like you've been worried for a few days. Remember to be kind to yourself. It's okay to take a break.");
+    return getRandomMessageFromCollection('worried-messages', "It seems like you've been worried for a few days. Remember to be kind to yourself. It's okay to take a break.");
 };
 
 
