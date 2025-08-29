@@ -9,9 +9,9 @@ import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { MotivationMode } from "@/components/settings/settings-page";
-import { getRandomMotivationByMood, getTinkeringMessage, getThreateningMessage, markMotivationAsRead } from "@/lib/motivation";
+import { getRandomMotivationByMood, getTinkeringMessage, getThreateningMessage, markMotivationAsRead, getWorriedStreakMessage } from "@/lib/motivation";
 import { useToast } from "@/hooks/use-toast";
-import { logMood } from "@/lib/mood-tracker";
+import { logMood, checkConsecutiveWorriedDays } from "@/lib/mood-tracker";
 
 const moods = [
   { emoji: "✨", label: "Motivated" },
@@ -22,13 +22,14 @@ const moods = [
 const TINKERING_THRESHOLD = 4;
 const THREATENING_THRESHOLD = 7;
 const TIME_WINDOW = 5 * 60 * 1000; // 5 minutes in milliseconds
+const WORRIED_STREAK_DAYS = 3;
 
 export default function MotivationCorner() {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [motivation, setMotivation] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [isAiGenerated, setIsAiGenerated] = useState(false);
-  const [warningLevel, setWarningLevel] = useState<null | 'orange' | 'red'>(null);
+  const [warningLevel, setWarningLevel] = useState<null | 'orange' | 'red' | 'blue'>(null);
   const [motivationMode] = useLocalStorage<MotivationMode>('motivation-mode', 'mixed');
   const [timestamps, setTimestamps] = useLocalStorage<number[]>('motivation-timestamps', []);
   const { toast } = useToast();
@@ -64,7 +65,7 @@ export default function MotivationCorner() {
     }
     
     const attemptsInWindow = currentTimestamps.length;
-    let newWarningLevel: 'orange' | 'red' | null = null;
+    let newWarningLevel: 'orange' | 'red' | 'blue' | null = null;
     let finalMessage: string;
     
     try {
@@ -74,7 +75,35 @@ export default function MotivationCorner() {
       } else if (accessLevel === 'full' && attemptsInWindow >= TINKERING_THRESHOLD) {
           newWarningLevel = 'orange';
           finalMessage = await getTinkeringMessage();
+      } else if (moodLabel === 'Worried' && accessLevel === 'full') {
+          const isWorriedStreak = await checkConsecutiveWorriedDays(WORRIED_STREAK_DAYS);
+          if (isWorriedStreak) {
+              newWarningLevel = 'blue';
+              finalMessage = await getWorriedStreakMessage();
+          } else {
+            // Normal worried logic
+            const useAi = motivationMode === 'ai' || (motivationMode === 'mixed' && Math.random() < 0.5);
+            if (useAi) {
+              setIsAiGenerated(true);
+              const result = await getMotivationAction({
+                  senderName: "Saurabh",
+                  recipientName: "Pranjal",
+                  topic: "JEE Prep",
+                  quizScore: 75,
+                  currentMood: moodLabel,
+              });
+              finalMessage = result.motivation;
+            } else {
+              setIsAiGenerated(false);
+              const messageData = await getRandomMotivationByMood(moodLabel, accessLevel || 'limited');
+              finalMessage = messageData.text;
+              if (isProduction && messageData.id !== 'fallback') {
+                  await markMotivationAsRead(messageData.collectionName, messageData.id);
+              }
+            }
+          }
       } else {
+          // Logic for Motivated and Focused moods
           const useAi = motivationMode === 'ai' || (motivationMode === 'mixed' && Math.random() < 0.5);
           if (useAi && accessLevel === 'full') {
               setIsAiGenerated(true);
@@ -86,20 +115,16 @@ export default function MotivationCorner() {
                   currentMood: moodLabel,
               });
               finalMessage = result.motivation;
-              // AI messages don't have a read status to update
           } else {
               setIsAiGenerated(false);
               const messageData = await getRandomMotivationByMood(moodLabel, accessLevel || 'limited');
               finalMessage = messageData.text;
-
-              // Mark as read only on production and if it's not a fallback message
               if (isProduction && messageData.id !== 'fallback') {
                   await markMotivationAsRead(messageData.collectionName, messageData.id);
               }
           }
       }
       
-      // Log the mood after fetching and updating the message
       await logMood(moodLabel, finalMessage);
 
       setMotivation(finalMessage);
@@ -148,6 +173,7 @@ export default function MotivationCorner() {
                 'bg-accent/10 border-accent': !warningLevel,
                 'bg-orange-500/10 border-orange-500': warningLevel === 'orange',
                 'bg-red-500/10 border-red-500': warningLevel === 'red',
+                'bg-blue-500/10 border-blue-500': warningLevel === 'blue',
             }
           )}>
             <div className="flex items-start">
@@ -156,6 +182,7 @@ export default function MotivationCorner() {
                 'text-accent': !warningLevel,
                 'text-orange-500': warningLevel === 'orange',
                 'text-red-500': warningLevel === 'red',
+                'text-blue-500': warningLevel === 'blue',
                }
               )} />
               <p className="italic">"{motivation}"</p>
