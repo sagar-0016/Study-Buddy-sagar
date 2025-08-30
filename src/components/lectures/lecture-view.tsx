@@ -285,6 +285,11 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
     };
     
     const triggerFileInput = () => {
+        toast({
+            title: "File Upload",
+            description: "The app will lock in 10 seconds. Please select your file.",
+            duration: 5000,
+        });
         pauseLocking(10000); // Pause for 10 seconds
         fileInputRef.current?.click();
     }
