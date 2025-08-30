@@ -285,7 +285,7 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
     };
     
     const triggerFileInput = () => {
-        pauseLocking(5000); // Pause for 5 seconds
+        pauseLocking(10000); // Pause for 10 seconds
         fileInputRef.current?.click();
     }
     
