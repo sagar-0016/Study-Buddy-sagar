@@ -288,7 +288,7 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
         toast({
             title: "File Upload",
             description: "The app will lock in 10 seconds. Please select your file.",
-            duration: 5000,
+            duration: 10000,
         });
         pauseLocking(10000); // Pause for 10 seconds
         fileInputRef.current?.click();
@@ -313,6 +313,10 @@ const NotesSection = ({ lecture, isClassMode }: { lecture: Lecture, isClassMode:
 
         const handleClick = () => {
             if (note.type === 'pdf') {
+                toast({
+                    title: "Loading PDF",
+                    description: "Please wait while the document is being prepared.",
+                });
                 setViewingPdfUrl(note.url);
             } else {
                 window.open(note.url, '_blank', 'noopener,noreferrer');
