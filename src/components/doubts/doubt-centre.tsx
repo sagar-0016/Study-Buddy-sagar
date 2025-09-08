@@ -130,7 +130,7 @@ const DoubtCard = ({ doubt, onCleared }: { doubt: Doubt, onCleared: (lectureId: 
                 <div className="flex justify-between items-start gap-4">
                     <div className='flex flex-col'>
                         <CardDescription>
-                            {formatDistanceToNow(doubt.createdAt.toDate(), { addSuffix: true })}
+                            {doubt.createdAt?.toDate ? formatDistanceToNow(doubt.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
                         </CardDescription>
                         {doubt.lectureTitle && (
                              <CardDescription className='font-semibold italic'>

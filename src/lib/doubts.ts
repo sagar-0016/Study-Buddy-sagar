@@ -1,4 +1,5 @@
 
+
 import { db, storage } from './firebase';
 import {
   collection,
@@ -98,26 +99,17 @@ export const addDoubt = async (data: {
  */
 export const getDoubts = async (accessLevel: AccessLevel): Promise<Doubt[]> => {
   try {
-    // This query now ONLY gets doubts from sub-collections by checking for the existence of `lectureId`.
-    const lectureDoubtsQuery = query(collectionGroup(db, 'doubts'), where('lectureId', '!=', ''));
-    
-    // This query ONLY gets doubts from the top-level collection by ensuring `lectureId` does NOT exist.
-    const generalDoubtsQuery = query(collection(db, 'doubts'), where('lectureId', '==', null));
+    const allDoubtsQuery = query(collectionGroup(db, 'doubts'));
 
     const accessConstraints: QueryConstraint[] = [];
     if (accessLevel === 'limited') {
       accessConstraints.push(where('accessLevel', '==', 'limited'));
     }
 
-    const [lectureDoubtsSnapshot, generalDoubtsSnapshot] = await Promise.all([
-      getDocs(query(lectureDoubtsQuery, ...accessConstraints)),
-      getDocs(query(generalDoubtsQuery, ...accessConstraints)),
-    ]);
+    const finalQuery = query(allDoubtsQuery, ...accessConstraints);
+    const querySnapshot = await getDocs(finalQuery);
 
-    const allDoubts = [
-        ...lectureDoubtsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doubt)),
-        ...generalDoubtsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doubt))
-    ];
+    const allDoubts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doubt));
     
     // Sort all doubts by creation date descending
     allDoubts.sort((a, b) => {
