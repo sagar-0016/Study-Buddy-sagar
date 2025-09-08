@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, MouseEvent as ReactMouseEvent } from 'react';
-import type { Lecture, LectureNote } from '@/lib/types';
+import type { Lecture, LectureNote, AccessLevel } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,7 +23,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { format } from 'date-fns';
-import { useAuth, type AccessLevel } from '@/context/auth-context';
+import { useAuth } from '@/context/auth-context';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 

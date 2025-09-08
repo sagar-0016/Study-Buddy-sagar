@@ -9,9 +9,11 @@ import {
   serverTimestamp,
   query,
   orderBy,
+  where,
+  QueryConstraint
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import type { TechnicalHelp } from './types';
+import type { TechnicalHelp, AccessLevel } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -35,12 +37,14 @@ const uploadHelpImage = async (file: File): Promise<string> => {
 export const addTechnicalHelp = async (data: {
   text: string;
   category: string;
+  accessLevel: AccessLevel;
   imageFile?: File;
 }): Promise<string> => {
   try {
      const payload: {
         text: string;
         category: string;
+        accessLevel: AccessLevel;
         isAddressed: boolean;
         isCleared: boolean;
         createdAt: any;
@@ -48,6 +52,7 @@ export const addTechnicalHelp = async (data: {
     } = {
       text: data.text,
       category: data.category,
+      accessLevel: data.accessLevel,
       isAddressed: false,
       isCleared: false,
       createdAt: serverTimestamp(),
@@ -70,10 +75,16 @@ export const addTechnicalHelp = async (data: {
  * Fetches all technical help requests from Firestore, ordered by creation date.
  * @returns {Promise<TechnicalHelp[]>} An array of help request objects.
  */
-export const getTechnicalHelp = async (): Promise<TechnicalHelp[]> => {
+export const getTechnicalHelp = async (accessLevel: AccessLevel): Promise<TechnicalHelp[]> => {
   try {
     const helpRef = collection(db, 'technical-help');
-    const q = query(helpRef, orderBy('createdAt', 'desc'));
+    
+    const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
+    if (accessLevel === 'limited') {
+      constraints.push(where('accessLevel', '==', 'limited'));
+    }
+
+    const q = query(helpRef, ...constraints);
     const querySnapshot = await getDocs(q);
 
     return querySnapshot.docs.map(

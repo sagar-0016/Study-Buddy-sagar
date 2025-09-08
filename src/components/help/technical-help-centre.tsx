@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { getTechnicalHelp, addTechnicalHelp, markTechnicalHelpAsCleared } from '@/lib/technical-help';
-import type { TechnicalHelp } from '@/lib/types';
+import type { TechnicalHelp, AccessLevel } from '@/lib/types';
 import {
   Select,
   SelectContent,
@@ -45,9 +45,11 @@ const AddHelpRequestDialog = ({ onHelpRequestAdded, children }: { onHelpRequestA
         if (!canSubmit) return;
         setIsSaving(true);
         try {
+            const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel || 'limited';
             await addTechnicalHelp({
                 text,
                 category,
+                accessLevel,
                 imageFile: imageFile || undefined
             });
             toast({ title: "Success!", description: "Your help request has been submitted." });
@@ -183,7 +185,8 @@ export default function TechnicalHelpCentre() {
 
     const fetchHelpRequests = useCallback(async () => {
         setIsLoading(true);
-        const fetchedRequests = await getTechnicalHelp();
+        const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | null || 'limited';
+        const fetchedRequests = await getTechnicalHelp(accessLevel);
         setRequests(fetchedRequests);
         setIsLoading(false);
     }, []);
