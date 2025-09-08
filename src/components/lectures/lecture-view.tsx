@@ -23,7 +23,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import 'react-pdf/dist/esm/Page/TextLayer.css';
 import { format } from 'date-fns';
-import { useAuth } from '@/context/auth-context';
+import { useAuth, type AccessLevel } from '@/context/auth-context';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -36,11 +36,13 @@ const DoubtSection = ({ lecture }: { lecture: Lecture }) => {
         if (!doubtText) return;
         setIsSubmitting(true);
         try {
+            const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel || 'limited';
             await addDoubt({
                 lectureId: lecture.id,
                 lectureTitle: lecture.title,
                 text: doubtText,
-                subject: lecture.subject
+                subject: lecture.subject,
+                accessLevel: accessLevel,
             });
             toast({ title: "Success", description: "Your doubt has been submitted." });
             setDoubtText('');

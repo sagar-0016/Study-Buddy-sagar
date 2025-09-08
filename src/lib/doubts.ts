@@ -10,9 +10,11 @@ import {
   query,
   orderBy,
   collectionGroup,
+  where,
+  QueryConstraint,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import type { Doubt } from './types';
+import type { Doubt, AccessLevel } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -29,32 +31,34 @@ const uploadDoubtImage = async (file: File): Promise<string> => {
 }
 
 /**
- * Adds a new doubt to a lecture's subcollection in Firestore. Handles optional image upload.
+ * Adds a new doubt to a lecture's subcollection or the general doubts collection in Firestore.
+ * Handles optional image upload and includes access level.
  * @param data - The data for the new doubt.
  * @returns The ID of the newly created document.
  */
 export const addDoubt = async (data: {
-  lectureId: string;
-  lectureTitle: string;
   text: string;
   subject: string;
+  accessLevel: AccessLevel;
+  lectureId?: string;
+  lectureTitle?: string;
   imageFile?: File;
 }): Promise<string> => {
   try {
     const payload: {
         text: string;
         subject: string;
-        lectureId: string;
-        lectureTitle: string;
+        accessLevel: AccessLevel;
         isAddressed: boolean;
         isCleared: boolean;
         createdAt: any;
+        lectureId?: string;
+        lectureTitle?: string;
         imageUrl?: string;
     } = {
       text: data.text,
       subject: data.subject,
-      lectureId: data.lectureId,
-      lectureTitle: data.lectureTitle,
+      accessLevel: data.accessLevel,
       isAddressed: false,
       isCleared: false,
       createdAt: serverTimestamp(),
@@ -63,9 +67,20 @@ export const addDoubt = async (data: {
     if (data.imageFile) {
         payload.imageUrl = await uploadDoubtImage(data.imageFile);
     }
+    
+    let newDocRef;
+    if (data.lectureId && data.lectureTitle) {
+        // Lecture-specific doubt
+        payload.lectureId = data.lectureId;
+        payload.lectureTitle = data.lectureTitle;
+        const doubtsRef = collection(db, 'lectures', data.lectureId, 'doubts');
+        newDocRef = await addDoc(doubtsRef, payload);
+    } else {
+        // General doubt
+        const doubtsRef = collection(db, 'doubts');
+        newDocRef = await addDoc(doubtsRef, payload);
+    }
 
-    const doubtsRef = collection(db, 'lectures', data.lectureId, 'doubts');
-    const newDocRef = await addDoc(doubtsRef, payload);
     return newDocRef.id;
   } catch (error) {
     console.error('Error adding doubt:', error);
@@ -73,24 +88,41 @@ export const addDoubt = async (data: {
   }
 };
 
+
 /**
- * Fetches all doubts from all lecture subcollections using a collection group query.
+ * Fetches all relevant doubts based on user's access level.
+ * Full access sees all doubts. Limited access sees only limited-access doubts.
+ * @param {AccessLevel} accessLevel - The access level of the current user.
  * @returns {Promise<Doubt[]>} An array of doubt objects.
  */
-export const getDoubts = async (): Promise<Doubt[]> => {
+export const getDoubts = async (accessLevel: AccessLevel): Promise<Doubt[]> => {
   try {
-    const doubtsGroupRef = collectionGroup(db, 'doubts');
-    const q = query(doubtsGroupRef, orderBy('createdAt', 'desc'));
-    const querySnapshot = await getDocs(q);
+    const lectureDoubtsQuery = collectionGroup(db, 'doubts');
+    const generalDoubtsQuery = collection(db, 'doubts');
 
-    return querySnapshot.docs.map(
-      (doc) => ({ id: doc.id, ...doc.data() } as Doubt)
-    );
+    const constraints: QueryConstraint[] = [];
+    if (accessLevel === 'limited') {
+      constraints.push(where('accessLevel', '==', 'limited'));
+    }
+
+    const lectureDoubtsSnapshot = await getDocs(query(lectureDoubtsQuery, ...constraints));
+    const generalDoubtsSnapshot = await getDocs(query(generalDoubtsQuery, ...constraints));
+
+    const allDoubts = [
+        ...lectureDoubtsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doubt)),
+        ...generalDoubtsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doubt))
+    ];
+    
+    // Sort all doubts by creation date descending
+    allDoubts.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+
+    return allDoubts;
   } catch (error) {
     console.error('Error fetching doubts:', error);
     return [];
   }
 };
+
 
 /**
  * Marks a doubt as cleared by the user.

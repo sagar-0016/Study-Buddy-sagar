@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -13,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { getDoubts, addDoubt, markDoubtAsCleared } from '@/lib/doubts';
-import type { Doubt } from '@/lib/types';
+import type { Doubt, AccessLevel } from '@/lib/types';
 import {
   Select,
   SelectContent,
@@ -45,21 +46,19 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
         if (!canSubmit) return;
         setIsSaving(true);
         try {
-            // Note: This adds a general doubt, not linked to a specific lecture.
-            // The addDoubt function in lib needs to handle this case, or a different function is needed.
-            // For now, we'll assume a general doubt doesn't require lectureId.
-            // This part might need adjustment based on final `addDoubt` signature.
-            console.warn("Submitting a general doubt without a lecture ID.");
-            
-            // Awaiting confirmation on how to handle general doubts vs lecture-specific ones.
-            // For now, this will likely fail if `addDoubt` requires `lectureId`.
-            
-            // toast({ title: "Success!", description: "Your doubt has been submitted." });
-            // onDoubtAdded();
-            // setIsOpen(false);
-            // resetForm();
+            const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | null || 'limited';
 
-             toast({ title: "Coming Soon", description: "Adding general doubts is not yet supported. Please ask doubts from a specific lecture page.", variant: "destructive" });
+            await addDoubt({
+                text,
+                subject,
+                accessLevel,
+                imageFile: imageFile || undefined,
+            });
+            
+            toast({ title: "Success!", description: "Your doubt has been submitted." });
+            onDoubtAdded();
+            setIsOpen(false);
+            resetForm();
 
         } catch (error) {
              toast({ title: "Error", description: "Could not submit your doubt.", variant: "destructive" });
@@ -75,7 +74,7 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
                 <DialogHeader>
                     <DialogTitle>Ask a New Doubt</DialogTitle>
                     <DialogDescription>
-                        Clearly describe your question. Note: General doubts can be added here once functionality is complete. For now, please ask from a lecture page.
+                        Clearly describe your question. This will be visible in the main Doubt Centre.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -104,7 +103,7 @@ const AddDoubtDialog = ({ onDoubtAdded, children }: { onDoubtAdded: () => void, 
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-                     <Button onClick={handleSubmit} disabled={true}>
+                     <Button onClick={handleSubmit} disabled={isSaving || !canSubmit}>
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                         Submit Doubt
                     </Button>
@@ -199,7 +198,8 @@ export default function DoubtCentre() {
 
     const fetchDoubts = useCallback(async () => {
         setIsLoading(true);
-        const fetchedDoubts = await getDoubts();
+        const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | null || 'limited';
+        const fetchedDoubts = await getDoubts(accessLevel);
         setDoubts(fetchedDoubts);
         setIsLoading(false);
     }, []);
@@ -211,10 +211,11 @@ export default function DoubtCentre() {
     const handleMarkCleared = async (lectureId: string, doubtId: string) => {
         try {
             if (!lectureId) {
-                 toast({ title: 'Error', description: 'Cannot find the associated lecture for this doubt.', variant: 'destructive' });
-                 return;
+                const doubtRef = doc(db, 'doubts', doubtId);
+                await updateDoc(doubtRef, { isCleared: true });
+            } else {
+                await markDoubtAsCleared(lectureId, doubtId);
             }
-            await markDoubtAsCleared(lectureId, doubtId);
             setDoubts(prev => prev.map(d => d.id === doubtId ? { ...d, isCleared: true } : d));
             toast({ title: 'Success', description: 'Doubt marked as cleared.' });
         } catch(error) {
@@ -237,7 +238,7 @@ export default function DoubtCentre() {
                 <div className="flex flex-col items-center justify-center text-center p-8 border-2 border-dashed rounded-lg min-h-[40vh]">
                     <MessageSquare className="h-12 w-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-semibold">No Doubts Here</h3>
-                    <p className="text-muted-foreground">Looks like you're all clear! Ask a new question from a lecture page to get started.</p>
+                    <p className="text-muted-foreground">Looks like you're all clear! Ask a new question to get started.</p>
                 </div>
             );
         }
@@ -254,8 +255,6 @@ export default function DoubtCentre() {
     return (
          <div className="relative">
              {renderContent()}
-           {/* The floating action button for adding general doubts is temporarily disabled.
-               Re-enable when a system for handling general (non-lecture-specific) doubts is implemented.
             <div className="fixed bottom-8 right-8 z-50">
                <AddDoubtDialog onDoubtAdded={fetchDoubts}>
                     <Button className="rounded-full h-14 w-14 p-4 shadow-lg flex items-center justify-center">
@@ -264,7 +263,6 @@ export default function DoubtCentre() {
                     </Button>
                </AddDoubtDialog>
            </div>
-           */}
         </div>
     );
 }

@@ -1,7 +1,7 @@
 
 
 import { DocumentData, Timestamp } from 'firebase/firestore';
-import type { AccessLevel } from '@/context/auth-context';
+export type AccessLevel = 'full' | 'limited';
 
 export type NavLink = {
   href: string;
@@ -167,6 +167,7 @@ export interface Doubt extends DocumentData {
     isCleared: boolean;
     createdAt: Timestamp;
     adressedText?: string;
+    accessLevel: AccessLevel;
 }
 
 export interface TechnicalHelp extends DocumentData {
