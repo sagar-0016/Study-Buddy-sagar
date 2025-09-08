@@ -46,7 +46,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const logAppOpenAndCheckMessages = async () => {
       try {
-        if (isAuthenticated) {
+        // Check for messages only when authenticated AND unlocked.
+        if (isAuthenticated && !isLocked) {
             const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | 'unknown';
             
             if (accessLevel !== 'full') {
@@ -75,7 +76,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     };
 
     logAppOpenAndCheckMessages();
-  }, [isAuthenticated, toast]);
+  }, [isAuthenticated, isLocked, toast]); // Added isLocked to dependency array
 
   if (!isAuthenticated) {
     return <LoginFlow />;
