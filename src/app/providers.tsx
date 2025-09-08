@@ -11,11 +11,8 @@ import { AuthProvider, useAuth } from '@/context/auth-context';
 import { BackgroundProvider, useBackground } from '@/context/background-context';
 import { ClassModeProvider, useClassMode } from '@/context/class-mode-context';
 import LoginFlow from '@/components/auth/login-flow';
-import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
-import { useToast } from '@/hooks/use-toast';
-import { MessageSquareWarning, Loader2, X, Github } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import UnlockScreen from '@/components/auth/unlock-screen';
-import type { AccessLevel } from '@/context/auth-context';
 import { cn } from '@/lib/utils';
 
 
@@ -49,7 +46,6 @@ function AppBackground() {
 function AppContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLocked, lockApp, unlockApp, isReloading } = useAuth();
   const { isClassMode } = useClassMode();
-  const { toast } = useToast();
 
   useEffect(() => {
     const lock = () => {
@@ -76,13 +72,12 @@ function AppContent({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isLocked, lockApp]);
 
   useEffect(() => {
-    const logAppOpenAndCheckMessages = async () => {
+    const logAppOpen = async () => {
       try {
-        if (isAuthenticated) {
+        if (isAuthenticated && !isLocked) { // Only log if fully unlocked
             const isOwnerDevice = localStorage.getItem('is-owner-device') === 'true';
             const isProduction = window.location.href.includes("https://study-buddy-two-phi.vercel.app");
 
-            // Only log if we're on the production URL AND it's not the owner's device
             if (!isOwnerDevice && isProduction) {
                 const accessLevel = localStorage.getItem('study-buddy-access-level') || 'unknown';
                 await addDoc(collection(db, "opened"), {
@@ -100,34 +95,14 @@ function AppContent({ children }: { children: React.ReactNode }) {
                   }
                 });
             }
-
-            const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | 'unknown';
-            
-            // Only check messages on production URL and for the full access user
-            if (accessLevel === 'full' && isProduction) {
-                const messages = await getUnreadMessages();
-                messages.forEach(async (msg) => {
-                    toast({
-                        title: (
-                            <div className="flex items-center gap-2">
-                                <MessageSquareWarning className="h-5 w-5 text-primary" />
-                                <span>New Message</span>
-                            </div>
-                        ),
-                        description: msg.text,
-                        duration: 10000,
-                    });
-                    await markMessageAsRead(msg.id);
-                });
-            }
         }
       } catch (error) {
-        console.error("Error during app startup tasks: ", error);
+        console.error("Error during app open logging: ", error);
       }
     };
 
-    logAppOpenAndCheckMessages();
-  }, [isAuthenticated, toast]);
+    logAppOpen();
+  }, [isAuthenticated, isLocked]);
 
   if (isReloading) {
     return (

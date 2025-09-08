@@ -3,7 +3,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MessageSquareWarning } from 'lucide-react';
+import { getUnreadMessages, markMessageAsRead } from '@/lib/messages';
 
 export type AccessLevel = 'full' | 'limited';
 
@@ -62,6 +63,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         sessionStorage.setItem('study-buddy-session-active', 'true');
         localStorage.setItem('study-buddy-access-level', accessLevel);
         localStorage.setItem('study-buddy-app-locked', 'false'); // Unlock the app
+
+        // --- Fetch messages on successful login ---
+        if (accessLevel === 'full') {
+            const isProduction = window.location.href.includes("study-buddy-two-phi.vercel.app");
+            if (isProduction) {
+                 getUnreadMessages().then(messages => {
+                    messages.forEach(async (msg) => {
+                        toast({
+                            title: (
+                                <div className="flex items-center gap-2">
+                                    <MessageSquareWarning className="h-5 w-5 text-primary" />
+                                    <span>New Message</span>
+                                </div>
+                            ),
+                            description: msg.text,
+                            duration: 10000,
+                        });
+                        await markMessageAsRead(msg.id);
+                    });
+                }).catch(error => {
+                    console.error("Failed to check for messages on login:", error);
+                });
+            }
+        }
+        // --- End of message fetching logic ---
 
     } catch (e) {
         console.error("Session/Local storage not available.");
