@@ -92,21 +92,27 @@ export const addDoubt = async (data: {
 /**
  * Fetches all relevant doubts based on user's access level.
  * Full access sees all doubts. Limited access sees only limited-access doubts.
+ * This function correctly combines lecture-specific doubts and general doubts without duplication.
  * @param {AccessLevel} accessLevel - The access level of the current user.
  * @returns {Promise<Doubt[]>} An array of doubt objects.
  */
 export const getDoubts = async (accessLevel: AccessLevel): Promise<Doubt[]> => {
   try {
-    const lectureDoubtsQuery = collectionGroup(db, 'doubts');
-    const generalDoubtsQuery = collection(db, 'doubts');
+    // This query now ONLY gets doubts from sub-collections by checking for the existence of `lectureId`.
+    const lectureDoubtsQuery = query(collectionGroup(db, 'doubts'), where('lectureId', '!=', ''));
+    
+    // This query ONLY gets doubts from the top-level collection by ensuring `lectureId` does NOT exist.
+    const generalDoubtsQuery = query(collection(db, 'doubts'), where('lectureId', '==', null));
 
-    const constraints: QueryConstraint[] = [];
+    const accessConstraints: QueryConstraint[] = [];
     if (accessLevel === 'limited') {
-      constraints.push(where('accessLevel', '==', 'limited'));
+      accessConstraints.push(where('accessLevel', '==', 'limited'));
     }
 
-    const lectureDoubtsSnapshot = await getDocs(query(lectureDoubtsQuery, ...constraints));
-    const generalDoubtsSnapshot = await getDocs(query(generalDoubtsQuery, ...constraints));
+    const [lectureDoubtsSnapshot, generalDoubtsSnapshot] = await Promise.all([
+      getDocs(query(lectureDoubtsQuery, ...accessConstraints)),
+      getDocs(query(generalDoubtsQuery, ...accessConstraints)),
+    ]);
 
     const allDoubts = [
         ...lectureDoubtsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Doubt)),
@@ -114,7 +120,11 @@ export const getDoubts = async (accessLevel: AccessLevel): Promise<Doubt[]> => {
     ];
     
     // Sort all doubts by creation date descending
-    allDoubts.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+    allDoubts.sort((a, b) => {
+        const timeA = a.createdAt?.toDate().getTime() || 0;
+        const timeB = b.createdAt?.toDate().getTime() || 0;
+        return timeB - timeA;
+    });
 
     return allDoubts;
   } catch (error) {
