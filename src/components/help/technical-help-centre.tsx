@@ -123,7 +123,7 @@ const HelpRequestCard = ({ request, onCleared }: { request: TechnicalHelp, onCle
             <CardHeader>
                 <div className="flex justify-between items-start gap-4">
                     <CardDescription>
-                        {formatDistanceToNow(request.createdAt.toDate(), { addSuffix: true })}
+                        {request.createdAt?.toDate ? formatDistanceToNow(request.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
                     </CardDescription>
                     <div className="flex items-center gap-2">
                          <Badge variant='secondary'>{request.category}</Badge>
