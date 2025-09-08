@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
@@ -18,6 +18,7 @@ import type { AccessLevel } from '@/context/auth-context';
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLocked, login, lockApp, unlockApp } = useAuth();
   const { toast } = useToast();
+  const wasLockedRef = useRef(isLocked);
 
   useEffect(() => {
     const lock = () => {
@@ -44,39 +45,40 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isLocked, lockApp]);
 
   useEffect(() => {
-    const logAppOpenAndCheckMessages = async () => {
-      try {
-        // Check for messages only when authenticated AND unlocked.
-        if (isAuthenticated && !isLocked) {
-            const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | 'unknown';
-            
-            if (accessLevel !== 'full') {
-              console.log("Access level is not 'full', skipping message check.");
-              return;
-            }
+    // This effect now specifically checks for the transition from locked to unlocked.
+    if (wasLockedRef.current && !isLocked) {
+      const checkMessagesOnUnlock = async () => {
+        try {
+          const accessLevel = localStorage.getItem('study-buddy-access-level') as AccessLevel | 'unknown';
+          
+          if (accessLevel !== 'full') {
+            console.log("Access level is not 'full', skipping message check.");
+            return;
+          }
 
-            const messages = await getUnreadMessages();
-            messages.forEach(async (msg) => {
-                toast({
-                    title: (
-                        <div className="flex items-center gap-2">
-                            <MessageSquareWarning className="h-5 w-5 text-primary" />
-                            <span>New Message</span>
-                        </div>
-                    ),
-                    description: msg.text,
-                    duration: 10000,
-                });
-                await markMessageAsRead(msg.id);
-            });
+          const messages = await getUnreadMessages();
+          messages.forEach(async (msg) => {
+              toast({
+                  title: (
+                      <div className="flex items-center gap-2">
+                          <MessageSquareWarning className="h-5 w-5 text-primary" />
+                          <span>New Message</span>
+                      </div>
+                  ),
+                  description: msg.text,
+                  duration: 10000,
+              });
+              await markMessageAsRead(msg.id);
+          });
+        } catch (error) {
+          console.error("Error checking messages on unlock: ", error);
         }
-      } catch (error) {
-        console.error("Error during app startup tasks: ", error);
-      }
-    };
-
-    logAppOpenAndCheckMessages();
-  }, [isAuthenticated, isLocked, toast]); // Added isLocked to dependency array
+      };
+      checkMessagesOnUnlock();
+    }
+    // Update the ref to the current lock state for the next render.
+    wasLockedRef.current = isLocked;
+  }, [isLocked, toast]); // Dependency array is now just on isLocked and toast.
 
   if (!isAuthenticated) {
     return <LoginFlow />;
