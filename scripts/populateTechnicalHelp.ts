@@ -3,21 +3,8 @@
 // 1. Make sure you have tsx installed: npm install -g tsx
 // 2. Run from the root of your project: tsx ./scripts/populateTechnicalHelp.ts
 
-import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
-
-// IMPORTANT: Paste your Firebase config here
-const firebaseConfig = {
-  apiKey: "AIzaSyDnzakdcRW6cwvgB4Hmc9qp5_mAJQ7fjm0",
-  authDomain: "share-aa50c.firebaseapp.com",
-  projectId: "share-aa50c",
-  storageBucket: "share-aa50c.appspot.com",
-  messagingSenderId: "196681616928",
-  appId: "1:196681616928:web:6b8b539cbe955549d37645"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { db } from '../src/lib/firebase';
 
 console.log("Firebase initialized for script.");
 
