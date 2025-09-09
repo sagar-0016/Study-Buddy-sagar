@@ -3,15 +3,31 @@
 // 1. Make sure you have tsx installed: npm install -g tsx
 // 2. Run from the root of your project: npm run migrate-data
 
-import { collection, getDocs, doc, writeBatch } from 'firebase/firestore';
-import { db as destDb } from '../src/lib/firebase'; // Destination is the main 'sagar' db
-import { sourceDb } from '../src/lib/firebase-source'; // Source is the '(default)' db
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, doc, writeBatch } from 'firebase/firestore';
+
+// --- Single Firebase Configuration ---
+// This connects to your overall Firebase project.
+const firebaseConfig = {
+  apiKey: "AIzaSyBv26GpTGNi56cOHY23H4JWk_Q0iu7WRbg",
+  authDomain: "study-buddy-7357a.firebaseapp.com",
+  projectId: "study-buddy-7357a",
+  storageBucket: "study-buddy-7357a.firebasestorage.app",
+  messagingSenderId: "286721031921",
+  appId: "1:286721031921:web:bdebedc76dd6081dbfb350"
+};
+
+// --- Initialize a single app ---
+const app = initializeApp(firebaseConfig);
+
+// --- Get explicit references to both databases ---
+const sourceDb = getFirestore(app); // Connects to '(default)' database
+const destDb = getFirestore(app, "sagar");   // Connects to 'sagar' database
 
 const collectionsToMigrate = [
     'brainstorming',
     'brainstorming-submissions',
     'discipline',
-    'doubts',
     'features',
     'flashcardDecks', // Special handling for subcollections
     'lectures', // Special handling for subcollections
@@ -34,6 +50,7 @@ const collectionsToMigrate = [
     'tricky-questions',
     'worried-messages'
 ];
+
 
 async function migrateCollection(collectionName: string) {
     console.log(`\nMigrating collection: ${collectionName}...`);
@@ -96,7 +113,12 @@ async function migrateSubcollection(parentId: string, subcollectionName: string,
 async function main() {
     console.log("🚀 Starting data migration from source (default) to destination (sagar)...");
     
-    for (const collectionName of collectionsToMigrate) {
+    // The `doubts` collection in the source project is nested under lectures.
+    // The migration logic for `lectures` already handles this. We only need
+    // to migrate the top-level collections.
+    const topLevelCollections = collectionsToMigrate.filter(c => c !== 'doubts');
+
+    for (const collectionName of topLevelCollections) {
         try {
             await migrateCollection(collectionName);
         } catch (error) {
