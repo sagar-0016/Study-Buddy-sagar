@@ -39,7 +39,6 @@ export const navLinks: NavLink[] = [
   { href: "/questions", label: "Questions", icon: ClipboardList },
   { href: "/flashcards", label: "Flashcards", icon: Notebook },
   { href: "/lectures", label: "Lectures", icon: Library },
-  { href: "/news", label: "News", icon: Newspaper },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/revisions", label: "Revisions", icon: BrainCircuit },
   { href: "/feedback", label: "AI Feedback", icon: BotMessageSquare },
