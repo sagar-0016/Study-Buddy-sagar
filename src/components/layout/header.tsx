@@ -9,6 +9,7 @@ import {
   LogOut,
   Settings,
   User,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Sheet,
@@ -118,6 +119,12 @@ export default function Header() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
+             <DropdownMenuItem asChild>
+                <a href="https://study-buddy-admin-panel.vercel.app/" target="_blank" rel="noopener noreferrer">
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    Admin Panel
+                </a>
+            </DropdownMenuItem>
              <DropdownMenuItem asChild>
                 <Link href="/settings">
                     <Settings className="mr-2 h-4 w-4" />
