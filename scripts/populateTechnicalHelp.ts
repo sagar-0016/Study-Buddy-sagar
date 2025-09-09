@@ -3,7 +3,7 @@
 // 1. Make sure you have tsx installed: npm install -g tsx
 // 2. Run from the root of your project: tsx ./scripts/populateTechnicalHelp.ts
 
-import { getFirestore, collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../src/lib/firebase';
 
 console.log("Firebase initialized for script.");

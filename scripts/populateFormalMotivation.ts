@@ -3,7 +3,7 @@
 // 1. Make sure you have tsx installed: npm install -g tsx
 // 2. Run from the root of your project: tsx ./scripts/populateFormalMotivation.ts
 
-import { getFirestore, collection, writeBatch, doc } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 import { db } from '../src/lib/firebase';
 
 console.log("Firebase initialized for script.");
