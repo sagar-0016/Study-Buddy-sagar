@@ -4,8 +4,8 @@
 // 2. Run from the root of your project: npm run migrate-data
 
 import { collection, getDocs, doc, writeBatch } from 'firebase/firestore';
-import { db as sourceDb } from '../src/lib/firebase';
-import { sourceDb as destDb } from '../src/lib/firebase-source';
+import { db as destDb } from '../src/lib/firebase'; // Destination is the main 'sagar' db
+import { sourceDb } from '../src/lib/firebase-source'; // Source is the '(default)' db
 
 const collectionsToMigrate = [
     'brainstorming',
@@ -94,7 +94,7 @@ async function migrateSubcollection(parentId: string, subcollectionName: string,
 
 
 async function main() {
-    console.log("🚀 Starting data migration from source to destination...");
+    console.log("🚀 Starting data migration from source (default) to destination (sagar)...");
     
     for (const collectionName of collectionsToMigrate) {
         try {
@@ -105,7 +105,7 @@ async function main() {
     }
 
     console.log("\n\n✅✅✅ Data migration complete! ✅✅✅");
-    console.log("Your new Firestore database should now be populated.");
+    console.log("Your new 'sagar' database should now be populated.");
     console.log("You can now close this script (Ctrl+C).");
 }
 

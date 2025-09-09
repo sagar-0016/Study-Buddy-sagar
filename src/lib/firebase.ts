@@ -4,19 +4,19 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
-// THIS IS THE SOURCE DATABASE
+// THIS IS THE DESTINATION DATABASE
 const firebaseConfig = {
-  apiKey: "AIzaSyBv26GpTGNi56cOHY23H4JWk_Q0iu7WRbg",
-  authDomain: "study-buddy-7357a.firebaseapp.com",
-  projectId: "study-buddy-7357a",
-  storageBucket: "study-buddy-7357a.firebasestorage.app",
-  messagingSenderId: "286721031921",
-  appId: "1:286721031921:web:bdebedc76dd6081dbfb350"
+  apiKey: "AIzaSyDnzakdcRW6cwvgB4Hmc9qp5_mAJQ7fjm0",
+  authDomain: "share-aa50c.firebaseapp.com",
+  projectId: "share-aa50c",
+  storageBucket: "share-aa50c.firebasestorage.app",
+  messagingSenderId: "196681616928",
+  appId: "1:196681616928:web:6b8b539cbe955549d37645"
 };
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const db = getFirestore(app); // Connect to the "(default)" database
+const db = getFirestore(app, "sagar"); // Connect to the "sagar" database
 const auth = getAuth(app);
 const storage = getStorage(app);
 
