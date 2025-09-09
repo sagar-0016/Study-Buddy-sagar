@@ -47,6 +47,10 @@ export const getLectureById = async (
     return null;
   } catch (error) {
     console.error(`Error fetching lecture ${lectureId}:`, error);
+    // Specifically handle the case where Firestore backend is not found.
+    if ((error as any)?.code === 'not-found') {
+      console.error("Firestore database not found. Please ensure it's created in the Firebase console.");
+    }
     return null;
   }
 };
