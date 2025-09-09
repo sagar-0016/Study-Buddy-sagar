@@ -14,32 +14,23 @@ type AuthContextType = {
   isReloading: boolean;
   login: (accessLevel: AccessLevel) => void;
   logout: () => void;
-  lockApp: () => void;
   unlockApp: (accessLevel: AccessLevel) => void;
-  pauseLocking: (durationInMs: number) => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLocked] = useState(true); // Default to locked
   const [isLoading, setIsLoading] = useState(true);
   const [isReloading, setIsReloading] = useState(false);
-  const [isLockingPaused, setIsLockingPaused] = useState(false);
-  const lockPauseTimer = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     try {
-      const sessionActive = sessionStorage.getItem('study-buddy-session-active') === 'true';
-      const appLocked = localStorage.getItem('study-buddy-app-locked') === 'true';
-
-      if (sessionActive) {
-        setIsAuthenticated(true);
-        if (appLocked) {
-          setIsLocked(true);
-        }
+      const isDeviceVerified = localStorage.getItem('study-buddy-device-verified') === 'true';
+      if (isDeviceVerified) {
+        setIsAuthenticated(true); // Consider verified device as "authenticated" but locked
       }
     } catch (e) {
         console.error("Session/Local storage not available.");
@@ -62,8 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         sessionStorage.setItem('study-buddy-session-active', 'true');
         localStorage.setItem('study-buddy-access-level', accessLevel);
-        localStorage.setItem('study-buddy-app-locked', 'false'); // Unlock the app
-
+        
         // --- Fetch messages on successful login ---
         if (accessLevel === 'full') {
             const isProduction = window.location.href.includes("study-buddy-two-phi.vercel.app");
@@ -101,7 +91,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         sessionStorage.removeItem('study-buddy-session-active');
         localStorage.removeItem('study-buddy-access-level');
         localStorage.removeItem('study-buddy-device-verified');
-        localStorage.removeItem('study-buddy-app-locked'); // Clear lock on logout
         toast({
             title: "Logged Out",
             description: "You have been successfully logged out."
@@ -115,31 +104,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.reload();
   };
 
-  const lockApp = useCallback(() => {
-    if (isAuthenticated && !isLockingPaused) {
-        try {
-            localStorage.setItem('study-buddy-app-locked', 'true');
-        } catch (e) {
-             console.error("Local storage not available.");
-        }
-        setIsLocked(true);
-    }
-  }, [isAuthenticated, isLockingPaused]);
-
   const unlockApp = (accessLevel: AccessLevel) => {
     login(accessLevel);
   }
-
-  const pauseLocking = (durationInMs: number) => {
-    if (lockPauseTimer.current) {
-        clearTimeout(lockPauseTimer.current);
-    }
-    setIsLockingPaused(true);
-    lockPauseTimer.current = setTimeout(() => {
-        setIsLockingPaused(false);
-        lockPauseTimer.current = null;
-    }, durationInMs);
-  };
 
   if (isLoading) {
     return (
@@ -150,7 +117,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLocked, isReloading, login, logout, lockApp, unlockApp, pauseLocking }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLocked, isReloading, login, logout, unlockApp }}>
       {children}
     </AuthContext.Provider>
   );
