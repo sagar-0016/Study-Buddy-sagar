@@ -87,7 +87,7 @@ export default function MotivationCorner() {
               setIsAiGenerated(true);
               const result = await getMotivationAction({
                   senderName: "Saurabh",
-                  recipientName: "Pranjal",
+                  recipientName: "Sagar",
                   topic: "JEE Prep",
                   quizScore: 75,
                   currentMood: moodLabel,
@@ -109,7 +109,7 @@ export default function MotivationCorner() {
               setIsAiGenerated(true);
               const result = await getMotivationAction({
                   senderName: "Saurabh",
-                  recipientName: "Pranjal",
+                  recipientName: "Sagar",
                   topic: "JEE Prep",
                   quizScore: 75,
                   currentMood: moodLabel,
@@ -141,7 +141,7 @@ export default function MotivationCorner() {
   return (
     <Card className="flex flex-col transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg border-0">
       <CardContent className="flex-grow space-y-4 pt-6">
-        <p className="text-lg font-medium text-center">How are you feeling, Pranjal?</p>
+        <p className="text-lg font-medium text-center">How are you feeling, Sagar?</p>
         <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
           {moods.map((mood) => (
             <Button

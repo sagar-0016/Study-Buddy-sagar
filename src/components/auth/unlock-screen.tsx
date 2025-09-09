@@ -12,7 +12,7 @@ import type { AccessLevel } from '@/context/auth-context';
 
 const LIMITED_ACCESS_KEY = 'p';
 const FULL_ACCESS_KEY = '_';
-const SETUP_USERNAME = 'pranjal';
+const SETUP_USERNAME = 'sagar';
 
 interface UnlockScreenProps {
   onUnlock: (accessLevel: AccessLevel) => void;

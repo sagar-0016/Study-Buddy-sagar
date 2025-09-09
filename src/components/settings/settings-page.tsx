@@ -28,7 +28,7 @@ const ProfileCard = () => {
                 <div className="space-y-3">
                     <div className="flex items-baseline gap-3">
                         <p className="text-sm font-medium text-muted-foreground w-12">Name:</p>
-                        <p className="font-semibold text-lg">Pranjal</p>
+                        <p className="font-semibold text-lg">Sagar</p>
                     </div>
                      <div className="flex items-baseline gap-3">
                         <p className="text-sm font-medium text-muted-foreground w-12">Aim:</p>

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { GraduationCap, KeyRound, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-const SETUP_USERNAME = 'pranjal';
+const SETUP_USERNAME = 'sagar';
 const SETUP_PASSWORD = '15-11';
 
 export default function VerifyDeviceScreen({ onVerified }: { onVerified: () => void }) {

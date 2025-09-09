@@ -40,7 +40,7 @@ export default function WelcomeBanner() {
     <div className="relative transition-transform duration-300 ease-in-out">
       <div className="grid md:grid-cols-2 items-center">
         <div className="p-8 md:p-12 z-10">
-          <h2 className="text-3xl lg:text-4xl font-bold text-primary">Conquer JEE, Pranjal!</h2>
+          <h2 className="text-3xl lg:text-4xl font-bold text-primary">Conquer JEE, Sagar!</h2>
           <OneLinerMotivation />
         </div>
         <div 

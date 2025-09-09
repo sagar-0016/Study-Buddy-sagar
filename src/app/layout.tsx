@@ -4,7 +4,7 @@ import "./globals.css";
 import Providers from './providers';
 
 export const metadata: Metadata = {
-  title: "Pranjal's Study Buddy",
+  title: "Sagar's Study Buddy",
   description: "Your personalized companion for JEE preparation.",
   icons: {
     icon: '/avatar.png',

@@ -107,7 +107,7 @@ export default function Sidebar() {
         )}>
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <GraduationCap className="h-6 w-6 text-primary" />
-              {!isClassMode && <span className="">Pranjal's Study Buddy</span>}
+              {!isClassMode && <span className="">Sagar's Study Buddy</span>}
             </Link>
           </div>
           <div className="flex flex-1 flex-col gap-y-2 overflow-y-auto">
