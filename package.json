@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "populate-all": "tsx ./scripts/populate-all.ts",
     "populate-schedules": "tsx ./scripts/populateSchedules.ts",
     "populate-flashcards": "tsx ./scripts/populateFlashcards.ts",
     "populate-messages": "tsx ./scripts/populateMessages.ts",
