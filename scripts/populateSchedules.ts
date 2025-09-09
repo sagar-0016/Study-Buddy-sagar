@@ -8,12 +8,12 @@ import { getFirestore, doc, setDoc, writeBatch, collection, getDocs } from 'fire
 
 // IMPORTANT: Paste your Firebase config here
 const firebaseConfig = {
-  apiKey: "AIzaSyBv26GpTGNi56cOHY23H4JWk_Q0iu7WRbg",
-  authDomain: "study-buddy-7357a.firebaseapp.com",
-  projectId: "study-buddy-7357a",
-  storageBucket: "study-buddy-7357a.appspot.com",
-  messagingSenderId: "286721031921",
-  appId: "1:286721031921:web:bdebedc76dd6081dbfb350"
+  apiKey: "AIzaSyDnzakdcRW6cwvgB4Hmc9qp5_mAJQ7fjm0",
+  authDomain: "share-aa50c.firebaseapp.com",
+  projectId: "share-aa50c",
+  storageBucket: "share-aa50c.appspot.com",
+  messagingSenderId: "196681616928",
+  appId: "1:196681616928:web:6b8b539cbe955549d37645"
 };
 
 const app = initializeApp(firebaseConfig);
