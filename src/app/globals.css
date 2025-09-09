@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 120 30% 97%;
+    --background: 220 30% 97%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100% / 0.6; /* Frosted glass effect */
@@ -13,31 +13,29 @@
     --popover: 0 0% 100% / 0.7; /* Frosted glass effect */
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 120 65% 45%; /* Darker, more saturated green */
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 220 65% 45%; /* Darker, more saturated blue */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 120 50% 92% / 0.7;
+    --secondary: 220 50% 92% / 0.7;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 120 50% 92% / 0.7;
+    --muted: 220 50% 92% / 0.7;
     --muted-foreground: 224 7.1% 44.1%;
 
-    --accent: 120 65% 35%; /* Even Darker Green for accents */
+    --accent: 220 65% 35%; /* Even Darker blue for accents */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 120 50% 88% / 0.8;
-    --input: 120 50% 88% / 0.7;
-    --ring: 120 65% 45%;
+    --border: 220 50% 88% / 0.8;
+    --input: 220 50% 88% / 0.7;
+    --ring: 220 65% 45%;
 
-    --radius: 0.5rem;
-
-    --chart-1: 120 70% 50%;
-    --chart-2: 90 70% 45%; /* Lime Green for PYQs */
-    --chart-3: 43 74% 66%;
-    --chart-4: 27 87% 67%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 190 70% 45%; /* Cyan for PYQs */
+    --chart-3: 260 74% 66%;
+    --chart-4: 240 87% 67%;
     --chart-5: 350 87% 67%;
   }
 
@@ -51,8 +49,8 @@
     --popover: 224 71.4% 4.1% / 0.7; /* Frosted glass effect */
     --popover-foreground: 210 40% 98%;
 
-    --primary: 120 55% 55%; /* Richer green for dark mode too */
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 220 55% 55%; /* Richer blue for dark mode */
+    --primary-foreground: 210 40% 98%;
 
     --secondary: 217.2 32.6% 17.5% / 0.7;
     --secondary-foreground: 210 40% 98%;
@@ -60,7 +58,7 @@
     --muted: 217.2 32.6% 17.5% / 0.7;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 120 55% 45%; /* Darker Green */
+    --accent: 220 55% 45%; /* Darker Blue */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -68,12 +66,12 @@
 
     --border: 217.2 32.6% 17.5% / 0.8;
     --input: 217.2 32.6% 17.5% / 0.7;
-    --ring: 120 55% 55%;
+    --ring: 220 55% 55%;
     
-    --chart-1: 120 70% 60%;
-    --chart-2: 90 70% 55%; /* Lime Green for PYQs */
-    --chart-3: 43 74% 56%;
-    --chart-4: 27 87% 57%;
+    --chart-1: 220 70% 60%;
+    --chart-2: 190 70% 55%; /* Cyan for PYQs */
+    --chart-3: 260 74% 56%;
+    --chart-4: 240 87% 57%;
     --chart-5: 350 87% 57%;
   }
 }
