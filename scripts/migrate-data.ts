@@ -3,9 +3,9 @@
 // 1. Make sure you have tsx installed: npm install -g tsx
 // 2. Run from the root of your project: npm run migrate-data
 
-import { collection, getDocs, doc, setDoc, writeBatch, getDoc } from 'firebase/firestore';
-import { db as destDb } from '../src/lib/firebase';
-import { sourceDb } from '../src/lib/firebase-source';
+import { collection, getDocs, doc, writeBatch } from 'firebase/firestore';
+import { db as sourceDb } from '../src/lib/firebase';
+import { sourceDb as destDb } from '../src/lib/firebase-source';
 
 const collectionsToMigrate = [
     'brainstorming',
