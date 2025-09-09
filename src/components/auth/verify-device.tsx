@@ -10,7 +10,7 @@ import { GraduationCap, KeyRound, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const SETUP_USERNAME = 'sagar';
-const SETUP_PASSWORD = '15-11';
+const SETUP_PASSWORD = '15-19';
 
 export default function VerifyDeviceScreen({ onVerified }: { onVerified: () => void }) {
     const [username, setUsername] = useState('');

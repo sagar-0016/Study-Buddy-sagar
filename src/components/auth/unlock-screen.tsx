@@ -10,8 +10,8 @@ import { GraduationCap, KeyRound } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { AccessLevel } from '@/context/auth-context';
 
-const LIMITED_ACCESS_KEY = 'p';
-const FULL_ACCESS_KEY = '_';
+const LIMITED_ACCESS_KEY = 's';
+const FULL_ACCESS_KEY = 's';
 const SETUP_USERNAME = 'sagar';
 
 interface UnlockScreenProps {
