@@ -94,7 +94,7 @@ async function migrateSubcollection(parentId: string, subcollectionName: string,
 
 
 async function main() {
-    console.log("🚀 Starting data migration from 'study-buddy-7357a' to 'share-aa50c'...");
+    console.log("🚀 Starting data migration from source to destination...");
     
     for (const collectionName of collectionsToMigrate) {
         try {
