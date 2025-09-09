@@ -1,10 +1,10 @@
 
-
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
+// THIS IS THE DESTINATION DATABASE
 const firebaseConfig = {
   apiKey: "AIzaSyDnzakdcRW6cwvgB4Hmc9qp5_mAJQ7fjm0",
   authDomain: "share-aa50c.firebaseapp.com",
