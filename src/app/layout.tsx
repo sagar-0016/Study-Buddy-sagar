@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Sagar's Study Buddy",
   description: "Your personalized companion for JEE preparation.",
   icons: {
-    icon: '/avatar.png',
+    icon: '/favicon.ico',
   },
 };
 

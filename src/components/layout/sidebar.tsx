@@ -33,8 +33,7 @@ import type { NavLink } from '@/lib/types';
 import { useClassMode } from "@/context/class-mode-context";
 
 export const navLinks: NavLink[] = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/syllabus", label: "Syllabus", icon: BookCheck },
+  { href: "/", label: "Syllabus", icon: BookCheck },
   { href: "/pyq", label: "PYQ Tracker", icon: ClipboardList },
   { href: "/planner", label: "Planner", icon: CalendarClock },
   { href: "/questions", label: "Questions", icon: ClipboardList },

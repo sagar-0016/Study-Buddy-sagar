@@ -3,12 +3,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   PanelLeft,
   GraduationCap,
   LogOut,
   Settings,
+  User,
 } from "lucide-react";
 import {
   Sheet,
@@ -108,18 +108,11 @@ export default function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              variant="ghost"
+              variant="secondary"
               size="icon"
               className="overflow-hidden rounded-full"
             >
-              <Image
-                src="/avatar.png"
-                width={36}
-                height={36}
-                alt="Avatar"
-                className="overflow-hidden rounded-full"
-                priority
-              />
+              <User className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
